@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================
+         Paperformat: กระดาษต่อเนื่อง 250 x 279 มม.
+         ขอบซ้าย 23 มม. = ระยะขอบรู feed (dot-matrix)
+         พิกัดช่องต่าง ๆ ในเทมเพลตวัดจาก "หลังหักขอบรูแล้ว"
+         ============================================================ -->
+    <record id="paperformat_invoice_form" model="report.paperformat">
+        <field name="name">Autozone Continuous Invoice Form (250x279)</field>
+        <field name="format">custom</field>
+        <field name="page_width">250</field>
+        <field name="page_height">279</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">0</field>
+        <field name="margin_bottom">0</field>
+        <field name="margin_left">0</field>
+        <field name="margin_right">0</field>
+        <field name="header_line" eval="False" />
+        <field name="header_spacing">0</field>
+        <field name="disable_shrinking" eval="True" />
+        <field name="dpi">96</field>
+    </record>
+
+    <!-- ============================================================
+         Template: พิมพ์ลงฟอร์มสำเร็จรูป (วางเฉพาะข้อมูล)
+         ============================================================ -->
+    <template id="report_invoice_form">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="custom_invoice_print.report_invoice_form_document" t-lang="o.partner_id.lang" />
+            </t>
+        </t>
+    </template>
+
+    <template id="report_invoice_form_document">
+        <t t-call="web.basic_layout">
+            <style>
+                /* @font-face ของ Sarabun ประกาศไว้ที่โมดูล autozone_report_fonts
+                   (โหลดผ่าน asset bundle web.report_assets_common ให้ทุกรายงาน) */
+                * { box-sizing: border-box; }
+                html, body, .o_basic_layout, .article { margin: 0 !important; padding: 0 !important; }
+                .form-page {
+                    position: relative;
+                    width: 250mm;      /* เต็มหน้ากระดาษ (offset ฐานย้ายไปที่ .canvas) */
+                    height: 278mm;
+                    page-break-after: always;
+                    font-family: 'Sarabun', 'Droid Sans Fallback', 'Tahoma', sans-serif;
+                    color: #000;
+                }
+                .form-page:last-child { page-break-after: auto; }
+                /* ปุ่มจูน offset ทั้งแผ่น: แก้ค่า top/left ที่ .canvas ถ้าพิมพ์แล้วเยื้อง
+                   left ติดลบ = ดันไปทางซ้าย, top ติดลบ = ดันขึ้นบน */
+                .canvas { position: absolute; top: 0mm; left: 16mm; width: 100%; height: 100%; }
+                /* font-weight 300 = Sarabun Light (เส้นบาง ตัวอักษรไม่ชนกัน)
+                   letter-spacing ใส่เฉพาะช่องอังกฤษ/ตัวเลข ส่วน .addr (ไทย) ปล่อยปกติ */
+                .f    { position: absolute; font-size: 11px; line-height: 1.2; font-weight: 300; letter-spacing: 0.8px; }
+                .num  { text-align: right; }
+                .clip { white-space: nowrap; overflow: hidden; }
+                .addr { line-height: 1.3; letter-spacing: normal; }
+            </style>
+
+            <t t-set="lines" t-value="o.invoice_line_ids.filtered(lambda l: l.display_type == 'product')" />
+                <t t-set="per_page" t-value="15" />
+                <t t-set="row_h" t-value="6.0" />
+                <t t-set="page_count" t-value="max(1, (len(lines) + per_page - 1) // per_page)" />
+
+                <t t-foreach="range(page_count)" t-as="pg">
+                    <t t-set="page_lines" t-value="lines[pg * per_page:(pg + 1) * per_page]" />
+                    <div class="form-page">
+                        <div class="canvas">
+
+                            <!-- ==================== ที่อยู่ ==================== -->
+                            <!-- ขายให้ / SOLD TO -->
+                            <div class="f addr" style="top:37mm; left:-8mm; width:85mm;">
+                                <div><t t-out="o.partner_id.name or ''" /></div>
+                                <t t-set="sold_addr" t-value="o.partner_id.get_thai_address_lines()" />
+                                <div><t t-out="' ' + sold_addr[0]" /></div>
+                                <div><t t-out="sold_addr[1]" /></div>
+                                <div t-if="o.partner_id.vat">เลขประจำตัวผู้เสียภาษี: <t t-out="o.partner_id.vat" /><t t-if="o.partner_id.branch" t-out="' ' + o.partner_id.get_thai_branch_display()" /></div>
+                            </div>
+
+                            <!-- ส่งของที่ / DELIVERY TO -->
+                            <t t-set="ship" t-value="o.partner_shipping_id or o.partner_id" />
+                            <div class="f addr" style="top:37mm; left:74mm; width:100mm;">
+                                <div><t t-out="ship.name or ''" /></div>
+                                <t t-set="ship_addr" t-value="ship.get_thai_address_lines()" />
+                                <div><t t-out="' ' + ship_addr[0]" /></div>
+                                <div><t t-out="ship_addr[1]" /></div>
+                                <div t-if="ship.vat">เลขประจำตัวผู้เสียภาษี: <t t-out="ship.vat" /><t t-if="ship.branch" t-out="' ' + ship.get_thai_branch_display()" /></div>
+                            </div>
+
+                            <!-- ==================== แถวหัวเอกสาร (บน 75) ==================== -->
+                            <div class="f clip" style="top:76mm; left:0mm; width:30mm;"><t t-out="o.x_po_reference or ''" /></div>
+                            <div class="f clip" style="top:76mm; left:35mm; width:45mm;"><t t-out="o.x_do_reference or ''" /></div>
+                            <div class="f clip" style="top:76mm; left:85mm; width:28mm;"><t t-out="o.invoice_date_due and o.invoice_date_due.strftime('%d/%m/%Y') or ''" /></div>
+                            <div class="f clip" style="top:76mm; left:117mm; width:30mm;"><t t-out="o.invoice_date and o.invoice_date.strftime('%d/%m/%Y') or ''" /></div>
+                            <div class="f clip" style="top:76mm; left:152mm; width:40mm;"><t t-out="o.name or ''" /></div>
+
+                            <!-- ==================== แถวหัวเอกสาร 2 (บน 97) ==================== -->
+                            <div class="f clip" style="top:90mm; left:0mm; width:45mm;"><t t-out="o.x_job_reference or ''" /></div>
+                            <div class="f clip" style="top:90mm; left:62mm; width:22mm;"><t t-out="o.x_brand_reference or ''" /></div>
+                            <div class="f clip" style="top:90mm; left:85mm; width:30mm;"><t t-out="o.x_car_reg_reference or ''" /></div>
+                            <div class="f clip" style="top:90mm; left:117mm; width:32mm;"><t t-out="o.x_claim_reference or ''" /></div>
+                            <div class="f clip" style="top:90mm; left:152mm; width:40mm;"><t t-out="o.x_policy_reference or ''" /></div>
+
+                            <!-- ==================== รายการสินค้า (บน 105, 15 แถว/หน้า) ==================== -->
+                            <t t-foreach="page_lines" t-as="line">
+                                <t t-set="rtop" t-value="105 + line_index * row_h" />
+                                <!-- รายการ: ตัดรหัสสินค้า [CODE] ออกถ้ามีนำหน้า -->
+                                <t t-set="desc" t-value="line.x_custom_name or line.name or (line.product_id.name or '')" />
+                                <t t-if="desc and desc[:1] == '[' and ']' in desc" t-set="desc" t-value="desc.split(']', 1)[1].strip()" />
+
+                                <div class="f clip" t-attf-style="top:{{rtop}}mm; left:-5mm; width:32mm;"><t t-out="line.product_id.default_code or ''" /></div>
+                                <div class="f clip" t-attf-style="top:{{rtop}}mm; left:29mm; width:83mm;"><t t-out="line.env['az.font.util'].wrap_cjk(desc)" /></div>
+                                <div class="f num clip" t-attf-style="top:{{rtop}}mm; left:114mm; width:18mm;"><t t-out="'{:,.2f}'.format(line.quantity)" /></div>
+                                <div class="f num clip" t-attf-style="top:{{rtop}}mm; left:136mm; width:19mm;"><t t-out="'{:,.2f}'.format(line.price_unit)" /></div>
+                                <div class="f num clip" t-attf-style="top:{{rtop}}mm; left:156mm; width:24mm;"><t t-out="'{:,.2f}'.format(line.price_subtotal)" /></div>
+                            </t>
+
+                            <!-- ==================== ยอดรวม (เฉพาะหน้าสุดท้าย, ชิดขวา) ==================== -->
+                            <t t-if="pg == page_count - 1">
+                                <div class="f num clip" style="top:210mm; left:150mm; width:30mm;"><t t-out="'{:,.2f}'.format(o.amount_untaxed)" /></div>
+                                <div class="f num clip" style="top:218mm; left:150mm; width:30mm;"><t t-out="'{:,.2f}'.format(o.amount_tax)" /></div>
+                                <div class="f num clip" style="top:228mm; left:150mm; width:30mm;"><t t-out="'{:,.2f}'.format(o.amount_total)" /></div>
+                            </t>
+
+                        </div>
+                    </div>
+                </t>
+            </t>
+    </template>
+
+</odoo>

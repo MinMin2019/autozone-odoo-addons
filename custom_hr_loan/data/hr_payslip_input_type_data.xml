@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- ดอกเบี้ยแยกจากเงินต้น (LOAN) เพื่อให้ลงบัญชีคนละตัว:
+             LOAN → Cr เงินให้กู้ยืมพนักงาน / LOAN_INT → Cr ดอกเบี้ยรับ
+             (ผูกบัญชีที่ Salary Rule ตาม doc/ACCOUNT_MAPPING.md ของ import_payslip_inputs) -->
+        <record id="input_type_loan_interest" model="hr.payslip.input.type">
+            <field name="name">ดอกเบี้ยเงินกู้สวัสดิการ (Loan Interest)</field>
+            <field name="code">LOAN_INT</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="rule_legacy_loan_interest" model="hr.salary.rule">
+            <field name="struct_id" ref="import_payslip_inputs.structure_legacy_import"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">ดอกเบี้ยเงินกู้สวัสดิการ</field>
+            <field name="code">LOAN_INT</field>
+            <field name="sequence">161</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_loan_interest"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['LOAN_INT'].amount</field>
+        </record>
+    </data>
+</odoo>

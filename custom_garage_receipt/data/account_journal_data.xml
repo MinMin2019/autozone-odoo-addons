@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- สร้าง Journal ที่ 1: ใบเสร็จแบบมี VAT -->
+        <record id="journal_cash_receipt_vat" model="account.journal">
+            <field name="name">Cash Receipt (VAT)</field>
+            <field name="type">sale</field>
+            <field name="code">RCV</field>
+            <!-- หากต้องการให้เป็น Bank เปลี่ยน type เป็น "bank" หรือถ้าเป็นขาย เปลี่ยนเป็น "sale" -->
+        </record>
+
+        <!-- สร้าง Journal ที่ 2: ใบเสร็จแบบไม่มี VAT -->
+        <record id="journal_cash_receipt_non_vat" model="account.journal">
+            <field name="name">Cash Receipt (Non-VAT)</field>
+            <field name="type">sale</field>
+            <field name="code">RCN</field>
+        </record>
+
+    </data>
+</odoo>

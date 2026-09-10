@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_import_payslip_inputs_wizard_form" model="ir.ui.view">
+        <field name="name">import.payslip.inputs.wizard.form</field>
+        <field name="model">import.payslip.inputs.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Import Other Inputs">
+                <field name="state" invisible="1"/>
+                <field name="payslip_run_id" invisible="1"/>
+                <field name="currency_id" invisible="1"/>
+
+                <!-- Step 1: Upload -->
+                <group invisible="state != 'upload'">
+                    <field name="file_data" filename="file_name" widget="binary"/>
+                    <field name="file_name" invisible="1"/>
+                </group>
+                <div invisible="state != 'upload'" class="text-muted">
+                    <p>ไฟล์จาก <b>Business Plus</b> (สคริปต์ bplus_extract.py) อัปโหลดได้ทันที ระบบจะอ่านชีต Import
+                       และใช้ชีต Control เทียบยอดสุทธิรายคนให้อัตโนมัติ</p>
+                    <p>ขั้นตอน: อัปโหลดไฟล์ → กด <b>ตรวจสอบไฟล์ (Preview)</b> → ตรวจยอดสรุป → กด <b>ยืนยันนำเข้า</b></p>
+                    <p>เงื่อนไข: จับคู่พนักงานด้วย <b>รหัสพนักงาน (Registration Number)</b> เท่านั้น,
+                       ต้องกด Generate Payslips ใน Batch ก่อน,
+                       จำนวนเงินใส่ <b>ค่าบวกเสมอ</b> (รายการหักระบบจะหักให้เองตาม Salary Rule)</p>
+                    <p>การนำเข้าซ้ำจะ<b>ล้างรายการที่เคย import ทั้งหมด</b>ของพนักงานในไฟล์ แล้วลงใหม่ตามไฟล์ล่าสุด
+                       (ไม่แตะรายการที่กรอกมือ)</p>
+                </div>
+
+                <!-- Step 2: Preview -->
+                <group invisible="state != 'preview'">
+                    <group string="สรุปยอดก่อนยืนยัน (ใช้กระทบยอดกับระบบเดิม)">
+                        <field name="employee_count" string="จำนวนพนักงาน"/>
+                        <field name="line_count" string="จำนวนรายการ"/>
+                        <field name="total_earning" string="รวมรายได้"/>
+                        <field name="total_deduction" string="รวมรายการหัก"/>
+                        <field name="total_company" string="สมทบนายจ้าง (ไม่กระทบสุทธิ)" invisible="not total_company"/>
+                        <field name="skipped_note" string="หมายเหตุ" invisible="not skipped_note"/>
+                        <field name="control_note" string="ตรวจทาน BPlus" invisible="not control_note"/>
+                        <field name="warning_note" string="คำเตือน" invisible="not warning_note"/>
+                    </group>
+                </group>
+                <field name="line_ids" invisible="state != 'preview'" readonly="1">
+                    <list create="0" delete="0" edit="0">
+                        <field name="registration_number"/>
+                        <field name="employee_id"/>
+                        <field name="code"/>
+                        <field name="input_type_id"/>
+                        <field name="kind"/>
+                        <field name="amount" sum="Total"/>
+                        <field name="note"/>
+                        <field name="currency_id" column_invisible="1"/>
+                    </list>
+                </field>
+
+                <!-- Step 3: ผลเทียบ NET กับ Business Plus (เฉพาะไฟล์ที่มีชีต Control) -->
+                <div invisible="state != 'result'">
+                    <field name="result_html" nolabel="1"/>
+                    <p class="text-muted">ผลนี้ถูกบันทึกไว้ในแชทเตอร์ของ Batch ด้วยแล้ว</p>
+                </div>
+
+                <footer>
+                    <button name="action_parse_file" string="ตรวจสอบไฟล์ (Preview)" type="object"
+                            class="btn-primary" invisible="state != 'upload'"/>
+                    <button name="action_download_template" string="Download Template" type="object"
+                            class="btn-secondary" invisible="state != 'upload'"/>
+                    <button name="action_confirm_import" string="ยืนยันนำเข้า" type="object"
+                            class="btn-primary" invisible="state != 'preview'"/>
+                    <button name="action_back_to_upload" string="ย้อนกลับ" type="object"
+                            class="btn-secondary" invisible="state != 'preview'"/>
+                    <button name="action_close_reload" string="ปิด" type="object"
+                            class="btn-primary" invisible="state != 'result'"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel" invisible="state == 'result'"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_import_payslip_inputs_wizard" model="ir.actions.act_window">
+        <field name="name">Import Other Inputs</field>
+        <field name="res_model">import.payslip.inputs.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

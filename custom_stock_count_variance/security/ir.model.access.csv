@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_scv_wizard_stock,stock.count.variance.wizard stock user,model_stock_count_variance_wizard,stock.group_stock_user,1,1,1,1
+access_scv_line_stock,stock.count.variance.line stock user,model_stock_count_variance_line,stock.group_stock_user,1,1,1,1
+access_scv_wizard_account,stock.count.variance.wizard account user,model_stock_count_variance_wizard,account.group_account_readonly,1,1,1,1
+access_scv_line_account,stock.count.variance.line account user,model_stock_count_variance_line,account.group_account_readonly,1,1,1,1

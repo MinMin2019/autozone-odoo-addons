@@ -1,0 +1,496 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="report_invoice_5_copies_custom">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="o">
+                    <t t-set="copies_list"
+                        t-value="[
+                        {'th': ' ต้นฉบับใบเสร็จรับเงิน / ใบกำกับภาษี', 'en': 'RECEIPT ORIGINAL / TAX INVOICE', 'word': 'เอกสารออกเป็นชุด', 'copy_type': 'ลูกค้า'},
+                        {'th': 'สำเนาใบกำกับภาษี / ใบส่งของ',      'en': 'TAX INVOICE COPY / DELIVERY ORDER', 'word': 'เอกสารออกเป็นชุด ไม่ใช่ใบกำกับภาษี', 'copy_type': 'บัญชี'},
+                        {'th': 'ต้นฉบับใบกำกับภาษี / ใบส่งของ',      'en': 'TAX INVOICE ORIGINAL / DELIVERY ORDER', 'word': 'เอกสารออกเป็นชุด', 'copy_type': 'ลูกค้า'},
+                        {'th': 'สำเนาใบเสร็จรับเงิน / ใบกำกับภาษี',   'en': 'RECEIPT COPY / TAX INVOICE', 'word': 'เอกสารออกเป็นชุด ไม่ใช่ใบกำกับภาษี', 'copy_type': 'บัญชี'},
+                        {'th': 'ต้นฉบับใบส่งของ / ใบแจ้งหนี้',          'en': 'DELIVERY ORDER ORIGINAL / INVOICE', 'word': 'เอกสารออกเป็นชุด ไม่ใช่ใบกำกับภาษี', 'copy_type': 'ลูกค้า'}
+                    ]" />
+                    <t t-foreach="copies_list" t-as="copy_title">
+                        <t t-call="custom_invoice_print.custom_invoice_full_layout"
+                            t-lang="o.partner_id.lang">
+                            <t t-set="custom_copy_title_obj" t-value="copy_title" />
+                        </t>
+                    </t>
+                </t>
+            </t>
+        </template>
+
+        <template id="custom_invoice_full_layout">
+            <t t-call="web.basic_layout">
+                <style>
+                    /* @font-face ของ Sarabun ประกาศไว้ที่โมดูล autozone_report_fonts */
+                    .page {
+                    font-family: Sarabun, 'Droid Sans Fallback', Tahoma, sans-serif;
+                    font-size: 13px;
+                    color: #000;
+                    position: relative;
+                    }
+                    /* Layout Table Helper - No Borders */
+                    table.layout-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    border: none;
+                    background-color: transparent; /* Ensure transparent background */
+                    }
+                    table.layout-table td {
+                    vertical-align: top;
+                    padding: 0;
+                    border: none;
+                    background-color: transparent; /* Ensure transparent background */
+                    }
+
+                    /* กล่องยอดรวม+ลายเซ็น: อยู่ในโฟลว์ปกติ (ต่อท้ายรายการ)
+                       page-break-inside:avoid = ห้ามตัดครึ่งข้ามหน้า -> ถ้าที่ไม่พอ ย้ายทั้งก้อนไปหน้าใหม่ */
+                    .signature-footer {
+                    width: 100%;
+                    margin-top: 25px;
+                    page-break-inside: avoid;
+                    }
+                    /* กันแถวรายการถูกตัดครึ่งกลางแถว */
+                    .items-table tbody tr { page-break-inside: avoid; }
+                    
+                </style>
+
+                <div class="page">
+                    <t t-set="report_pages" t-value="o.get_report_pages()" />
+                    <t t-foreach="report_pages" t-as="pinfo">
+                    <div t-attf-style="#{'page-break-before: always;' if not pinfo_first else ''}">
+
+                    <!-- ===== หัวบิล: แสดงทุกหน้า (บัญชีขอ 2026-08-04 — ความจุหน้า
+                         ใน get_report_pages คิดหัวบิล 13 แถวทุกหน้าแล้ว) ===== -->
+                    <t t-if="True">
+
+                    <!-- ==================== HEADER (No Border) ==================== -->
+                    <table class="table table-bordered"
+                        style="margin-bottom: 15px; border: 1px solid #ffffff;">
+                        <tr>
+                            <!-- Col 1: Logo -->
+                            <td
+                                style="width: 1%; white-space: nowrap; padding-right: 15px; vertical-align: middle;">
+                                <img t-if="o.company_id.logo"
+                                    t-att-src="image_data_uri(o.company_id.logo)"
+                                    style="max-height: 55px; width: auto;" alt="Logo" />
+                            </td>
+
+                            <!-- Col 2: Company Info -->
+                            <td style="vertical-align: middle;">
+                                <strong style="font-size: 18px;">
+                                    <span t-field="o.company_id.name" />
+                                </strong>
+                                <div style="font-size: 12px; line-height: 1.3;">
+                                    <span t-out="o.company_id.partner_id.get_thai_address()" />
+                                    <br />
+                                    <span style="font-size: 9px;">Head Office: 4/2 Moo 6
+                                        S.Sukhaphiban 12, T.Bansuan, A.Muangchonburi, Chonburi 20000
+                                        Thailand</span>
+                                    <br />
+                                    <span>Tel: </span>
+                                    <span style="font-size: 9px;" t-field="o.company_id.phone" />
+                                    <span t-if="o.company_id.vat"> เลขประจำตัวผู้เสียภาษี: <span
+                                            style="font-size: 9px;"
+                                            t-field="o.company_id.vat" />
+                                    </span>
+                                </div>
+                            </td>
+
+                            <!-- Col 3: Doc Title (No Background/Border on Table Cell, Border on
+                            Content Div Only) -->
+                            <td style="width: 35%; vertical-align: middle; text-align: right;">
+                                <div
+                                    style="border: 2px solid #000; padding: 5px 10px; border-radius: 5px; text-align: center; display: block; min-width: 260px; margin-left: auto;">
+                                    <div
+                                        style="font-family:'Sarabun', sans-serif; font-size:15px; font-weight:600; line-height:1.2; padding-left:4px; white-space:normal;">
+                                        <!-- nbsp คร่อมหน้า-หลัง กัน wkhtmltopdf ตัด glyph ไทยตัวแรก (เช่น "ต") -->
+                                        <span>&#160;</span><span t-esc="custom_copy_title_obj['th']" /><span>&#160;</span>
+                                    </div>
+                                    <div style="font-size: 10px; font-weight: bold;">
+                                        <span t-esc="custom_copy_title_obj['en']" />
+                                    </div>
+                                    <div style="font-size: 8px;">
+                                        <span t-esc="custom_copy_title_obj['word']" />
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- ==================== ADDRESS (Clean No Border) ==================== -->
+                    <table class="table table-bordered"
+                        style="margin-bottom: 10px; border: 1px solid #ffffff">
+                        <tr>
+                            <td style="width: 49%; padding-right: 5px;">
+                                <div
+                                    style="border: 1px solid #ccc; padding: 10px; border-radius: 4px; height: 150px;">                                    <!--
+                                    Removed border and background -->
+                                    <strong>ขายให้ / SOLD TO</strong>
+                                    <br />
+                                    <strong t-field="o.partner_id.name" />
+                                    <br />
+                                    <span style="display:inline-block; padding-left:3px;"><t t-out="o.partner_id.get_thai_address()" /></span>
+                                    <br />
+                                    <span t-if="o.partner_id.vat">เลขผู้เสียภาษี: <span
+                                            t-field="o.partner_id.vat" /><t t-if="o.partner_id.branch" t-out="' ' + o.partner_id.get_thai_branch_display()" />
+                                    </span>
+                                </div>
+                            </td>
+                            <td style="width: 2%;"></td>
+                            <td style="width: 49%; padding-right: 5px;">
+                                <div
+                                    style="border: 1px solid #ccc; padding: 10px; border-radius: 4px; height: 150px;">                                    <!--
+                                    Removed border and background -->
+                                    <strong>ส่งของที่ / DELIVERY TO</strong>
+                                    <br />
+                                    <t t-set="ship" t-value="o.partner_shipping_id or o.partner_id" />
+                                    <strong t-field="ship.name" />
+                                    <br />
+                                    <span style="display:inline-block; padding-left:3px;"><t t-out="ship.get_thai_address()" /></span>
+                                    <br />
+                                    <span t-if="ship.vat">เลขผู้เสียภาษี: <span t-field="ship.vat" /><t t-if="ship.branch" t-out="' ' + ship.get_thai_branch_display()" />
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- ==================== DOC INFO TABLE ==================== -->
+                    <table class="table table-bordered table-sm text-center mb-2"
+                        style="border-color: black; font-size: 12px;">
+                        <thead class="bg-light">
+                            <tr>
+                                <!-- ส่วนหัว: ตรวจสอบว่ามี Job No หรือไม่ -->
+                                <t t-if="o.x_job_reference">
+                                    <th width="12%" class="text-center">เลขที่งานซ่อม <br /> Job No.</th>
+                                    <th width="8%" class="text-center">ยี่ห้อ <br /> Brand</th>
+                                    <th width="10%" class="text-center">ทะเบียนรถ <br /> Car Reg No.</th>
+                                    <th width="20%" class="text-center">เลขที่เคลม <br /> Claim No.</th>
+                                    <th width="20%" class="text-center">เลขที่กรมธรรม์ <br /> Policy
+                                        No.</th>
+                                </t>
+                                <t t-if="not o.x_job_reference">
+                                    <th width="20%" class="text-center">เลขที่ใบสั่งซื้อ <br /> PO
+                                        No.</th>
+                                    <th width="20%" class="text-center">เลขที่ใบรับสินค้า <br /> DO
+                                        No.</th>
+                                </t>
+                                <th t-att-width="'8%' if o.x_job_reference else '20%'"
+                                    class="text-center">วันครบกำหนดชำระเงิน <br /> Due Date</th>
+                                <th t-att-width="'8%' if o.x_job_reference else '20%'"
+                                    class="text-center">วันที่ <br />Inv Date</th>
+                                <th t-att-width="'14%' if o.x_job_reference else '20%'"
+                                    class="text-center">เลขที่ <br /> Number</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <!-- เนื้อหา: ใช้เงื่อนไขเดียวกันกับส่วนหัว -->
+                                <t t-if="o.x_job_reference">
+                                    <td>
+                                        <span t-field="o.x_job_reference" />
+                                    </td>
+                                    <td>
+                                        <span t-field="o.x_brand_reference" />
+                                    </td>
+                                    <td>
+                                        <span t-field="o.x_car_reg_reference" />
+                                    </td>
+                                    <td>
+                                        <span t-field="o.x_claim_reference" />
+                                    </td>
+                                    <td>
+                                        <span t-field="o.x_policy_reference" />
+                                    </td>
+                                </t>
+                                <t t-if="not o.x_job_reference">
+                                    <td>
+                                        <span t-field="o.x_po_reference" />
+                                    </td>
+                                    <td>
+                                        <span t-field="o.x_do_reference" />
+                                    </td>
+                                </t>
+                                <!-- ข้อมูล: คอลัมน์คงที่ -->
+                                <td>
+                                    <span t-field="o.invoice_date_due" />
+                                </td>
+                                <td>
+                                    <span t-field="o.invoice_date" />
+                                </td>
+                                <td>
+                                    <strong>
+                                        <span t-field="o.name" />
+                                    </strong>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    </t>
+                    <!-- ===== จบหัวบิล ===== -->
+
+                    <!-- ==================== BODY (รายการของหน้านี้) ==================== -->
+                    <!-- หน้าสุดท้ายเติม "แถวว่าง" ให้ครบ per_last(33)/per_single(20) แถว
+                         -> ดันยอดรวม/ลายเซ็นชิดล่างแบบแม่น (คิดเป็นแถว ดูใน tbody) -->
+                    <div>
+                        <table class="table table-sm items-table" style="border: 1px solid #fff;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid #000;">
+                                    <th style="border:none; border-right: 1px solid transparent;"
+                                        class="text-start">รายการ<br />Description</th>
+                                    <th style="border:none;" class="text-end">จำนวน<br />Quantity</th>
+                                    <th style="border:none;" class="text-end">ราคาต่อหน่วย<br />Unit
+                                        Price</th>
+                                    <th style="border:none;" class="text-end">จำนวน (บาท)<br />Amount
+                                        (Baht)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- unit = ช่วงของรายการบนหน้านี้ (รายการรายละเอียดยาวอาจถูกหั่น
+                                     ข้ามหน้า -> ช่องจำนวน/ราคาแสดงเฉพาะช่วงแรก u['first']) -->
+                                <t t-foreach="pinfo['units']" t-as="u">
+                                    <t t-set="line" t-value="u['line']" />
+                                    <tr t-if="line.display_type == 'product'">
+                                        <td style="border:none;">
+                                            <!-- ส่วนที่ 1: ดึงรหัสสินค้า (Reference) มาแสดงในวงเล็บ -->
+                                            <!-- <t t-if="line.product_id.default_code"> [<span
+                                                    t-field="line.product_id.default_code" />] </t> -->
+
+                                            <!-- ส่วนที่ 2: เช็คว่ามีการกรอก 'รายละเอียด' มาหรือไม่?
+                                                 (u['desc'] = บรรทัดของ x_custom_name_long เฉพาะช่วงของหน้านี้) -->
+                                            <t t-if="u['desc']">
+                                                <div style="white-space: normal;">
+                                                    <t t-foreach="u['desc']" t-as="vin_line">
+                                                        <span t-out="line.env['az.font.util'].wrap_cjk(vin_line)" />
+                                                        <br />
+                                                    </t>
+                                                </div>
+                                            </t>
+                                            <t t-elif="line.x_custom_name">
+                                                <span t-out="line.env['az.font.util'].wrap_cjk(line.x_custom_name, nl2br=True)" />
+                                            </t>
+                                            <t t-elif="line.name">
+                                                <span t-out="line.env['az.font.util'].wrap_cjk(line.name, nl2br=True)" />
+                                            </t>
+                                            <t t-else="">
+                                                <span t-out="line.env['az.font.util'].wrap_cjk(line.product_id.name)" />
+                                            </t>
+                                        </td>
+                                        <td style="border:none;" class="text-end">
+                                            <span t-if="u['first']"
+                                                t-esc="'{:,.2f}'.format(line.quantity)" />
+                                        </td>
+                                        <td style="border:none;" class="text-end">
+                                            <span t-if="u['first']"
+                                                t-esc="'{:,.2f}'.format(line.price_unit)" />
+                                        </td>
+                                        <td style="border:none;" class="text-end">
+                                            <span t-if="u['first']"
+                                                t-esc="'{:,.2f}'.format(line.price_subtotal)" />
+                                        </td>
+                                    </tr>
+
+                                    <!-- Section line -->
+                                    <tr t-elif="line.display_type == 'line_section'">
+                                        <td colspan="4"
+                                            style="border:none; font-weight:bold; padding-top:8px;">
+                                            <span t-out="line.env['az.font.util'].wrap_cjk(line.name, nl2br=True)" />
+                                        </td>
+                                    </tr>
+
+                                    <!-- Note line -->
+                                    <tr t-elif="line.display_type == 'line_note'">
+                                        <td colspan="4"
+                                            style="border:none; font-style:italic; color:#555;">
+                                            <span t-out="line.env['az.font.util'].wrap_cjk(line.name, nl2br=True)" />
+                                        </td>
+                                    </tr>
+
+                                </t>
+
+                                <!-- เติมแถวว่างให้หน้าสุดท้ายครบ 20 แถว (per_last = per_single = 20
+                                     เพราะทุกหน้ามีหัวบิล) นับเป็น "แถวจริง" (pinfo['rows'])
+                                     ไม่ใช่จำนวนรายการ -> ยอดรวม/ลายเซ็นชิดล่างพอดี -->
+                                <t t-if="pinfo_last">
+                                    <t t-set="pad" t-value="max(0, 20 - pinfo['rows'])" />
+                                    <t t-foreach="range(pad)" t-as="e">
+                                        <tr>
+                                            <td style="border:none;">&#160;</td>
+                                            <td style="border:none;" />
+                                            <td style="border:none;" />
+                                            <td style="border:none;" />
+                                        </tr>
+                                    </t>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- ===== ยอดรวม + ลายเซ็น: แสดงเฉพาะหน้าสุดท้าย ===== -->
+                    <t t-if="pinfo_last">
+                    <div class="signature-footer">
+
+                        <!-- ==================== TOTALS (ย้ายลงมาอยู่เหนือลายเซ็น เว้น 30px) ==================== -->
+                        <table class="table table-bordered"
+                            style="margin-bottom: 20px; border: 1px solid #ffffff; page-break-inside: avoid;">
+                            <tr>
+                                <!-- Thai Baht Text Box -->
+                                <td style="width: 60%; padding-right: 20px; vertical-align: top;">
+                                    <div
+                                        style="border: 1px solid #ccc; padding: 8px; text-align: left; font-weight: bold;">
+                                        <span t-esc="o.thai_baht_text(o.amount_total)" />
+                                    </div>
+                                </td>
+                                <td style="width: 40%;">
+                                    <table class="table table-sm table-bordered" style="margin: 0;">
+                                        <tr>
+                                            <td>มูลค่าสินค้า (Amount)</td>
+                                            <td class="text-end">
+                                                <span t-esc="'{:,.2f}'.format(o.amount_untaxed)" />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>ภาษีมูลค่าเพิ่ม (VAT)</td>
+                                            <td class="text-end">
+                                                <span t-esc="'{:,.2f}'.format(o.amount_tax)" />
+                                            </td>
+                                        </tr>
+                                        <tr class="bg-light">
+                                            <td>
+                                                <strong>ยอดรวม (Total)</strong>
+                                            </td>
+                                            <td class="text-end">
+                                                <strong>
+                                                    <span t-esc="'{:,.2f}'.format(o.amount_total)" />
+                                                </strong>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                        <!-- ==================== SIGNATURE ==================== -->
+                        <table
+                            style="width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 10px; page-break-inside: avoid;">
+                            <tr>
+                                <td
+                                    style="width: 25%; border-right: 1px solid #000; vertical-align: top;">
+                                    <div
+                                        style="height: 160px; position: relative; padding: 5px; text-align: center;">
+                                        <div style="font-size: 10px; margin-bottom: 5px;">
+                                            ได้รับสินค้าตามรายการข้างบนนี้แล้ว <br />
+                                            ในสภาพที่ดีและเรียบร้อยทุกประการ <br />
+                                        <span
+                                                style="font-size: 8px;"> RECEIVED THE ABOVE
+                                                MENTIONED GOODS </span> <br />
+                                        <span
+                                                style="font-size: 8px;"> IN GOOD ORDER AND CONDITION </span>
+                                        </div>
+                                        <div
+                                            style="position: absolute; bottom: 5px; left: 0; width: 100%;">
+                                            <div
+                                                style="border-bottom: 1px dotted #000; width: 80%; margin: 0 auto;"></div>
+                                            <div style="margin-top: 3px; font-weight: bold;">
+                                                ผู้รับของ</div>
+                                            <div style="font-size: 10px; margin-top: 2px;">วันที่
+                                                ....... / ....... / .......</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td
+                                    style="width: 25%; border-right: 1px solid #000; vertical-align: top;">
+                                    <div
+                                        style="height: 160px; position: relative; padding: 5px; text-align: center;">
+                                        <div
+                                            style="position: absolute; bottom: 5px; left: 0; width: 100%;">
+                                            <img
+                                                t-if="o.create_uid.x_sign_image"
+                                                t-att-src="image_data_uri(o.create_uid.x_sign_image)"
+                                                style="max-height: 45px; max-width: 80%; display: block; margin: 0 auto 2px auto;" />
+                                            <div
+                                                style="border-bottom: 1px dotted #000; width: 80%; margin: 0 auto;"></div>
+                                            <div style="margin-top: 3px; font-weight: bold;">
+                                                ผู้ส่งของ</div>
+                                            <div style="font-size: 10px; margin-top: 2px;">วันที่
+                                                <span t-esc="(o.invoice_date or o.create_date_only).strftime('%d / %m / %Y')" /></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td
+                                    style="width: 25%; border-right: 1px solid #000; vertical-align: top;">
+                                    <div
+                                        style="height: 160px; position: relative; padding: 5px; text-align: center;">
+                                        <div
+                                            style="position: absolute; bottom: 5px; left: 0; width: 100%;">
+                                            <img
+                                                t-if="o.create_uid.x_sign_image"
+                                                t-att-src="image_data_uri(o.create_uid.x_sign_image)"
+                                                style="max-height: 45px; max-width: 80%; display: block; margin: 0 auto 2px auto;" />
+                                            <div
+                                                style="border-bottom: 1px dotted #000; width: 80%; margin: 0 auto;"></div>
+                                            <div style="margin-top: 3px; font-weight: bold;">
+                                                ผู้รับเงิน</div>
+                                            <div style="font-size: 10px; margin-top: 2px;">วันที่
+                                                <span t-esc="(o.invoice_date or o.create_date_only).strftime('%d / %m / %Y')" /></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="width: 25%; vertical-align: top;">
+                                    <div
+                                        style="height: 160px; position: relative; padding: 5px; text-align: center;">
+                                        <div
+                                            style="font-size: 11px; font-weight: bold; margin-bottom: 5px;">
+                                            บริษัท ออโต้ โซน จำกัด <br />
+                                            <span
+                                                style="font-size: 9px;">AUTOZONE CO., LTD.</span>
+                                        </div>
+                                        <div
+                                            style="position: absolute; bottom: 5px; left: 0; width: 100%;">
+                                            <img
+                                                t-if="o.create_uid.x_sign_image"
+                                                t-att-src="image_data_uri(o.create_uid.x_sign_image)"
+                                                style="max-height: 45px; max-width: 80%; display: block; margin: 0 auto 2px auto;" />
+                                            <div
+                                                style="border-bottom: 1px dotted #000; width: 80%; margin: 0 auto;"></div>
+                                            <div style="margin-top: 3px; font-weight: bold;">
+                                                ผู้อนุมัติ</div>
+                                            <div style="font-size: 10px; margin-top: 2px;">วันที่
+                                                <span t-esc="(o.invoice_date or o.create_date_only).strftime('%d / %m / %Y')" /></div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- ==================== FOOTER ==================== -->
+                        <div style="position: relative; font-size: 9px; margin-top: 5px;">
+                            <div> ในกรณีที่มีการผิดนัดชำระเงินเมื่อถึงกำหนด
+                                ลูกค้าจะต้องเสียเบี้ยปรับในการชำระล่าช้าในอัตราไม่เกิน 18%
+                                ต่อปีของจำนวนเงินที่ต้องชำระ <br />
+                            <span style="font-size: 8px;">LATE
+                                PAYMENT SERVICE CHARGE WILL BE CHARGED NOT EXCEEDING 18% PER ANNUM
+                                    ON OVERDUE ACCOUNTS.</span>
+                            </div>
+                            <div
+                                style="position: absolute; bottom: 0; right: 0; font-weight: bold; font-size: 11px;">
+                                <span t-esc="custom_copy_title_obj['copy_type']" />
+                            </div>
+                        </div>
+                    </div>
+                    </t>
+                    <!-- ===== จบยอดรวม+ลายเซ็น (หน้าสุดท้าย) ===== -->
+
+                    </div>
+                    </t>
+                    <!-- ===== จบ loop หน้า ===== -->
+
+                </div>
+            </t>
+        </template>
+    </data>
+</odoo>

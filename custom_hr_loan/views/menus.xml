@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- แอป top-level ของตัวเอง (แยกจาก Accounting 20 ส.ค. 2026) — ทั้งบัญชีและ
+         HR/Payroll เข้าถึงผ่าน role ของตัวเองได้; groups= กันเมนูจริงรั่วถึงพนักงานทั่วไป -->
+    <menuitem id="menu_hr_loan_root" name="เงินกู้พนักงาน"
+        web_icon="custom_hr_loan,static/description/icon.png" sequence="300"
+        groups="account.group_account_invoice,hr_payroll.group_hr_payroll_user"/>
+    <menuitem id="menu_hr_loan_register" name="ทะเบียนเงินกู้"
+        parent="menu_hr_loan_root" action="action_hr_employee_loan" sequence="10"/>
+    <menuitem id="menu_hr_loan_lines" name="งวดผ่อนทั้งหมด"
+        parent="menu_hr_loan_root" action="action_hr_employee_loan_line" sequence="20"/>
+</odoo>

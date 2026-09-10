@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ฟอร์ม partner มาตรฐานไม่มี header — สร้างใหม่ใส่ปุ่ม + statusbar -->
+    <record id="view_partner_form_mda" model="ir.ui.view">
+        <field name="name">res.partner.form.mda</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <field name="mda_is_approver" invisible="1"/>
+                    <button name="action_mda_submit" type="object" string="ส่งอนุมัติ"
+                            class="btn-primary"
+                            invisible="approval_state != 'draft' or parent_id or mda_is_approver"/>
+                    <button name="action_mda_approve" type="object" string="อนุมัติ"
+                            class="btn-primary"
+                            invisible="approval_state == 'approved' or parent_id or not mda_is_approver"/>
+                    <button name="action_mda_open_reject_wizard" type="object" string="ตีกลับ"
+                            invisible="approval_state != 'to_approve' or parent_id or not mda_is_approver"/>
+                    <field name="approval_state" widget="statusbar"
+                           statusbar_visible="draft,to_approve,approved"/>
+                </header>
+            </xpath>
+            <xpath expr="//sheet" position="inside">
+                <group invisible="not mda_reject_reason" name="mda_reject_group">
+                    <field name="mda_reject_reason" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_res_partner_filter_mda" model="ir.ui.view">
+        <field name="name">res.partner.select.mda</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_res_partner_filter"/>
+        <field name="arch" type="xml">
+            <filter name="inactive" position="before">
+                <separator/>
+                <filter string="รออนุมัติ" name="mda_to_approve"
+                        domain="[('approval_state', '=', 'to_approve')]"/>
+                <filter string="ร่าง (ยังไม่ส่งอนุมัติ)" name="mda_draft"
+                        domain="[('approval_state', '=', 'draft'), ('parent_id', '=', False)]"/>
+                <separator/>
+            </filter>
+        </field>
+    </record>
+</odoo>

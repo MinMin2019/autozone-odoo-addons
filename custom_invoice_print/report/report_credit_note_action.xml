@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Action รายงานใบลดหนี้ — ไม่ผูก binding กับ Print menu
+             (Print menu กรองตามประเภทเอกสารไม่ได้) แต่เรียกผ่านปุ่ม "พิมพ์ใบลดหนี้"
+             บนฟอร์ม ซึ่งแสดงเฉพาะ move_type = out_refund -->
+        <record id="action_report_credit_note_custom" model="ir.actions.report">
+            <field name="name">ใบลดหนี้ / ใบกำกับภาษี</field>
+            <field name="model">account.move</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">custom_invoice_print.report_credit_note_custom</field>
+            <field name="report_file">custom_invoice_print.report_credit_note_custom</field>
+            <field name="print_report_name">(object._get_report_base_filename())</field>
+        </record>
+    </data>
+</odoo>

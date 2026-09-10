@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_payslip_run_form_inherit_import_inputs" model="ir.ui.view">
+        <field name="name">hr.payslip.run.form.inherit.import.inputs</field>
+        <field name="model">hr.payslip.run</field>
+        <field name="inherit_id" ref="hr_payroll.hr_payslip_run_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_draft']" position="after">
+                <!-- เปลี่ยนจาก states="draft" เป็น invisible="state != 'draft'" -->
+                <button name="%(action_import_payslip_inputs_wizard)d" 
+                        string="Import Inputs (Excel)" 
+                        type="action" 
+                        class="oe_highlight" 
+                        invisible="state not in ('draft', 'verify') or not slip_ids"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

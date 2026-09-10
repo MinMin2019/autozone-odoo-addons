@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- คอลัมน์เดิมของ account_asset ไม่ได้กำหนด sequence (=0, เรียงตาม id)
+         ใช้ sequence -1 เพื่อให้ Asset Code ขึ้นเป็นคอลัมน์แรก -->
+    <record id="assets_report_asset_code" model="account.report.column">
+        <field name="report_id" ref="account_asset.assets_report"/>
+        <field name="sequence">-1</field>
+        <field name="name">Asset Code</field>
+        <field name="expression_label">asset_code</field>
+        <field name="figure_type">string</field>
+    </record>
+</odoo>

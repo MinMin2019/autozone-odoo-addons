@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- บรรทัดฐาน 100% ของคอลัมน์ common-size:
+         P&L = รายได้รวม (หมวด 4), Balance Sheet = สินทรัพย์รวม -->
+    <record id="account_reports.profit_and_loss" model="account.report">
+        <field name="az_common_size_base_line_id" ref="account_reports.account_financial_report_revenue0"/>
+        <field name="az_common_size_label">%ขาย</field>
+    </record>
+    <record id="account_reports.balance_sheet" model="account.report">
+        <field name="az_common_size_base_line_id" ref="account_reports.account_financial_report_total_assets0"/>
+        <field name="az_common_size_label">%สินทรัพย์</field>
+    </record>
+</odoo>

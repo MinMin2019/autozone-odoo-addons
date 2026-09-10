@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="purchase_order_form_vendor_only" model="ir.ui.view">
+        <field name="name">purchase.order.form.vendor.only</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id'][1]" position="attributes">
+                <!-- ต้องใส่เงื่อนไข company ซ้ำเอง เพราะ domain ใน view จะทับ domain จาก check_company -->
+                <attribute name="domain">
+                    [('supplier_rank', '>', 0), '|', ('company_id', '=', False), ('company_id', '=', company_id)]
+                </attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

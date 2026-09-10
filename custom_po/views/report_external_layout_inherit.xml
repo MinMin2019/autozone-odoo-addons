@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <template id="external_layout_standard_company_header_center_all"
+            inherit_id="web.external_layout_standard">
+
+    <xpath expr="//div[contains(@t-attf-class, 'header o_company_')]"
+           position="replace">
+
+      <div t-attf-class="header o_company_#{company.id}_layout"
+           t-att-style="report_header_style">
+
+        <!-- Center everything -->
+        <div class="d-flex justify-content-center" style="width: 100%;">
+          <div class="d-flex align-items-center" style="gap: 12px;">
+
+            <!-- Logo: left of company block -->
+            <div style="width: 70px; min-width: 70px; text-align: center;">
+              <img t-if="company.logo"
+                   class="o_company_logo_small"
+                   t-att-src="image_data_uri(company.logo)"
+                   alt="Logo"
+                   style="max-width: 70px; max-height: 70px;"/>
+            </div>
+
+            <!-- Company block (name + address aligned to same start) -->
+            <div style="text-align: left;">
+              <t t-if="company.name">
+                <div style="font-size: 18px; font-weight: 700; line-height: 1.2;">
+                  <t t-esc="company.name"/>
+                </div>
+              </t>
+
+              <p class="mb-0"
+                 style="font-size: 12px; line-height: 1.2; white-space: nowrap;">
+                <t t-esc="company.partner_id.get_thai_address()"/>
+              </p>
+
+              <t t-if="company.vat">
+                <p class="mb-0" style="font-size: 12px; line-height: 1.2;">
+                  Tax ID: <t t-esc="company.vat"/> (HEAD OFFICE)
+                </p>
+              </t>
+            </div>
+
+          </div>
+        </div>
+
+        <div style="border-top: 1px solid #ddd; margin-top: 6px;"/>
+      </div>
+
+    </xpath>
+    
+  </template>
+</odoo>

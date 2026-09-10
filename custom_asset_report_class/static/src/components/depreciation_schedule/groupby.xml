@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates>
+    <t t-inherit="account_asset.DepreciationScheduleGroupBy" t-inherit-mode="extension">
+        <!-- ป้ายบนปุ่มเมื่อเลือกจัดกลุ่มตามคลาสอยู่ -->
+        <xpath expr="//button/t[contains(@t-elif, 'asset_group_id')]" position="after">
+            <t t-elif="controller.options.assets_grouping_field === 'x_class_id'">
+                Group by Class
+            </t>
+        </xpath>
+        <!-- ตัวเลือกใน dropdown -->
+        <xpath expr="//DropdownItem[contains(@onSelected, 'asset_group_id')]" position="after">
+            <DropdownItem
+                class="{ 'selected': controller.options.assets_grouping_field === 'x_class_id' }"
+                onSelected="() => this.filterClicked({ optionKey: 'assets_grouping_field', optionValue: 'x_class_id', reload: true})"
+            >
+                Group by Class
+            </DropdownItem>
+        </xpath>
+    </t>
+</templates>

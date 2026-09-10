@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══ Export Roles ═══ -->
+    <record id="view_access_role_export_form" model="ir.ui.view">
+        <field name="name">access.role.export.form</field>
+        <field name="model">access.role.export</field>
+        <field name="arch" type="xml">
+            <form string="Export Roles">
+                <group>
+                    <field name="role_ids" widget="many2many_tags"/>
+                    <field name="filename" invisible="1"/>
+                    <field name="file" filename="filename" readonly="1"
+                           invisible="not file"
+                           help="คลิกที่ไฟล์เพื่อดาวน์โหลด แล้วนำไป Import Roles บนฐานปลายทาง"/>
+                </group>
+                <footer>
+                    <button name="action_export" type="object" string="Generate File"
+                            class="btn-primary"/>
+                    <button string="Close" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_role_export" model="ir.actions.act_window">
+        <field name="name">Export Roles</field>
+        <field name="res_model">access.role.export</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- ═══ Import Roles ═══ -->
+    <record id="view_access_role_import_form" model="ir.ui.view">
+        <field name="name">access.role.import.form</field>
+        <field name="model">access.role.import</field>
+        <field name="arch" type="xml">
+            <form string="Import Roles">
+                <group>
+                    <field name="filename" invisible="1"/>
+                    <field name="file" filename="filename"/>
+                    <field name="attach_users"/>
+                </group>
+                <group invisible="not summary">
+                    <field name="summary" nolabel="1" readonly="1"/>
+                </group>
+                <footer>
+                    <button name="action_import" type="object" string="Import"
+                            class="btn-primary" invisible="summary"/>
+                    <button string="Close" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_role_import" model="ir.actions.act_window">
+        <field name="name">Import Roles</field>
+        <field name="res_model">access.role.import</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

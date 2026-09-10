@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- เปิดช่อง Auto-Complete ให้กลุ่มบัญชี (Billing) เห็นด้วย ไม่ต้องมีสิทธิ์จัดซื้อ -->
+    <record id="view_move_form_bill_autocomplete" model="ir.ui.view">
+        <field name="name">account.move.form.bill.autocomplete</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="purchase.view_move_form_inherit_purchase"/>
+        <field name="arch" type="xml">
+            <xpath expr="//t[@groups='purchase.group_purchase_user']" position="attributes">
+                <attribute name="groups">purchase.group_purchase_user,account.group_account_invoice</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

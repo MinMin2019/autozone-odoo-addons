@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_users_form_warehouse_scope" model="ir.ui.view">
+        <field name="name">res.users.form.warehouse.scope</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Warehouse Scope" name="warehouse_scope">
+                    <group>
+                        <field name="warehouse_unrestricted"/>
+                        <field name="allowed_warehouse_ids" widget="many2many_tags"
+                               invisible="warehouse_unrestricted"
+                               options="{'no_create': True}"/>
+                    </group>
+                    <div class="text-muted">
+                        Empty = all warehouses (not scoped). Assign warehouses to restrict this user.
+                        Master warehouse/location records stay readable so the user can still
+                        transact with other warehouses (e.g. central) without seeing their on-hand stock.
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

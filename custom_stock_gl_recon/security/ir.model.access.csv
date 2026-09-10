@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sgr_wizard_acc,stock.gl.recon.wizard account,model_stock_gl_recon_wizard,account.group_account_readonly,1,1,1,1
+access_sgr_line_acc,stock.gl.recon.line account,model_stock_gl_recon_line,account.group_account_readonly,1,1,1,1
+access_sgr_detail_acc,stock.gl.recon.detail account,model_stock_gl_recon_detail,account.group_account_readonly,1,1,1,1
+access_sgr_wizard_stock,stock.gl.recon.wizard stock manager,model_stock_gl_recon_wizard,stock.group_stock_manager,1,1,1,1
+access_sgr_line_stock,stock.gl.recon.line stock manager,model_stock_gl_recon_line,stock.group_stock_manager,1,1,1,1
+access_sgr_detail_stock,stock.gl.recon.detail stock manager,model_stock_gl_recon_detail,stock.group_stock_manager,1,1,1,1

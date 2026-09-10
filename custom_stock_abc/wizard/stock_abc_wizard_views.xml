@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sabc_wizard_form" model="ir.ui.view">
+        <field name="name">stock.abc.wizard.form</field>
+        <field name="model">stock.abc.wizard</field>
+        <field name="arch" type="xml">
+            <form string="ABC Analysis">
+                <group>
+                    <group string="ช่วงเวลา / เกณฑ์">
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                        <field name="basis" widget="radio"/>
+                        <field name="a_pct"/>
+                        <field name="b_pct"/>
+                        <field name="company_id" invisible="1"/>
+                    </group>
+                    <group string="ขอบเขต">
+                        <field name="per_warehouse"/>
+                        <field name="warehouse_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="ทุกสาขา"/>
+                        <field name="categ_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="ทุกหมวด"/>
+                        <field name="product_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="ทุกสินค้า"/>
+                        <field name="include_non_storable"/>
+                        <field name="saved_date" invisible="not saved_date"/>
+                    </group>
+                </group>
+                <div class="text-muted small">
+                    เรียงสินค้าจากมูลค่ามากไปน้อย แล้วสะสม %: A = กลุ่มแรกที่รวมกันถึง 80% (ของน้อยตัวแต่มูลค่ามาก ควรคุมเข้ม นับบ่อย),
+                    B = ถัดมาถึง 95%, C = ที่เหลือ (ของเยอะตัวแต่มูลค่าน้อย) &#160;|&#160;
+                    ปุ่ม "บันทึกชั้นลงสินค้า" เก็บ A/B/C ไว้ที่ตัวสินค้า (แท็บ Inventory) ใช้กรองตอนวางรอบนับสต็อก
+                </div>
+                <footer>
+                    <button name="action_view" string="ดูรายงาน" type="object" class="btn-primary"/>
+                    <button name="action_save_to_products" string="บันทึกชั้นลงสินค้า" type="object" class="btn-secondary"
+                            confirm="จะเขียนทับชั้น ABC เดิมของสินค้าทุกตัวในผลวิเคราะห์นี้ ยืนยัน?" invisible="per_warehouse"/>
+                    <button name="action_export_xlsx" string="Excel" type="object" class="btn-secondary"/>
+                    <button name="action_print_pdf" string="PDF" type="object" class="btn-secondary"/>
+                    <button string="ยกเลิก" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sabc_wizard" model="ir.actions.act_window">
+        <field name="name">ABC Analysis</field>
+        <field name="res_model">stock.abc.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_sabc" name="ABC Analysis (จัดชั้นสินค้า)"
+              parent="stock.menu_warehouse_report" action="action_sabc_wizard" sequence="54"/>
+
+    <record id="view_sabc_line_list" model="ir.ui.view">
+        <field name="name">stock.abc.line.list</field>
+        <field name="model">stock.abc.line</field>
+        <field name="arch" type="xml">
+            <list string="ABC Analysis" create="false" edit="false" delete="false"
+                  decoration-danger="abc_class == 'A'" decoration-warning="abc_class == 'B'">
+                <field name="warehouse_id" optional="show" column_invisible="not context.get('per_warehouse')"/>
+                <field name="rank"/>
+                <field name="abc_class"/>
+                <field name="default_code"/>
+                <field name="product_name"/>
+                <field name="categ_id" optional="hide"/>
+                <field name="uom_id"/>
+                <field name="basis_value" sum="รวม"/>
+                <field name="share_pct"/>
+                <field name="cum_pct"/>
+                <field name="use_qty" optional="show"/>
+                <field name="use_value" optional="hide" sum="รวม"/>
+                <field name="stock_qty" optional="show"/>
+                <field name="stock_value" optional="show" sum="รวม"/>
+                <field name="unit_cost" optional="hide"/>
+                <field name="product_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sabc_line_search" model="ir.ui.view">
+        <field name="name">stock.abc.line.search</field>
+        <field name="model">stock.abc.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="default_code"/>
+                <field name="product_name"/>
+                <field name="product_id"/>
+                <field name="warehouse_id"/>
+                <field name="categ_id"/>
+                <filter name="cls_a" string="A" domain="[('abc_class', '=', 'A')]"/>
+                <filter name="cls_b" string="B" domain="[('abc_class', '=', 'B')]"/>
+                <filter name="cls_c" string="C" domain="[('abc_class', '=', 'C')]"/>
+                <separator/>
+                <filter name="c_with_stock" string="C แต่ถือของมาก (มูลค่าคงเหลือ ≥ 5,000)" domain="[('abc_class', '=', 'C'), ('stock_value', '&gt;=', 5000)]"/>
+                <filter name="a_no_stock" string="A แต่ของหมด" domain="[('abc_class', '=', 'A'), ('stock_qty', '&lt;=', 0)]"/>
+                <group expand="0" string="จัดกลุ่ม">
+                    <filter name="group_class" string="ชั้น" context="{'group_by': 'abc_class'}"/>
+                    <filter name="group_warehouse" string="สาขา" context="{'group_by': 'warehouse_id'}"/>
+                    <filter name="group_categ" string="หมวดสินค้า" context="{'group_by': 'categ_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sabc_line_pivot" model="ir.ui.view">
+        <field name="name">stock.abc.line.pivot</field>
+        <field name="model">stock.abc.line</field>
+        <field name="arch" type="xml">
+            <pivot string="ABC Analysis" disable_linking="1">
+                <field name="abc_class" type="row"/>
+                <field name="basis_value" type="measure"/>
+                <field name="stock_value" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_sabc_line_graph" model="ir.ui.view">
+        <field name="name">stock.abc.line.graph</field>
+        <field name="model">stock.abc.line</field>
+        <field name="arch" type="xml">
+            <graph string="ABC Analysis" type="bar">
+                <field name="abc_class"/>
+                <field name="basis_value" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_sabc_line_form" model="ir.ui.view">
+        <field name="name">stock.abc.line.form</field>
+        <field name="model">stock.abc.line</field>
+        <field name="arch" type="xml">
+            <form string="ABC Analysis" create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="oe_title"><h2><field name="name" readonly="1"/></h2></div>
+                    <group>
+                        <group>
+                            <field name="product_id" readonly="1"/>
+                            <field name="categ_id" readonly="1"/>
+                            <field name="uom_id" readonly="1"/>
+                            <field name="warehouse_id" readonly="1" invisible="not warehouse_id"/>
+                            <field name="date_from" readonly="1"/>
+                            <field name="date_to" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="abc_class" readonly="1"/>
+                            <field name="rank" readonly="1"/>
+                            <field name="item_count" readonly="1"/>
+                            <field name="basis_value" readonly="1"/>
+                            <field name="share_pct" readonly="1"/>
+                            <field name="cum_pct" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="การใช้ในช่วง">
+                            <field name="use_qty" readonly="1"/>
+                            <field name="use_value" readonly="1"/>
+                        </group>
+                        <group string="คงเหลือ ณ วันสิ้นช่วง">
+                            <field name="stock_qty" readonly="1"/>
+                            <field name="unit_cost" readonly="1"/>
+                            <field name="stock_value" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

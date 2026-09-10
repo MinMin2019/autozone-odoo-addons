@@ -1,0 +1,26 @@
+{
+    "name": "Stock Card (บัญชีคุมสินค้า)",
+    "version": "18.0.1.0.2",
+    "category": "Autozone/Inventory",
+    "author": "Autozone",
+    "summary": "บัญชีคุมสินค้า ยกมา/รับ/จ่าย/ยกไป ต่อสินค้าต่อสาขา (หรือต่อตำแหน่ง) ทั้งจำนวนและมูลค่า + PDF/Excel",
+    "description": """
+รายงาน Stock Card / บัญชีคุมสินค้า ตามมาตรฐาน ERP ที่ Odoo ไม่มีในตัว
+
+* เลือกช่วงวันที่ + สาขา (คลัง) + สินค้า/หมวด
+* ค่าเริ่มต้นสรุป "ต่อสาขา" (1 สาขา = 1 บรรทัดต่อสินค้า) ติ๊ก "แยกตำแหน่งในสาขา" ได้เมื่อมีตำแหน่งย่อย
+* ยอดยกมา / รับ / จ่าย / ยกไป ทั้งจำนวนและมูลค่า พร้อมรายละเอียดการเคลื่อนไหวรายบรรทัด (running balance)
+* มูลค่าต่อบรรทัด = จำนวน x ต้นทุนที่ Odoo บันทึกไว้กับ move นั้น (stock.valuation.layer)
+  ถ้า move ไม่มี layer (เช่น โอนระหว่างสาขา) ใช้ต้นทุนปัจจุบันของสินค้า
+* พิมพ์ PDF (A4 แนวนอน) และ Excel (สรุป + รายละเอียด)
+    """,
+    "depends": ["stock", "stock_account", "autozone_report_fonts"],
+    "data": [
+        "security/ir.model.access.csv",
+        "report/stock_card_report.xml",
+        "wizard/stock_card_wizard_views.xml",
+    ],
+    "installable": True,
+    "application": False,
+    "license": "LGPL-3",
+}

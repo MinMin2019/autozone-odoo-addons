@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Foundation group: เปิด read โมเดลสนับสนุน (journal/account/tax/currency/uom...)
+         เพื่อกันฟอร์มเอกสาร error AccessError เมื่อ user ไม่ได้อยู่กลุ่ม functional มาตรฐาน
+         *** access line ถูกเติมโดย post_init_hook (ทนต่อโมเดลที่ไม่ได้ติดตั้ง) *** -->
+    <record id="group_arb_foundation" model="res.groups">
+        <field name="name">[FOUNDATION] Supporting models read</field>
+        <field name="category_id" ref="module_category_arb_caps"/>
+        <field name="arb_generated" eval="True"/>
+        <field name="arb_kind">foundation</field>
+        <field name="arb_key">foundation|base</field>
+    </record>
+
+    <!-- Foundation เฉพาะ Accounting: *ไม่* implies group มาตรฐาน (เมนู Odoo จะได้ซ่อน)
+         แต่ mirror สิทธิ์ read ของ group_account_readonly มาไว้ที่ group นี้แทน
+         (เติมโดย _sync_account_foundation ใน action_apply) → อ่านได้ ไม่ error แต่เมนูมาตรฐานไม่โผล่ -->
+    <record id="group_arb_foundation_account" model="res.groups">
+        <field name="name">[FOUNDATION] Accounting read base</field>
+        <field name="category_id" ref="module_category_arb_caps"/>
+        <field name="arb_generated" eval="True"/>
+        <field name="arb_kind">foundation</field>
+        <field name="arb_key">foundation|account</field>
+    </record>
+
+</odoo>

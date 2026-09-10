@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_mda_type_system,az.approval.type system,model_az_approval_type,base.group_system,1,1,1,1
+access_mda_type_approver_partner,az.approval.type approver partner,model_az_approval_type,group_mda_approver_partner,1,0,0,0
+access_mda_type_approver_product,az.approval.type approver product,model_az_approval_type,group_mda_approver_product,1,0,0,0
+access_mda_reject_wizard,az.mda.reject.wizard user,model_az_mda_reject_wizard,base.group_user,1,1,1,1

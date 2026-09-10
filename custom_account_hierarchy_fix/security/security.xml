@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- กลุ่มสิทธิ์คุมเมนู Chart of Accounts Hierarchy (เทียบเท่า
+         "Account Hierarchy Viewer" ของโมดูล ais_account_hierarchy) -->
+    <record id="group_account_hierarchy_viewer" model="res.groups">
+        <field name="name">Account Hierarchy Viewer</field>
+        <field name="category_id" ref="base.module_category_accounting"/>
+        <field name="comment">เห็นเมนู Chart of Accounts Hierarchy ในแอปบัญชี</field>
+    </record>
+
+    <!-- ผู้ใช้กลุ่มบัญชีเดิมได้สิทธิ์อัตโนมัติ — ไม่มีใครเสียเมนูที่เคยเห็น
+         ถ้าอยากจำกัดภายหลัง ค่อยถอด implied นี้แล้วเลือกรายคน -->
+    <record id="account.group_account_invoice" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('group_account_hierarchy_viewer'))]"/>
+    </record>
+
+    <!-- ผูกกลุ่มเข้ากับเมนูของ sh_account_parent -->
+    <record id="sh_account_parent.sh_account_hierarchy_wizard_menu" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('group_account_hierarchy_viewer')])]"/>
+    </record>
+</odoo>

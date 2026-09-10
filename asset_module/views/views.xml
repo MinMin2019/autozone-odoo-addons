@@ -1,0 +1,36 @@
+<odoo>
+  <data>
+    <!--  Keep image top-left  -->
+    <record id="view_account_asset_form_inherit_image" model="ir.ui.view">
+      <field name="name">account.asset.form.inherit.image</field>
+      <field name="model">account.asset</field>
+      <field name="inherit_id" ref="account_asset.view_account_asset_form"/>
+      <field name="arch" type="xml">
+
+        <xpath expr="//div[@class='oe_title']" position="before">
+          <field name="image_1920" widget="image" class="oe_avatar" string="Image"/>
+        </xpath>
+
+          <xpath expr="//field[@name='asset_group_id']" position="after">
+            <field name="x_purchase_date" />
+            <field name="x_asset_barcode" />
+            <field name="x_asset_description" />
+            <field name="x_asset_repository" />
+            <field name="x_class_id" />
+            <field name="x_location_id" />
+          </xpath>
+
+          <xpath expr="//field[@name='salvage_value']" position="after">
+            <field name="x_asset_cost" />
+            <field name="x_asset_serial" />
+            <field name="x_asset_brand" />
+            <field name="x_asset_model" />
+            <field name="x_asset_warranty_expiry_date" />
+          </xpath>
+        
+      </field>
+    </record>
+
+  </data>
+</odoo>
+

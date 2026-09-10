@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_petty_cash_fund_user,petty.cash.fund user,model_petty_cash_fund,account.group_account_invoice,1,0,0,0
+access_petty_cash_fund_manager,petty.cash.fund manager,model_petty_cash_fund,account.group_account_manager,1,1,1,1
+access_petty_cash_request,petty.cash.request,model_petty_cash_request,account.group_account_invoice,1,1,1,1
+access_petty_cash_clearing,petty.cash.clearing,model_petty_cash_clearing,account.group_account_invoice,1,1,1,1
+access_petty_cash_clearing_line,petty.cash.clearing.line,model_petty_cash_clearing_line,account.group_account_invoice,1,1,1,1
+access_petty_cash_replenish,petty.cash.replenish,model_petty_cash_replenish,account.group_account_invoice,1,1,1,1
+access_petty_cash_count,petty.cash.count,model_petty_cash_count,account.group_account_invoice,1,1,1,1

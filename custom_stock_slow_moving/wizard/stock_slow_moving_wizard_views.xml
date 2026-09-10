@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ssm_wizard_form" model="ir.ui.view">
+        <field name="name">stock.slow.moving.wizard.form</field>
+        <field name="model">stock.slow.moving.wizard</field>
+        <field name="arch" type="xml">
+            <form string="สินค้าเคลื่อนไหวช้า / ไม่เคลื่อนไหว">
+                <group>
+                    <group string="วันที่ / เกณฑ์">
+                        <field name="date_to"/>
+                        <field name="dead_days"/>
+                        <field name="slow_months"/>
+                        <field name="lookback_days"/>
+                        <field name="company_id" invisible="1"/>
+                    </group>
+                    <group string="ขอบเขต">
+                        <field name="warehouse_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="ทุกสาขา"/>
+                        <field name="categ_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="ทุกหมวด"/>
+                        <field name="product_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="ทุกสินค้า"/>
+                    </group>
+                </group>
+                <group string="ตัวเลือก">
+                    <field name="only_flagged"/>
+                    <field name="group_all"/>
+                    <field name="include_non_storable"/>
+                </group>
+                <div class="text-muted small">
+                    "การใช้" = ส่งขาย / เบิกใช้ / โอนออกไปสาขาอื่น (ไม่นับคืนผู้ขายและปรับปรุงนับ)
+                    &#160;|&#160; Dead = มีของแต่ไม่ได้ใช้เกิน N วัน &#160;|&#160; Slow = ใช้ช้าจนของที่มีพอใช้เกิน X เดือน
+                    &#160;|&#160; คอลัมน์ "สาขาที่ยังใช้" ช่วยตัดสินใจโยกของแทนซื้อใหม่
+                </div>
+                <footer>
+                    <button name="action_view" string="ดูรายงาน" type="object" class="btn-primary"/>
+                    <button name="action_export_xlsx" string="Excel" type="object" class="btn-secondary"/>
+                    <button name="action_print_pdf" string="PDF" type="object" class="btn-secondary"/>
+                    <button string="ยกเลิก" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_ssm_wizard" model="ir.actions.act_window">
+        <field name="name">สินค้าเคลื่อนไหวช้า (Slow / Dead Stock)</field>
+        <field name="res_model">stock.slow.moving.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_ssm" name="สินค้าเคลื่อนไหวช้า (Slow / Dead Stock)"
+              parent="stock.menu_warehouse_report" action="action_ssm_wizard" sequence="50"/>
+
+    <record id="view_ssm_line_list" model="ir.ui.view">
+        <field name="name">stock.slow.moving.line.list</field>
+        <field name="model">stock.slow.moving.line</field>
+        <field name="arch" type="xml">
+            <list string="สินค้าเคลื่อนไหวช้า" create="false" edit="false" delete="false"
+                  decoration-danger="classification == 'dead'" decoration-warning="classification == 'slow'">
+                <field name="warehouse_id" optional="show" column_invisible="context.get('group_all')"/>
+                <field name="default_code"/>
+                <field name="product_name"/>
+                <field name="categ_id" optional="hide"/>
+                <field name="uom_id"/>
+                <field name="classification"/>
+                <field name="qty"/>
+                <field name="unit_cost" optional="hide"/>
+                <field name="value" sum="รวม"/>
+                <field name="last_in_date" optional="hide"/>
+                <field name="last_out_date" optional="show"/>
+                <field name="days_no_use" optional="show"/>
+                <field name="use_30" optional="hide"/>
+                <field name="use_90" optional="show"/>
+                <field name="use_180" optional="hide"/>
+                <field name="use_365" optional="show"/>
+                <field name="avg_monthly" optional="show"/>
+                <field name="months_cover" optional="show"/>
+                <field name="no_usage" optional="hide"/>
+                <field name="other_users" optional="show"/>
+                <field name="action_hint" optional="hide"/>
+                <field name="product_id" column_invisible="1"/>
+                <button name="action_open_moves" type="object" icon="fa-history" title="ดูการเคลื่อนไหว"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_ssm_line_search" model="ir.ui.view">
+        <field name="name">stock.slow.moving.line.search</field>
+        <field name="model">stock.slow.moving.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="default_code"/>
+                <field name="product_name"/>
+                <field name="product_id"/>
+                <field name="warehouse_id"/>
+                <field name="categ_id"/>
+                <filter name="dead" string="Dead" domain="[('classification', '=', 'dead')]"/>
+                <filter name="slow" string="Slow" domain="[('classification', '=', 'slow')]"/>
+                <filter name="normal" string="Normal" domain="[('classification', '=', 'normal')]"/>
+                <filter name="has_other" string="มีสาขาอื่นยังใช้ (โยกได้)" domain="[('other_users', '!=', False)]"/>
+                <filter name="no_usage" string="ไม่มีการใช้เลย" domain="[('no_usage', '=', True)]"/>
+                <filter name="big" string="มูลค่าเกิน 5,000" domain="[('value', '&gt;=', 5000)]"/>
+                <group expand="0" string="จัดกลุ่ม">
+                    <filter name="group_warehouse" string="สาขา / คลัง" context="{'group_by': 'warehouse_id'}"/>
+                    <filter name="group_cls" string="ชั้น" context="{'group_by': 'classification'}"/>
+                    <filter name="group_categ" string="หมวดสินค้า" context="{'group_by': 'categ_id'}"/>
+                    <filter name="group_product" string="สินค้า" context="{'group_by': 'product_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_ssm_line_pivot" model="ir.ui.view">
+        <field name="name">stock.slow.moving.line.pivot</field>
+        <field name="model">stock.slow.moving.line</field>
+        <field name="arch" type="xml">
+            <pivot string="สินค้าเคลื่อนไหวช้า" disable_linking="1">
+                <field name="warehouse_id" type="row"/>
+                <field name="classification" type="col"/>
+                <field name="value" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_ssm_line_graph" model="ir.ui.view">
+        <field name="name">stock.slow.moving.line.graph</field>
+        <field name="model">stock.slow.moving.line</field>
+        <field name="arch" type="xml">
+            <graph string="สินค้าเคลื่อนไหวช้า" type="bar" stacked="1">
+                <field name="warehouse_id"/>
+                <field name="classification"/>
+                <field name="value" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_ssm_line_form" model="ir.ui.view">
+        <field name="name">stock.slow.moving.line.form</field>
+        <field name="model">stock.slow.moving.line</field>
+        <field name="arch" type="xml">
+            <form string="สินค้าเคลื่อนไหวช้า" create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="oe_title"><h2><field name="name" readonly="1"/></h2></div>
+                    <group>
+                        <group string="สินค้า / ที่">
+                            <field name="product_id" readonly="1"/>
+                            <field name="categ_id" readonly="1"/>
+                            <field name="uom_id" readonly="1"/>
+                            <field name="warehouse_id" readonly="1"/>
+                            <field name="date_to" readonly="1"/>
+                            <field name="classification" readonly="1"/>
+                        </group>
+                        <group string="คงเหลือ">
+                            <field name="qty" readonly="1"/>
+                            <field name="unit_cost" readonly="1"/>
+                            <field name="value" readonly="1"/>
+                            <field name="last_in_date" readonly="1"/>
+                            <field name="last_out_date" readonly="1"/>
+                            <field name="days_no_use" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="การใช้ย้อนหลัง">
+                            <field name="use_30" readonly="1"/>
+                            <field name="use_90" readonly="1"/>
+                            <field name="use_180" readonly="1"/>
+                            <field name="use_365" readonly="1"/>
+                            <field name="avg_monthly" readonly="1"/>
+                            <field name="months_cover" readonly="1" invisible="no_usage"/>
+                            <field name="no_usage" readonly="1"/>
+                        </group>
+                        <group string="ทางแก้">
+                            <field name="other_users" readonly="1"/>
+                            <field name="action_hint" readonly="1"/>
+                            <button name="action_open_moves" type="object" string="ดูการเคลื่อนไหว" class="btn-secondary"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

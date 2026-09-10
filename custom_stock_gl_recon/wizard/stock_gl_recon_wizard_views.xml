@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sgr_wizard_form" model="ir.ui.view">
+        <field name="name">stock.gl.recon.wizard.form</field>
+        <field name="model">stock.gl.recon.wizard</field>
+        <field name="arch" type="xml">
+            <form string="กระทบยอดสต็อกกับบัญชี">
+                <group>
+                    <field name="date_to"/>
+                    <field name="extra_account_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                    <field name="company_id" invisible="1"/>
+                </group>
+                <div class="text-muted small">
+                    เทียบ 3 ตัวเลข ณ วันที่: <b>ของในคลัง</b> (จำนวนคงเหลือ × ต้นทุนปัจจุบัน) /
+                    <b>ระบบสต็อก</b> (valuation layer) / <b>ยอดในบัญชี</b> (GL posted)
+                    แล้วแยกสาเหตุผลต่างให้อัตโนมัติ + ยอดคงค้างบัญชีพักสินค้าขาเข้า-ขาออก
+                </div>
+                <footer>
+                    <button name="action_view" string="ดูรายงาน" type="object" class="btn-primary"/>
+                    <button name="action_export_xlsx" string="Excel" type="object" class="btn-secondary"/>
+                    <button name="action_print_pdf" string="PDF" type="object" class="btn-secondary"/>
+                    <button string="ยกเลิก" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sgr_wizard" model="ir.actions.act_window">
+        <field name="name">กระทบยอดสต็อกกับบัญชี</field>
+        <field name="res_model">stock.gl.recon.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_sgr_stock" name="กระทบยอดสต็อกกับบัญชี (Stock vs GL)"
+              parent="stock.menu_warehouse_report" action="action_sgr_wizard" sequence="48"/>
+    <menuitem id="menu_sgr_account" name="กระทบยอดสต็อกกับบัญชี (Stock vs GL)"
+              parent="account.menu_finance_reports" action="action_sgr_wizard" sequence="95"/>
+
+    <record id="view_sgr_line_list" model="ir.ui.view">
+        <field name="name">stock.gl.recon.line.list</field>
+        <field name="model">stock.gl.recon.line</field>
+        <field name="arch" type="xml">
+            <list string="กระทบยอดสต็อกกับบัญชี" create="false" edit="false" delete="false"
+                  decoration-bf="is_total">
+                <field name="section" column_invisible="1"/>
+                <field name="account_code"/>
+                <field name="account_name"/>
+                <field name="physical_value" sum="รวม"/>
+                <field name="svl_value" sum="รวม"/>
+                <field name="gl_value" sum="รวม"/>
+                <field name="diff_gl_svl" decoration-danger="(diff_gl_svl &gt;= 1 or diff_gl_svl &lt;= -1)"/>
+                <field name="svl_no_je" optional="show"/>
+                <field name="je_no_svl" optional="show"/>
+                <field name="linked_diff" optional="show"/>
+                <field name="diff_svl_phys" optional="show" decoration-warning="(diff_svl_phys &gt;= 1 or diff_svl_phys &lt;= -1)"/>
+                <field name="gl_linked" optional="hide"/>
+                <field name="gl_unreconciled" optional="hide"/>
+                <field name="product_count" optional="hide"/>
+                <field name="is_total" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sgr_line_form" model="ir.ui.view">
+        <field name="name">stock.gl.recon.line.form</field>
+        <field name="model">stock.gl.recon.line</field>
+        <field name="arch" type="xml">
+            <form string="กระทบยอดสต็อกกับบัญชี" create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="oe_title"><h2><field name="name" readonly="1"/></h2></div>
+                    <group>
+                        <group string="3 ตัวเลข ณ วันที่" invisible="section != 'valuation'">
+                            <field name="date_to" readonly="1"/>
+                            <field name="physical_value" readonly="1"/>
+                            <field name="svl_value" readonly="1"/>
+                            <field name="gl_value" readonly="1"/>
+                        </group>
+                        <group string="สาเหตุผลต่าง บัญชี − ระบบสต็อก" invisible="section != 'valuation'">
+                            <field name="diff_gl_svl" readonly="1"/>
+                            <field name="svl_no_je" readonly="1"/>
+                            <field name="svl_non_storable" readonly="1"/>
+                            <field name="je_no_svl" readonly="1"/>
+                            <field name="linked_diff" readonly="1"/>
+                            <field name="diff_svl_phys" readonly="1"/>
+                        </group>
+                        <group string="บัญชีพัก" invisible="section != 'suspense'">
+                            <field name="date_to" readonly="1"/>
+                            <field name="suspense_kind" readonly="1"/>
+                            <field name="gl_value" readonly="1"/>
+                            <field name="gl_linked" readonly="1"/>
+                            <field name="je_no_svl" readonly="1" string="ลงมือ / จากบิล-JV"/>
+                            <field name="gl_unreconciled" readonly="1"/>
+                            <field name="is_reconcilable" readonly="1"/>
+                        </group>
+                    </group>
+                    <field name="section" invisible="1"/>
+                    <notebook>
+                        <page string="รายสินค้า (ระบบสต็อก เทียบ ของในคลัง)" invisible="section != 'valuation'">
+                            <field name="product_detail_ids" readonly="1">
+                                <list create="false" edit="false" delete="false"
+                                      decoration-muted="not is_storable" decoration-warning="is_manual">
+                                    <field name="default_code"/>
+                                    <field name="product_id"/>
+                                    <field name="categ_id" optional="hide"/>
+                                    <field name="is_storable" optional="show"/>
+                                    <field name="is_manual" optional="show"/>
+                                    <field name="qty"/>
+                                    <field name="svl_qty" optional="show"/>
+                                    <field name="unit_cost"/>
+                                    <field name="physical_value" sum="รวม"/>
+                                    <field name="svl_value" sum="รวม"/>
+                                    <field name="svl_no_je" sum="รวม" optional="show"/>
+                                    <field name="diff_value" sum="รวม" decoration-danger="(diff_value &gt;= 1 or diff_value &lt;= -1)"/>
+                                    <button name="action_open_svl" type="object" icon="fa-external-link" title="เปิด valuation layers"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="รายสมุดรายวัน (ยอดในบัญชี)">
+                            <field name="journal_detail_ids" readonly="1">
+                                <list create="false" edit="false" delete="false" decoration-warning="not linked">
+                                    <field name="journal_id"/>
+                                    <field name="linked"/>
+                                    <field name="debit" sum="รวม"/>
+                                    <field name="credit" sum="รวม"/>
+                                    <field name="balance" sum="รวม"/>
+                                    <field name="line_count" sum="รวม"/>
+                                    <field name="unreconciled" sum="รวม"/>
+                                    <button name="action_open_aml" type="object" icon="fa-external-link" title="เปิดบรรทัดบัญชี"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

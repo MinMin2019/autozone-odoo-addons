@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- รายการใบรับสินค้าสำหรับทีมบัญชี: เห็นของที่รับแล้ว กดออกบิลได้จากแถวโดยไม่ต้องเข้าเมนูจัดซื้อ/คลัง -->
+    <record id="view_receipt_to_bill_list" model="ir.ui.view">
+        <field name="name">stock.picking.list.receipt.to.bill</field>
+        <field name="model">stock.picking</field>
+        <field name="arch" type="xml">
+            <list string="ใบรับสินค้า" create="false" edit="false" delete="false"
+                decoration-warning="purchase_bill_status == 'to_bill'"
+                decoration-muted="purchase_bill_status == 'billed'">
+                <field name="name" string="เลขใบรับ"/>
+                <field name="date_done" string="วันที่รับของ" widget="date"/>
+                <field name="partner_id" string="ผู้ขาย"/>
+                <field name="origin" string="ใบสั่งซื้อ"/>
+                <field name="picking_type_id" string="คลัง" optional="show"/>
+                <field name="purchase_bill_status" widget="badge"
+                    decoration-warning="purchase_bill_status == 'to_bill'"
+                    decoration-success="purchase_bill_status == 'billed'"/>
+                <field name="bill_ids" widget="many2many_tags" string="บิลผู้ขาย" optional="show"/>
+                <button name="action_create_bill_from_receipt" type="object"
+                    string="สร้างบิลผู้ขาย" class="btn-primary btn-sm"
+                    invisible="purchase_bill_status != 'to_bill'"/>
+                <button name="action_create_bill_from_receipt" type="object"
+                    string="สร้างบิลเพิ่ม" class="btn-secondary btn-sm"
+                    invisible="purchase_bill_status != 'billed'"/>
+                <field name="company_id" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_receipt_to_bill_search" model="ir.ui.view">
+        <field name="name">stock.picking.search.receipt.to.bill</field>
+        <field name="model">stock.picking</field>
+        <field name="arch" type="xml">
+            <search string="ใบรับสินค้า">
+                <field name="name" string="เลขใบรับ"/>
+                <field name="partner_id" string="ผู้ขาย"/>
+                <field name="origin" string="ใบสั่งซื้อ"/>
+                <field name="product_id" string="สินค้า"/>
+                <filter name="receipt_to_bill" string="ยังไม่ตั้งหนี้"
+                    domain="[('purchase_bill_status', '=', 'to_bill')]"/>
+                <filter name="receipt_billed" string="ตั้งหนี้แล้ว"
+                    domain="[('purchase_bill_status', '=', 'billed')]"/>
+                <separator/>
+                <filter name="date_done" string="วันที่รับของ" date="date_done"/>
+                <group expand="0" string="จัดกลุ่ม">
+                    <filter name="group_partner" string="ผู้ขาย" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_origin" string="ใบสั่งซื้อ" context="{'group_by': 'origin'}"/>
+                    <filter name="group_date_done" string="เดือนที่รับของ" context="{'group_by': 'date_done:month'}"/>
+                    <filter name="group_picking_type" string="คลัง" context="{'group_by': 'picking_type_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_receipt_to_bill" model="ir.actions.act_window">
+        <field name="name">ใบรับสินค้าค้างตั้งหนี้</field>
+        <field name="res_model">stock.picking</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_receipt_to_bill_list"/>
+        <field name="search_view_id" ref="view_receipt_to_bill_search"/>
+        <field name="domain">[('purchase_bill_status', '!=', 'none')]</field>
+        <field name="context">{'search_default_receipt_to_bill': 1, 'create': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">ไม่มีใบรับสินค้าที่ค้างตั้งหนี้</p>
+            <p>ใบรับสินค้าที่คลังตรวจรับแล้ว (Validate) และมาจากใบสั่งซื้อจะขึ้นที่นี่
+            กด "สร้างบิลผู้ขาย" ท้ายแถวเพื่อออกบิลตามจำนวนที่รับจริงในใบรับนั้น</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_receipt_to_bill"
+        name="ใบรับสินค้าค้างตั้งหนี้"
+        parent="account.menu_finance_payables"
+        action="action_receipt_to_bill"
+        sequence="2"
+        groups="account.group_account_invoice"/>
+
+</odoo>

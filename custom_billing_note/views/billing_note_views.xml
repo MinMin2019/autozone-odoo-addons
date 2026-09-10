@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 1. List View (หน้ารายการรวม) -->
+    <record id="view_customer_billing_note_list" model="ir.ui.view">
+        <field name="name">customer.billing.note.list</field>
+        <field name="model">customer.billing.note</field>
+        <field name="arch" type="xml">
+            <!-- ใส่ decoration คุมทั้งบรรทัด: 
+             - muted (สีเทา) ถ้ายังเป็นร่าง
+             - info (สีฟ้า) ถ้ายกเลิกแล้ว -->
+            <list string="Billing Notes" default_order="date desc, name desc"
+                decoration-muted="state == 'draft'" decoration-info="state == 'cancel'">
+                <field name="currency_id" column_invisible="1" />
+
+                <field name="name" string="เลขที่ใบวางบิล" decoration-bf="1" />
+                <field name="partner_id" string="ลูกค้า" />
+                <field name="date" string="วันที่วางบิล" />
+
+                <!-- วันครบกำหนด: ถ้ายังไม่จ่ายและเลยกำหนด (due_date < วันนี้) ให้แสดงสีแดงเตือน! -->
+                <!-- <field name="due_date" string="วันครบกำหนด"
+                    decoration-danger="due_date &lt; current_date and state == 'confirmed'" /> -->
+
+                <!-- ยอดรวม: หนาเสมอ (bf="1") และถ้าเป็นบิลรอเก็บเงิน (confirmed)
+                ให้ตัวเลขเป็นสีเหลืองส้ม (warning) -->
+                <field name="amount_total" string="ยอดรวมวางบิล" widget="monetary"
+                    sum="ยอดรวมทั้งหมด" decoration-bf="1" decoration-warning="state == 'confirmed'"
+                    decoration-success="state == 'done'" />
+
+                <!-- ป้ายสถานะ: โชว์สีตามสถานะ -->
+                <field name="state" string="สถานะ" widget="badge"
+                    decoration-info="state == 'draft'"
+                    decoration-warning="state == 'confirmed'"
+                    decoration-success="state == 'done'" />
+            </list>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_customer_billing_note_search" model="ir.ui.view">
+        <field name="name">customer.billing.note.search</field>
+        <field name="model">customer.billing.note</field>
+        <field name="arch" type="xml">
+            <search string="ค้นหาใบวางบิล">
+                <!-- 1. ช่องค้นหาหลัก (Search bar) -->
+                <field name="name" string="เลขที่ / ลูกค้า"
+                    filter_domain="['|', ('name', 'ilike', self), ('partner_id', 'child_of', self)]" />
+                <field name="partner_id" string="ลูกค้า" />
+
+                <!-- 2. ตัวกรองด่วน (Filters) ที่จะไปโผล่ในปุ่ม Filters ด้านบน -->
+                <filter string="บิลรอเก็บเงิน (ยืนยันแล้ว)" name="filter_confirmed"
+                    domain="[('state', '=', 'confirmed')]" />
+                <filter string="บิลที่ชำระแล้ว" name="filter_done" domain="[('state', '=', 'done')]" />
+                <separator />
+                <!-- ตัวกรองค้นหาบิลที่ 'เกินกำหนดชำระ' (เฉพาะใบที่ยังไม่ได้จ่าย) -->
+                <!-- <filter string="เกินกำหนดชำระ" name="filter_overdue"
+                    domain="[('state', '=', 'confirmed'), ('due_date', '&lt;', context_today().strftime('%Y-%m-%d'))]" /> -->
+
+                <!-- 3. จัดกลุ่ม (Group By) -->
+                <group expand="0" string="Group By">
+                    <filter string="ลูกค้า" name="group_partner"
+                        context="{'group_by': 'partner_id'}" />
+                    <filter string="สถานะ" name="group_state" context="{'group_by': 'state'}" />
+                    <filter string="เดือนที่วางบิล" name="group_date"
+                        context="{'group_by': 'date:month'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- 2. Form View (หน้ากรอกข้อมูลแต่ละใบ) -->
+    <record id="view_customer_billing_note_form" model="ir.ui.view">
+        <field name="name">customer.billing.note.form</field>
+        <field name="model">customer.billing.note</field>
+        <field name="arch" type="xml">
+            <form string="Billing Note">
+                <header>
+                    <button name="action_confirm" string="Confirm" type="object"
+                        class="oe_highlight" invisible="state != 'draft'" />
+
+                    <!-- ปรับปุ่มให้ Reset to Draft ได้ทั้งตอน Cancelled และ Confirmed -->
+                    <button name="action_draft" string="Reset to Draft" type="object"
+                        invisible="state not in ('cancel', 'confirmed')" />
+
+                    <button name="action_cancel" string="Cancel" type="object"
+                        invisible="state in ('done', 'cancel')" />
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,done" />
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <!-- ปลด readonly="1" เพื่อให้สามารถแก้เลขเอกสารได้เมื่อเป็น Draft -->
+                            <field name="name" readonly="state != 'draft'" />
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="partner_id" readonly="state != 'draft'" />
+                        </group>
+                        <group>
+                            <field name="date" readonly="state != 'draft'" />
+                            <!-- <field name="due_date" readonly="state != 'draft'" /> -->
+                            <field name="currency_id" invisible="1" />
+                            <field name="company_id" invisible="1" />
+
+                            <!-- *** ต้องวาง available_invoice_ids ไว้ตรงนี้แบบซ่อน เพื่อให้ View
+                            รู้จักตัวแปร *** -->
+                            <field name="available_invoice_ids" invisible="1" />
+                        </group>
+                    </group>
+
+                    <!-- แท็บแสดงรายการใบแจ้งหนี้ (Many2many) -->
+                    <notebook>
+                        <page string="Invoices" name="invoices">
+
+                            <!-- เปลี่ยน Domain ให้ใช้ available_invoice_ids แทนการเช็คตายตัว -->
+                            <field name="invoice_ids" readonly="state != 'draft'" nolabel="1"
+                                domain="[('id', 'in', available_invoice_ids)]">
+                                <list>
+                                    <field name="currency_id" column_invisible="1" />
+                                    <field name="invoice_date" width="15%" />
+                                    <field name="name" width="20%" />
+                                    <field name="invoice_date_due" width="15%" />
+                                    <field name="payment_state" widget="badge" width="20%" />
+                                    <field name="ref" width="20%" />
+                                    <field name="amount_total" widget="float" width="10%" />
+                                </list>
+                            </field>
+
+                            <!-- จัดหน้าตายอดรวมใหม่ เลียนแบบหน้า Invoice มาตรฐาน -->
+                            <div class="row">
+                                <!-- ฝั่งซ้าย ปล่อยว่างไว้ หรือจะเอาไว้ใส่หมายเหตุในอนาคต -->
+                                <div class="col-9">
+                                </div>
+
+                                <!-- ฝั่งขวา สำหรับแสดงยอดรวม -->
+                                <div class="col-3">
+                                    <table class="table table-sm table-borderless">
+                                        <tr
+                                            style="border-top: 1px solid #ced4da; border-bottom: 3px double #ced4da;">
+                                            <td class="text-start">
+                                                <strong>ยอดรวมวางบิล</strong>
+                                            </td>
+                                            <td class="text-end">
+                                                <strong>
+                                                    <field name="amount_total" widget="monetary"
+                                                        options="{'currency_field': 'currency_id'}" />
+                                                </strong>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </page>
+                    </notebook>
+
+                </sheet>
+
+                <!-- วางโค้ดส่วนของ Chatter ไว้ตรงนี้ (ใต้ sheet) Odoo 18 ต้องใช้แท็ก <chatter/> แทน
+                div ธรรมดา -->
+                <chatter />
+
+            </form>
+        </field>
+    </record>
+
+</odoo>

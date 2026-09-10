@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <!-- ============ Opportunity-level KPI ============ -->
+
+    <!-- KPI columns on the Opportunity list (hidden by default, sortable) -->
+    <record id="crm_case_tree_view_oppor_kpi" model="ir.ui.view">
+        <field name="name">crm.lead.list.opportunity.kpi</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_case_tree_view_oppor" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='expected_revenue']" position="after">
+                <field name="quoted_qty" optional="hide" sum="Quoted Qty" />
+                <field name="contract_qty" optional="hide" sum="Contract Qty" />
+                <field name="released_qty" optional="hide" sum="Released Qty" />
+                <field name="invoiced_qty" optional="hide" sum="Invoiced Qty" />
+                <field name="to_invoice_qty" optional="hide" sum="To Invoice Qty" />
+                <field name="remaining_to_bo_qty" optional="hide" sum="Remaining to BO" />
+                <field name="remaining_release_qty" optional="hide" sum="Remaining to Release" />
+                <field
+                    name="invoiced_amount"
+                    optional="hide"
+                    sum="Invoiced Amount"
+                    widget="monetary"
+                    options="{'currency_field': 'company_currency'}"
+                />
+                <field
+                    name="to_invoice_amount"
+                    optional="hide"
+                    sum="To Invoice Amount"
+                    widget="monetary"
+                    options="{'currency_field': 'company_currency'}"
+                />
+            </xpath>
+        </field>
+    </record>
+
+    <record id="crm_lead_view_pivot_contract" model="ir.ui.view">
+        <field name="name">crm.lead.pivot.contract</field>
+        <field name="model">crm.lead</field>
+        <field name="arch" type="xml">
+            <pivot string="KPI สัญญา / Contract KPI" sample="1">
+                <field name="user_id" type="row" />
+                <field name="quoted_qty" type="measure" />
+                <field name="contract_qty" type="measure" />
+                <field name="released_qty" type="measure" />
+                <field name="invoiced_qty" type="measure" />
+                <field name="to_invoice_qty" type="measure" />
+                <field name="remaining_to_bo_qty" type="measure" />
+                <field name="invoiced_amount" type="measure" />
+                <field name="to_invoice_amount" type="measure" />
+            </pivot>
+        </field>
+    </record>
+
+    <record id="crm_lead_view_graph_contract" model="ir.ui.view">
+        <field name="name">crm.lead.graph.contract</field>
+        <field name="model">crm.lead</field>
+        <field name="arch" type="xml">
+            <graph string="KPI สัญญา / Contract KPI" sample="1">
+                <field name="user_id" />
+                <field name="contract_qty" type="measure" />
+                <field name="invoiced_qty" type="measure" />
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_crm_contract_kpi" model="ir.actions.act_window">
+        <field name="name">KPI สัญญา / Contract KPI</field>
+        <field name="res_model">crm.lead</field>
+        <field name="view_mode">pivot,graph,list,form</field>
+        <field name="domain">[('blanket_order_ids', '!=', False)]</field>
+        <field name="context">{'search_default_user_id': uid}</field>
+        <field name="view_id" ref="crm_lead_view_pivot_contract" />
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No contract opportunities yet</p>
+            <p>Opportunities that carry at least one Blanket Order show up here with their contract KPIs.</p>
+        </field>
+    </record>
+
+    <record id="action_crm_contract_kpi_list" model="ir.actions.act_window.view">
+        <field name="sequence" eval="3" />
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="crm.crm_case_tree_view_oppor" />
+        <field name="act_window_id" ref="action_crm_contract_kpi" />
+    </record>
+
+    <menuitem
+        id="menu_crm_contract_kpi"
+        name="KPI สัญญา / Contract KPI"
+        parent="crm.crm_menu_report"
+        action="action_crm_contract_kpi"
+        sequence="25"
+    />
+
+    <!-- ============ Per-product analysis (multi-product contracts) ============ -->
+
+    <record id="blanket_line_view_pivot_contract" model="ir.ui.view">
+        <field name="name">sale.blanket.order.line.pivot.contract</field>
+        <field name="model">sale.blanket.order.line</field>
+        <field name="arch" type="xml">
+            <pivot string="สัญญาแยกตามสินค้า / Contract by Product" sample="1">
+                <field name="opportunity_id" type="row" />
+                <field name="product_id" type="row" />
+                <field name="original_uom_qty" type="measure" string="ยอดสัญญา / Contract Qty" />
+                <field name="ordered_uom_qty" type="measure" string="ยอดเรียก / Released Qty" />
+                <field name="invoiced_qty_posted" type="measure" string="ยอดวางบิล / Invoiced Qty" />
+                <field name="to_invoice_qty" type="measure" string="ยอดค้างวางบิล / To Invoice Qty" />
+                <field name="remaining_uom_qty" type="measure" string="คงเหลือรอเรียก / Remaining" />
+                <field name="invoiced_amount_posted" type="measure" string="มูลค่าวางบิล / Invoiced Amount" />
+                <field name="to_invoice_amount" type="measure" string="มูลค่าค้างวางบิล / To Invoice Amount" />
+            </pivot>
+        </field>
+    </record>
+
+    <record id="blanket_line_view_list_contract" model="ir.ui.view">
+        <field name="name">sale.blanket.order.line.list.contract</field>
+        <field name="model">sale.blanket.order.line</field>
+        <field name="arch" type="xml">
+            <list string="สัญญาแยกตามสินค้า / Contract by Product" create="false">
+                <field name="opportunity_id" />
+                <field name="order_id" />
+                <field name="product_id" />
+                <field name="product_uom" optional="hide" />
+                <field name="original_uom_qty" string="ยอดสัญญา / Contract Qty" sum="Contract Qty" />
+                <field name="ordered_uom_qty" string="ยอดเรียก / Released Qty" sum="Released Qty" />
+                <field name="invoiced_qty_posted" string="ยอดวางบิล / Invoiced Qty" sum="Invoiced Qty" />
+                <field name="to_invoice_qty" string="ยอดค้างวางบิล / To Invoice Qty" sum="To Invoice Qty" />
+                <field name="remaining_uom_qty" string="คงเหลือรอเรียก / Remaining" sum="Remaining" />
+                <field name="currency_id" column_invisible="True" />
+                <field
+                    name="invoiced_amount_posted"
+                    string="มูลค่าวางบิล / Invoiced Amount"
+                    sum="Invoiced Amount"
+                    widget="monetary"
+                />
+                <field
+                    name="to_invoice_amount"
+                    string="มูลค่าค้างวางบิล / To Invoice Amount"
+                    sum="To Invoice Amount"
+                    widget="monetary"
+                />
+            </list>
+        </field>
+    </record>
+
+    <record id="action_contract_line_analysis" model="ir.actions.act_window">
+        <field name="name">สัญญาแยกตามสินค้า / Contract by Product</field>
+        <field name="res_model">sale.blanket.order.line</field>
+        <field name="view_mode">pivot,list</field>
+        <field name="domain">[('display_type', '=', False), ('opportunity_id', '!=', False)]</field>
+        <field name="view_id" ref="blanket_line_view_pivot_contract" />
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No contract lines yet</p>
+            <p>Per-product contract / released / invoiced quantities across all Blanket Orders linked to an Opportunity.</p>
+        </field>
+    </record>
+
+    <record id="action_contract_line_analysis_list" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2" />
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="blanket_line_view_list_contract" />
+        <field name="act_window_id" ref="action_contract_line_analysis" />
+    </record>
+
+    <menuitem
+        id="menu_contract_line_analysis"
+        name="สัญญาแยกตามสินค้า / Contract by Product"
+        parent="crm.crm_menu_report"
+        action="action_contract_line_analysis"
+        sequence="26"
+    />
+</odoo>

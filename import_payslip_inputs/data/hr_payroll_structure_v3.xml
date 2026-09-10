@@ -1,0 +1,2339 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- v4: generated 1 รหัส Business Plus = 1 input type (8 ก.ย. 2026) -->
+    <!-- อย่าแก้มือ - แก้ที่ tools/gen_payroll_config.py แล้ว generate ใหม่ -->
+    <!-- noupdate: record เดิมไม่ถูกทับตอน -u -> ชื่อ/ลำดับ/บัญชี ให้ wire_payroll_accounts_shell.py จัดการ -->
+    <data noupdate="1">
+        <record id="input_type_pay_adjust" model="hr.payslip.input.type">
+            <field name="name">ตกหล่นเงินเดือน</field>
+            <field name="code">PAY_ADJUST</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_ot_x1" model="hr.payslip.input.type">
+            <field name="name">ค่าล่วงเวลา x1</field>
+            <field name="code">OT_X1</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_ot_x15" model="hr.payslip.input.type">
+            <field name="name">ค่าล่วงเวลา x1.5</field>
+            <field name="code">OT_X15</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_ot_x2" model="hr.payslip.input.type">
+            <field name="name">ค่าล่วงเวลา x2</field>
+            <field name="code">OT_X2</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_ot_x3" model="hr.payslip.input.type">
+            <field name="name">ค่าล่วงเวลา x3</field>
+            <field name="code">OT_X3</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_position" model="hr.payslip.input.type">
+            <field name="name">ค่าตำแหน่ง</field>
+            <field name="code">POSITION</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_professional" model="hr.payslip.input.type">
+            <field name="name">ค่าวิชาชีพ</field>
+            <field name="code">PROFESSIONAL</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_professional_2" model="hr.payslip.input.type">
+            <field name="name">ค่าวิชาชีพ (2)</field>
+            <field name="code">PROFESSIONAL_2</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_diligence_extra" model="hr.payslip.input.type">
+            <field name="name">เบี้ยขยัน (เพิ่มเติม)</field>
+            <field name="code">DILIGENCE_EXTRA</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_cost_living" model="hr.payslip.input.type">
+            <field name="name">ค่าครองชีพ</field>
+            <field name="code">COST_LIVING</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_cost_living_sso" model="hr.payslip.input.type">
+            <field name="name">ค่าครองชีพ (SSO)</field>
+            <field name="code">COST_LIVING_SSO</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_meal_ot" model="hr.payslip.input.type">
+            <field name="name">ค่าอาหาร</field>
+            <field name="code">MEAL_OT</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_meal_fix" model="hr.payslip.input.type">
+            <field name="name">ค่าอาหาร (ฝังในประวัติ)</field>
+            <field name="code">MEAL_FIX</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_transport" model="hr.payslip.input.type">
+            <field name="name">ค่าพาหนะ</field>
+            <field name="code">TRANSPORT</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_house_rent" model="hr.payslip.input.type">
+            <field name="name">ค่าเช่าบ้าน</field>
+            <field name="code">HOUSE_RENT</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_phone" model="hr.payslip.input.type">
+            <field name="name">ค่าโทรศัพท์</field>
+            <field name="code">PHONE</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_per_diem" model="hr.payslip.input.type">
+            <field name="name">เบี้ยเลี้ยง</field>
+            <field name="code">PER_DIEM</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_incentive" model="hr.payslip.input.type">
+            <field name="name">Incentive</field>
+            <field name="code">INCENTIVE</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_piece_rate" model="hr.payslip.input.type">
+            <field name="name">ค่าแรงรายชิ้น</field>
+            <field name="code">PIECE_RATE</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_bonus_qtr" model="hr.payslip.input.type">
+            <field name="name">โบนัสไตรมาส</field>
+            <field name="code">BONUS_QTR</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_leave_refund" model="hr.payslip.input.type">
+            <field name="name">คืนเงินพักร้อน</field>
+            <field name="code">LEAVE_REFUND</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_welfare_adjust" model="hr.payslip.input.type">
+            <field name="name">ตกหล่นสวัสดิการ</field>
+            <field name="code">WELFARE_ADJUST</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_uniform_pay" model="hr.payslip.input.type">
+            <field name="name">ค่าชุดฟอร์ม (จ่ายให้)</field>
+            <field name="code">UNIFORM_PAY</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_deposit_refund" model="hr.payslip.input.type">
+            <field name="name">คืนเงินประกันพนักงาน</field>
+            <field name="code">DEPOSIT_REFUND</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_severance" model="hr.payslip.input.type">
+            <field name="name">เงินชดเชยการเลิกจ้าง</field>
+            <field name="code">SEVERANCE</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_tax_prev_year" model="hr.payslip.input.type">
+            <field name="name">หักค่าภาษีปีที่แล้ว</field>
+            <field name="code">TAX_PREV_YEAR</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_student_loan" model="hr.payslip.input.type">
+            <field name="name">หัก กยศ.</field>
+            <field name="code">STUDENT_LOAN</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_absence" model="hr.payslip.input.type">
+            <field name="name">หักขาดงาน</field>
+            <field name="code">ABSENCE</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_early_leave" model="hr.payslip.input.type">
+            <field name="name">หักกลับก่อนเวลา</field>
+            <field name="code">EARLY_LEAVE</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_no_scan_in" model="hr.payslip.input.type">
+            <field name="name">หักไม่ตอกบัตรเข้า</field>
+            <field name="code">NO_SCAN_IN</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_no_scan_out" model="hr.payslip.input.type">
+            <field name="name">หักไม่ตอกบัตรออก</field>
+            <field name="code">NO_SCAN_OUT</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_personal_leave" model="hr.payslip.input.type">
+            <field name="name">หักลากิจ</field>
+            <field name="code">PERSONAL_LEAVE</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_personal_leave_sp" model="hr.payslip.input.type">
+            <field name="name">หักลากิจ (พิเศษ)</field>
+            <field name="code">PERSONAL_LEAVE_SP</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_sick_no_cert" model="hr.payslip.input.type">
+            <field name="name">หักป่วยไม่มีใบแพทย์</field>
+            <field name="code">SICK_NO_CERT</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_sick_over_quota" model="hr.payslip.input.type">
+            <field name="name">หักลาป่วยเกินสิทธิ</field>
+            <field name="code">SICK_OVER_QUOTA</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_maternity" model="hr.payslip.input.type">
+            <field name="name">หักลาคลอด</field>
+            <field name="code">MATERNITY</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_ordination" model="hr.payslip.input.type">
+            <field name="name">หักลาบวช</field>
+            <field name="code">ORDINATION</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_company_leave" model="hr.payslip.input.type">
+            <field name="name">หักลาตามเงื่อนไขบริษัท</field>
+            <field name="code">COMPANY_LEAVE</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_salary_cut_25" model="hr.payslip.input.type">
+            <field name="name">หักเงินเดือน 25%</field>
+            <field name="code">SALARY_CUT_25</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_suspend" model="hr.payslip.input.type">
+            <field name="name">หักพักงาน</field>
+            <field name="code">SUSPEND</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_suspend_tax" model="hr.payslip.input.type">
+            <field name="name">หักพักงาน (คิดภาษี)</field>
+            <field name="code">SUSPEND_TAX</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_guarantee" model="hr.payslip.input.type">
+            <field name="name">หักเงินค้ำประกันพนักงาน</field>
+            <field name="code">GUARANTEE</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_dorm" model="hr.payslip.input.type">
+            <field name="name">หักค่าหอพัก</field>
+            <field name="code">DORM</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_utilities" model="hr.payslip.input.type">
+            <field name="name">หักน้ำ/ไฟ/โทรศัพท์</field>
+            <field name="code">UTILITIES</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_tools" model="hr.payslip.input.type">
+            <field name="name">หักค่าเครื่องมือ</field>
+            <field name="code">TOOLS</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_uniform_ded" model="hr.payslip.input.type">
+            <field name="name">หักค่าเครื่องแบบ</field>
+            <field name="code">UNIFORM_DED</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_per_diem_ded" model="hr.payslip.input.type">
+            <field name="name">หักเบี้ยเลี้ยง (จ่ายล่วงหน้า)</field>
+            <field name="code">PER_DIEM_DED</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="input_type_sso_employer" model="hr.payslip.input.type">
+            <field name="name">สมทบประกันสังคม (นายจ้าง)</field>
+            <field name="code">SSO_EMPLOYER</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="structure_type_factory" model="hr.payroll.structure.type">
+            <field name="name">พนักงานโรงงาน (Legacy Import)</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="structure_factory" model="hr.payroll.structure">
+            <field name="name">เงินเดือน - โรงงาน (Legacy Import)</field>
+            <field name="type_id" ref="structure_type_factory"/>
+            <field name="country_id" eval="False"/>
+            <field name="use_worked_day_lines" eval="False"/>
+            <field name="rule_ids" eval="[(5, 0, 0)]"/>
+            <field name="input_line_type_ids" eval="[(6, 0, [ref('input_type_basic'), ref('input_type_pay_adjust'), ref('input_type_ot_x1'), ref('input_type_ot_x15'), ref('input_type_ot_x2'), ref('input_type_ot_x3'), ref('input_type_ot'), ref('input_type_position'), ref('input_type_professional'), ref('input_type_professional_2'), ref('input_type_diligence'), ref('input_type_diligence_extra'), ref('input_type_cost_living'), ref('input_type_cost_living_sso'), ref('input_type_meal_ot'), ref('input_type_meal_fix'), ref('input_type_transport'), ref('input_type_house_rent'), ref('input_type_phone'), ref('input_type_per_diem'), ref('input_type_incentive'), ref('input_type_piece_rate'), ref('input_type_bonus'), ref('input_type_bonus_qtr'), ref('input_type_leave_refund'), ref('input_type_welfare_adjust'), ref('input_type_uniform_pay'), ref('input_type_deposit_refund'), ref('input_type_severance'), ref('input_type_inc_other'), ref('input_type_sso'), ref('input_type_tax'), ref('input_type_tax_prev_year'), ref('input_type_student_loan'), ref('input_type_absence'), ref('input_type_late'), ref('input_type_early_leave'), ref('input_type_no_scan_in'), ref('input_type_no_scan_out'), ref('input_type_personal_leave'), ref('input_type_personal_leave_sp'), ref('input_type_sick_no_cert'), ref('input_type_sick_over_quota'), ref('input_type_maternity'), ref('input_type_ordination'), ref('input_type_company_leave'), ref('input_type_salary_cut_25'), ref('input_type_suspend'), ref('input_type_suspend_tax'), ref('input_type_advance'), ref('input_type_loan'), ref('input_type_guarantee'), ref('input_type_dorm'), ref('input_type_utilities'), ref('input_type_tools'), ref('input_type_uniform_ded'), ref('input_type_per_diem_ded'), ref('input_type_ded_other'), ref('input_type_sso_employer')])]"/>
+        </record>
+        <record id="rule_fac_basic" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.BASIC"/>
+            <field name="name">เงินเดือน</field>
+            <field name="code">BASIC</field>
+            <field name="sequence">1</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_basic"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_basic"/>
+        </record>
+        <record id="rule_fac_pay_adjust" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ตกหล่นเงินเดือน</field>
+            <field name="code">PAY_ADJUST</field>
+            <field name="sequence">4</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_pay_adjust"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_pay_adjust"/>
+        </record>
+        <record id="rule_fac_ot_x1" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าล่วงเวลา x1</field>
+            <field name="code">OT_X1</field>
+            <field name="sequence">6</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_ot_x1"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_ot_x1"/>
+        </record>
+        <record id="rule_fac_ot_x15" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าล่วงเวลา x1.5</field>
+            <field name="code">OT_X15</field>
+            <field name="sequence">8</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_ot_x15"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_ot_x15"/>
+        </record>
+        <record id="rule_fac_ot_x2" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าล่วงเวลา x2</field>
+            <field name="code">OT_X2</field>
+            <field name="sequence">10</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_ot_x2"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_ot_x2"/>
+        </record>
+        <record id="rule_fac_ot_x3" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าล่วงเวลา x3</field>
+            <field name="code">OT_X3</field>
+            <field name="sequence">12</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_ot_x3"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_ot_x3"/>
+        </record>
+        <record id="rule_fac_ot" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าล่วงเวลา (ไม่ระบุอัตรา)</field>
+            <field name="code">OT</field>
+            <field name="sequence">14</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_ot"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_ot"/>
+        </record>
+        <record id="rule_fac_position" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าตำแหน่ง</field>
+            <field name="code">POSITION</field>
+            <field name="sequence">16</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_position"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_position"/>
+        </record>
+        <record id="rule_fac_professional" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าวิชาชีพ</field>
+            <field name="code">PROFESSIONAL</field>
+            <field name="sequence">18</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_professional"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_professional"/>
+        </record>
+        <record id="rule_fac_professional_2" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าวิชาชีพ (2)</field>
+            <field name="code">PROFESSIONAL_2</field>
+            <field name="sequence">20</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_professional_2"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_professional_2"/>
+        </record>
+        <record id="rule_fac_diligence" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">เบี้ยขยัน</field>
+            <field name="code">DILIGENCE</field>
+            <field name="sequence">22</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_diligence"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_diligence"/>
+        </record>
+        <record id="rule_fac_diligence_extra" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">เบี้ยขยัน (เพิ่มเติม)</field>
+            <field name="code">DILIGENCE_EXTRA</field>
+            <field name="sequence">24</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_diligence_extra"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_diligence_extra"/>
+        </record>
+        <record id="rule_fac_cost_living" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าครองชีพ</field>
+            <field name="code">COST_LIVING</field>
+            <field name="sequence">26</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_cost_living"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_cost_living"/>
+        </record>
+        <record id="rule_fac_cost_living_sso" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าครองชีพ (SSO)</field>
+            <field name="code">COST_LIVING_SSO</field>
+            <field name="sequence">28</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_cost_living_sso"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_cost_living_sso"/>
+        </record>
+        <record id="rule_fac_meal_ot" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าอาหาร</field>
+            <field name="code">MEAL_OT</field>
+            <field name="sequence">30</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_meal_ot"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_meal_ot"/>
+        </record>
+        <record id="rule_fac_meal_fix" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าอาหาร (ฝังในประวัติ)</field>
+            <field name="code">MEAL_FIX</field>
+            <field name="sequence">32</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_meal_fix"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_meal_fix"/>
+        </record>
+        <record id="rule_fac_transport" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าพาหนะ</field>
+            <field name="code">TRANSPORT</field>
+            <field name="sequence">34</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_transport"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_transport"/>
+        </record>
+        <record id="rule_fac_house_rent" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าเช่าบ้าน</field>
+            <field name="code">HOUSE_RENT</field>
+            <field name="sequence">36</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_house_rent"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_house_rent"/>
+        </record>
+        <record id="rule_fac_phone" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าโทรศัพท์</field>
+            <field name="code">PHONE</field>
+            <field name="sequence">38</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_phone"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_phone"/>
+        </record>
+        <record id="rule_fac_per_diem" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">เบี้ยเลี้ยง</field>
+            <field name="code">PER_DIEM</field>
+            <field name="sequence">40</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_per_diem"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_per_diem"/>
+        </record>
+        <record id="rule_fac_incentive" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">Incentive</field>
+            <field name="code">INCENTIVE</field>
+            <field name="sequence">42</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_incentive"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_incentive"/>
+        </record>
+        <record id="rule_fac_piece_rate" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าแรงรายชิ้น</field>
+            <field name="code">PIECE_RATE</field>
+            <field name="sequence">44</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_piece_rate"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_piece_rate"/>
+        </record>
+        <record id="rule_fac_bonus" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">โบนัส</field>
+            <field name="code">BONUS</field>
+            <field name="sequence">46</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_bonus"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_bonus"/>
+        </record>
+        <record id="rule_fac_bonus_qtr" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">โบนัสไตรมาส</field>
+            <field name="code">BONUS_QTR</field>
+            <field name="sequence">48</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_bonus_qtr"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_bonus_qtr"/>
+        </record>
+        <record id="rule_fac_leave_refund" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">คืนเงินพักร้อน</field>
+            <field name="code">LEAVE_REFUND</field>
+            <field name="sequence">50</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_leave_refund"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_leave_refund"/>
+        </record>
+        <record id="rule_fac_welfare_adjust" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ตกหล่นสวัสดิการ</field>
+            <field name="code">WELFARE_ADJUST</field>
+            <field name="sequence">52</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_welfare_adjust"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_welfare_adjust"/>
+        </record>
+        <record id="rule_fac_uniform_pay" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าชุดฟอร์ม (จ่ายให้)</field>
+            <field name="code">UNIFORM_PAY</field>
+            <field name="sequence">54</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_uniform_pay"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_uniform_pay"/>
+        </record>
+        <record id="rule_fac_deposit_refund" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">คืนเงินประกันพนักงาน</field>
+            <field name="code">DEPOSIT_REFUND</field>
+            <field name="sequence">56</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_deposit_refund"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_deposit_refund"/>
+        </record>
+        <record id="rule_fac_severance" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">เงินชดเชยการเลิกจ้าง</field>
+            <field name="code">SEVERANCE</field>
+            <field name="sequence">58</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_severance"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_severance"/>
+        </record>
+        <record id="rule_fac_inc_other" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">เงินได้อื่น ๆ</field>
+            <field name="code">INC_OTHER</field>
+            <field name="sequence">60</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_inc_other"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_inc_other"/>
+        </record>
+        <record id="rule_fac_gross" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.GROSS"/>
+            <field name="name">รวมรายได้</field>
+            <field name="code">GROSS</field>
+            <field name="sequence">100</field>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = categories['BASIC'] + categories['ALW']</field>
+        </record>
+        <record id="rule_fac_sso" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักประกันสังคม</field>
+            <field name="code">SSO</field>
+            <field name="sequence">102</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_sso"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['SSO'].amount</field>
+        </record>
+        <record id="rule_fac_tax" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักภาษีเงินได้ (ภงด.1)</field>
+            <field name="code">TAX</field>
+            <field name="sequence">104</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_tax"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['TAX'].amount</field>
+        </record>
+        <record id="rule_fac_tax_prev_year" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักค่าภาษีปีที่แล้ว</field>
+            <field name="code">TAX_PREV_YEAR</field>
+            <field name="sequence">106</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_tax_prev_year"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['TAX_PREV_YEAR'].amount</field>
+        </record>
+        <record id="rule_fac_student_loan" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หัก กยศ.</field>
+            <field name="code">STUDENT_LOAN</field>
+            <field name="sequence">108</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_student_loan"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['STUDENT_LOAN'].amount</field>
+        </record>
+        <record id="rule_fac_absence" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักขาดงาน</field>
+            <field name="code">ABSENCE</field>
+            <field name="sequence">110</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_absence"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['ABSENCE'].amount</field>
+        </record>
+        <record id="rule_fac_late" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักมาสาย</field>
+            <field name="code">LATE</field>
+            <field name="sequence">112</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_late"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['LATE'].amount</field>
+        </record>
+        <record id="rule_fac_early_leave" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักกลับก่อนเวลา</field>
+            <field name="code">EARLY_LEAVE</field>
+            <field name="sequence">114</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_early_leave"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['EARLY_LEAVE'].amount</field>
+        </record>
+        <record id="rule_fac_no_scan_in" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักไม่ตอกบัตรเข้า</field>
+            <field name="code">NO_SCAN_IN</field>
+            <field name="sequence">116</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_no_scan_in"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['NO_SCAN_IN'].amount</field>
+        </record>
+        <record id="rule_fac_no_scan_out" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักไม่ตอกบัตรออก</field>
+            <field name="code">NO_SCAN_OUT</field>
+            <field name="sequence">118</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_no_scan_out"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['NO_SCAN_OUT'].amount</field>
+        </record>
+        <record id="rule_fac_personal_leave" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักลากิจ</field>
+            <field name="code">PERSONAL_LEAVE</field>
+            <field name="sequence">120</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_personal_leave"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['PERSONAL_LEAVE'].amount</field>
+        </record>
+        <record id="rule_fac_personal_leave_sp" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักลากิจ (พิเศษ)</field>
+            <field name="code">PERSONAL_LEAVE_SP</field>
+            <field name="sequence">122</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_personal_leave_sp"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['PERSONAL_LEAVE_SP'].amount</field>
+        </record>
+        <record id="rule_fac_sick_no_cert" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักป่วยไม่มีใบแพทย์</field>
+            <field name="code">SICK_NO_CERT</field>
+            <field name="sequence">124</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_sick_no_cert"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['SICK_NO_CERT'].amount</field>
+        </record>
+        <record id="rule_fac_sick_over_quota" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักลาป่วยเกินสิทธิ</field>
+            <field name="code">SICK_OVER_QUOTA</field>
+            <field name="sequence">126</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_sick_over_quota"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['SICK_OVER_QUOTA'].amount</field>
+        </record>
+        <record id="rule_fac_maternity" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักลาคลอด</field>
+            <field name="code">MATERNITY</field>
+            <field name="sequence">128</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_maternity"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['MATERNITY'].amount</field>
+        </record>
+        <record id="rule_fac_ordination" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักลาบวช</field>
+            <field name="code">ORDINATION</field>
+            <field name="sequence">130</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_ordination"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['ORDINATION'].amount</field>
+        </record>
+        <record id="rule_fac_company_leave" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักลาตามเงื่อนไขบริษัท</field>
+            <field name="code">COMPANY_LEAVE</field>
+            <field name="sequence">132</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_company_leave"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['COMPANY_LEAVE'].amount</field>
+        </record>
+        <record id="rule_fac_salary_cut_25" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักเงินเดือน 25%</field>
+            <field name="code">SALARY_CUT_25</field>
+            <field name="sequence">134</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_salary_cut_25"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['SALARY_CUT_25'].amount</field>
+        </record>
+        <record id="rule_fac_suspend" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักพักงาน</field>
+            <field name="code">SUSPEND</field>
+            <field name="sequence">136</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_suspend"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['SUSPEND'].amount</field>
+        </record>
+        <record id="rule_fac_suspend_tax" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักพักงาน (คิดภาษี)</field>
+            <field name="code">SUSPEND_TAX</field>
+            <field name="sequence">138</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_suspend_tax"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['SUSPEND_TAX'].amount</field>
+        </record>
+        <record id="rule_fac_advance" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักเงินเบิกล่วงหน้า</field>
+            <field name="code">ADVANCE</field>
+            <field name="sequence">140</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_advance"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['ADVANCE'].amount</field>
+        </record>
+        <record id="rule_fac_loan" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักเงินกู้</field>
+            <field name="code">LOAN</field>
+            <field name="sequence">142</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_loan"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['LOAN'].amount</field>
+        </record>
+        <record id="rule_fac_loan_int" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักดอกเบี้ยเงินกู้</field>
+            <field name="code">LOAN_INT</field>
+            <field name="sequence">144</field>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = 'LOAN_INT' in inputs</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['LOAN_INT'].amount</field>
+        </record>
+        <record id="rule_fac_guarantee" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักเงินค้ำประกันพนักงาน</field>
+            <field name="code">GUARANTEE</field>
+            <field name="sequence">146</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_guarantee"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['GUARANTEE'].amount</field>
+        </record>
+        <record id="rule_fac_dorm" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักค่าหอพัก</field>
+            <field name="code">DORM</field>
+            <field name="sequence">148</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_dorm"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['DORM'].amount</field>
+        </record>
+        <record id="rule_fac_utilities" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักน้ำ/ไฟ/โทรศัพท์</field>
+            <field name="code">UTILITIES</field>
+            <field name="sequence">150</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_utilities"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['UTILITIES'].amount</field>
+        </record>
+        <record id="rule_fac_tools" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักค่าเครื่องมือ</field>
+            <field name="code">TOOLS</field>
+            <field name="sequence">152</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_tools"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['TOOLS'].amount</field>
+        </record>
+        <record id="rule_fac_uniform_ded" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักค่าเครื่องแบบ</field>
+            <field name="code">UNIFORM_DED</field>
+            <field name="sequence">154</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_uniform_ded"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['UNIFORM_DED'].amount</field>
+        </record>
+        <record id="rule_fac_per_diem_ded" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักเบี้ยเลี้ยง (จ่ายล่วงหน้า)</field>
+            <field name="code">PER_DIEM_DED</field>
+            <field name="sequence">156</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_per_diem_ded"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['PER_DIEM_DED'].amount</field>
+        </record>
+        <record id="rule_fac_ded_other" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักอื่น ๆ</field>
+            <field name="code">DED_OTHER</field>
+            <field name="sequence">158</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_ded_other"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['DED_OTHER'].amount</field>
+        </record>
+        <record id="rule_fac_sso_employer" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.COMP"/>
+            <field name="name">สมทบประกันสังคม (นายจ้าง)</field>
+            <field name="code">SSO_EMPLOYER</field>
+            <field name="sequence">190</field>
+            <field name="appears_on_payslip" eval="False"/>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_sso_employer"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_sso_employer"/>
+        </record>
+        <record id="rule_fac_net" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_factory"/>
+            <field name="category_id" ref="hr_payroll.NET"/>
+            <field name="name">เงินได้สุทธิ</field>
+            <field name="code">NET</field>
+            <field name="sequence">200</field>
+            <field name="appears_on_employee_cost_dashboard" eval="True"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = categories['BASIC'] + categories['ALW'] + categories['DED']</field>
+        </record>
+        <record id="structure_type_factory" model="hr.payroll.structure.type">
+            <field name="default_struct_id" ref="structure_factory"/>
+        </record>
+        <record id="structure_type_office" model="hr.payroll.structure.type">
+            <field name="name">พนักงานสำนักงาน (Legacy Import)</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="structure_office" model="hr.payroll.structure">
+            <field name="name">เงินเดือน - สำนักงาน (Legacy Import)</field>
+            <field name="type_id" ref="structure_type_office"/>
+            <field name="country_id" eval="False"/>
+            <field name="use_worked_day_lines" eval="False"/>
+            <field name="rule_ids" eval="[(5, 0, 0)]"/>
+            <field name="input_line_type_ids" eval="[(6, 0, [ref('input_type_basic'), ref('input_type_pay_adjust'), ref('input_type_ot_x1'), ref('input_type_ot_x15'), ref('input_type_ot_x2'), ref('input_type_ot_x3'), ref('input_type_ot'), ref('input_type_position'), ref('input_type_professional'), ref('input_type_professional_2'), ref('input_type_diligence'), ref('input_type_diligence_extra'), ref('input_type_cost_living'), ref('input_type_cost_living_sso'), ref('input_type_meal_ot'), ref('input_type_meal_fix'), ref('input_type_transport'), ref('input_type_house_rent'), ref('input_type_phone'), ref('input_type_per_diem'), ref('input_type_incentive'), ref('input_type_piece_rate'), ref('input_type_bonus'), ref('input_type_bonus_qtr'), ref('input_type_leave_refund'), ref('input_type_welfare_adjust'), ref('input_type_uniform_pay'), ref('input_type_deposit_refund'), ref('input_type_severance'), ref('input_type_inc_other'), ref('input_type_sso'), ref('input_type_tax'), ref('input_type_tax_prev_year'), ref('input_type_student_loan'), ref('input_type_absence'), ref('input_type_late'), ref('input_type_early_leave'), ref('input_type_no_scan_in'), ref('input_type_no_scan_out'), ref('input_type_personal_leave'), ref('input_type_personal_leave_sp'), ref('input_type_sick_no_cert'), ref('input_type_sick_over_quota'), ref('input_type_maternity'), ref('input_type_ordination'), ref('input_type_company_leave'), ref('input_type_salary_cut_25'), ref('input_type_suspend'), ref('input_type_suspend_tax'), ref('input_type_advance'), ref('input_type_loan'), ref('input_type_guarantee'), ref('input_type_dorm'), ref('input_type_utilities'), ref('input_type_tools'), ref('input_type_uniform_ded'), ref('input_type_per_diem_ded'), ref('input_type_ded_other'), ref('input_type_sso_employer')])]"/>
+        </record>
+        <record id="rule_off_basic" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.BASIC"/>
+            <field name="name">เงินเดือน</field>
+            <field name="code">BASIC</field>
+            <field name="sequence">1</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_basic"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_basic"/>
+        </record>
+        <record id="rule_off_pay_adjust" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ตกหล่นเงินเดือน</field>
+            <field name="code">PAY_ADJUST</field>
+            <field name="sequence">4</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_pay_adjust"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_pay_adjust"/>
+        </record>
+        <record id="rule_off_ot_x1" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าล่วงเวลา x1</field>
+            <field name="code">OT_X1</field>
+            <field name="sequence">6</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_ot_x1"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_ot_x1"/>
+        </record>
+        <record id="rule_off_ot_x15" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าล่วงเวลา x1.5</field>
+            <field name="code">OT_X15</field>
+            <field name="sequence">8</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_ot_x15"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_ot_x15"/>
+        </record>
+        <record id="rule_off_ot_x2" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าล่วงเวลา x2</field>
+            <field name="code">OT_X2</field>
+            <field name="sequence">10</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_ot_x2"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_ot_x2"/>
+        </record>
+        <record id="rule_off_ot_x3" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าล่วงเวลา x3</field>
+            <field name="code">OT_X3</field>
+            <field name="sequence">12</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_ot_x3"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_ot_x3"/>
+        </record>
+        <record id="rule_off_ot" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าล่วงเวลา (ไม่ระบุอัตรา)</field>
+            <field name="code">OT</field>
+            <field name="sequence">14</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_ot"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_ot"/>
+        </record>
+        <record id="rule_off_position" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าตำแหน่ง</field>
+            <field name="code">POSITION</field>
+            <field name="sequence">16</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_position"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_position"/>
+        </record>
+        <record id="rule_off_professional" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าวิชาชีพ</field>
+            <field name="code">PROFESSIONAL</field>
+            <field name="sequence">18</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_professional"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_professional"/>
+        </record>
+        <record id="rule_off_professional_2" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าวิชาชีพ (2)</field>
+            <field name="code">PROFESSIONAL_2</field>
+            <field name="sequence">20</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_professional_2"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_professional_2"/>
+        </record>
+        <record id="rule_off_diligence" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">เบี้ยขยัน</field>
+            <field name="code">DILIGENCE</field>
+            <field name="sequence">22</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_diligence"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_diligence"/>
+        </record>
+        <record id="rule_off_diligence_extra" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">เบี้ยขยัน (เพิ่มเติม)</field>
+            <field name="code">DILIGENCE_EXTRA</field>
+            <field name="sequence">24</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_diligence_extra"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_diligence_extra"/>
+        </record>
+        <record id="rule_off_cost_living" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าครองชีพ</field>
+            <field name="code">COST_LIVING</field>
+            <field name="sequence">26</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_cost_living"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_cost_living"/>
+        </record>
+        <record id="rule_off_cost_living_sso" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าครองชีพ (SSO)</field>
+            <field name="code">COST_LIVING_SSO</field>
+            <field name="sequence">28</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_cost_living_sso"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_cost_living_sso"/>
+        </record>
+        <record id="rule_off_meal_ot" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าอาหาร</field>
+            <field name="code">MEAL_OT</field>
+            <field name="sequence">30</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_meal_ot"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_meal_ot"/>
+        </record>
+        <record id="rule_off_meal_fix" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าอาหาร (ฝังในประวัติ)</field>
+            <field name="code">MEAL_FIX</field>
+            <field name="sequence">32</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_meal_fix"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_meal_fix"/>
+        </record>
+        <record id="rule_off_transport" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าพาหนะ</field>
+            <field name="code">TRANSPORT</field>
+            <field name="sequence">34</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_transport"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_transport"/>
+        </record>
+        <record id="rule_off_house_rent" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าเช่าบ้าน</field>
+            <field name="code">HOUSE_RENT</field>
+            <field name="sequence">36</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_house_rent"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_house_rent"/>
+        </record>
+        <record id="rule_off_phone" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าโทรศัพท์</field>
+            <field name="code">PHONE</field>
+            <field name="sequence">38</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_phone"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_phone"/>
+        </record>
+        <record id="rule_off_per_diem" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">เบี้ยเลี้ยง</field>
+            <field name="code">PER_DIEM</field>
+            <field name="sequence">40</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_per_diem"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_per_diem"/>
+        </record>
+        <record id="rule_off_incentive" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">Incentive</field>
+            <field name="code">INCENTIVE</field>
+            <field name="sequence">42</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_incentive"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_incentive"/>
+        </record>
+        <record id="rule_off_piece_rate" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าแรงรายชิ้น</field>
+            <field name="code">PIECE_RATE</field>
+            <field name="sequence">44</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_piece_rate"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_piece_rate"/>
+        </record>
+        <record id="rule_off_bonus" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">โบนัส</field>
+            <field name="code">BONUS</field>
+            <field name="sequence">46</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_bonus"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_bonus"/>
+        </record>
+        <record id="rule_off_bonus_qtr" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">โบนัสไตรมาส</field>
+            <field name="code">BONUS_QTR</field>
+            <field name="sequence">48</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_bonus_qtr"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_bonus_qtr"/>
+        </record>
+        <record id="rule_off_leave_refund" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">คืนเงินพักร้อน</field>
+            <field name="code">LEAVE_REFUND</field>
+            <field name="sequence">50</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_leave_refund"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_leave_refund"/>
+        </record>
+        <record id="rule_off_welfare_adjust" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ตกหล่นสวัสดิการ</field>
+            <field name="code">WELFARE_ADJUST</field>
+            <field name="sequence">52</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_welfare_adjust"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_welfare_adjust"/>
+        </record>
+        <record id="rule_off_uniform_pay" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าชุดฟอร์ม (จ่ายให้)</field>
+            <field name="code">UNIFORM_PAY</field>
+            <field name="sequence">54</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_uniform_pay"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_uniform_pay"/>
+        </record>
+        <record id="rule_off_deposit_refund" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">คืนเงินประกันพนักงาน</field>
+            <field name="code">DEPOSIT_REFUND</field>
+            <field name="sequence">56</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_deposit_refund"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_deposit_refund"/>
+        </record>
+        <record id="rule_off_severance" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">เงินชดเชยการเลิกจ้าง</field>
+            <field name="code">SEVERANCE</field>
+            <field name="sequence">58</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_severance"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_severance"/>
+        </record>
+        <record id="rule_off_inc_other" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">เงินได้อื่น ๆ</field>
+            <field name="code">INC_OTHER</field>
+            <field name="sequence">60</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_inc_other"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_inc_other"/>
+        </record>
+        <record id="rule_off_gross" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.GROSS"/>
+            <field name="name">รวมรายได้</field>
+            <field name="code">GROSS</field>
+            <field name="sequence">100</field>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = categories['BASIC'] + categories['ALW']</field>
+        </record>
+        <record id="rule_off_sso" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักประกันสังคม</field>
+            <field name="code">SSO</field>
+            <field name="sequence">102</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_sso"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['SSO'].amount</field>
+        </record>
+        <record id="rule_off_tax" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักภาษีเงินได้ (ภงด.1)</field>
+            <field name="code">TAX</field>
+            <field name="sequence">104</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_tax"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['TAX'].amount</field>
+        </record>
+        <record id="rule_off_tax_prev_year" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักค่าภาษีปีที่แล้ว</field>
+            <field name="code">TAX_PREV_YEAR</field>
+            <field name="sequence">106</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_tax_prev_year"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['TAX_PREV_YEAR'].amount</field>
+        </record>
+        <record id="rule_off_student_loan" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หัก กยศ.</field>
+            <field name="code">STUDENT_LOAN</field>
+            <field name="sequence">108</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_student_loan"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['STUDENT_LOAN'].amount</field>
+        </record>
+        <record id="rule_off_absence" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักขาดงาน</field>
+            <field name="code">ABSENCE</field>
+            <field name="sequence">110</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_absence"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['ABSENCE'].amount</field>
+        </record>
+        <record id="rule_off_late" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักมาสาย</field>
+            <field name="code">LATE</field>
+            <field name="sequence">112</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_late"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['LATE'].amount</field>
+        </record>
+        <record id="rule_off_early_leave" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักกลับก่อนเวลา</field>
+            <field name="code">EARLY_LEAVE</field>
+            <field name="sequence">114</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_early_leave"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['EARLY_LEAVE'].amount</field>
+        </record>
+        <record id="rule_off_no_scan_in" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักไม่ตอกบัตรเข้า</field>
+            <field name="code">NO_SCAN_IN</field>
+            <field name="sequence">116</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_no_scan_in"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['NO_SCAN_IN'].amount</field>
+        </record>
+        <record id="rule_off_no_scan_out" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักไม่ตอกบัตรออก</field>
+            <field name="code">NO_SCAN_OUT</field>
+            <field name="sequence">118</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_no_scan_out"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['NO_SCAN_OUT'].amount</field>
+        </record>
+        <record id="rule_off_personal_leave" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักลากิจ</field>
+            <field name="code">PERSONAL_LEAVE</field>
+            <field name="sequence">120</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_personal_leave"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['PERSONAL_LEAVE'].amount</field>
+        </record>
+        <record id="rule_off_personal_leave_sp" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักลากิจ (พิเศษ)</field>
+            <field name="code">PERSONAL_LEAVE_SP</field>
+            <field name="sequence">122</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_personal_leave_sp"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['PERSONAL_LEAVE_SP'].amount</field>
+        </record>
+        <record id="rule_off_sick_no_cert" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักป่วยไม่มีใบแพทย์</field>
+            <field name="code">SICK_NO_CERT</field>
+            <field name="sequence">124</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_sick_no_cert"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['SICK_NO_CERT'].amount</field>
+        </record>
+        <record id="rule_off_sick_over_quota" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักลาป่วยเกินสิทธิ</field>
+            <field name="code">SICK_OVER_QUOTA</field>
+            <field name="sequence">126</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_sick_over_quota"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['SICK_OVER_QUOTA'].amount</field>
+        </record>
+        <record id="rule_off_maternity" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักลาคลอด</field>
+            <field name="code">MATERNITY</field>
+            <field name="sequence">128</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_maternity"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['MATERNITY'].amount</field>
+        </record>
+        <record id="rule_off_ordination" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักลาบวช</field>
+            <field name="code">ORDINATION</field>
+            <field name="sequence">130</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_ordination"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['ORDINATION'].amount</field>
+        </record>
+        <record id="rule_off_company_leave" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักลาตามเงื่อนไขบริษัท</field>
+            <field name="code">COMPANY_LEAVE</field>
+            <field name="sequence">132</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_company_leave"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['COMPANY_LEAVE'].amount</field>
+        </record>
+        <record id="rule_off_salary_cut_25" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักเงินเดือน 25%</field>
+            <field name="code">SALARY_CUT_25</field>
+            <field name="sequence">134</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_salary_cut_25"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['SALARY_CUT_25'].amount</field>
+        </record>
+        <record id="rule_off_suspend" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักพักงาน</field>
+            <field name="code">SUSPEND</field>
+            <field name="sequence">136</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_suspend"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['SUSPEND'].amount</field>
+        </record>
+        <record id="rule_off_suspend_tax" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักพักงาน (คิดภาษี)</field>
+            <field name="code">SUSPEND_TAX</field>
+            <field name="sequence">138</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_suspend_tax"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['SUSPEND_TAX'].amount</field>
+        </record>
+        <record id="rule_off_advance" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักเงินเบิกล่วงหน้า</field>
+            <field name="code">ADVANCE</field>
+            <field name="sequence">140</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_advance"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['ADVANCE'].amount</field>
+        </record>
+        <record id="rule_off_loan" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักเงินกู้</field>
+            <field name="code">LOAN</field>
+            <field name="sequence">142</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_loan"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['LOAN'].amount</field>
+        </record>
+        <record id="rule_off_loan_int" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักดอกเบี้ยเงินกู้</field>
+            <field name="code">LOAN_INT</field>
+            <field name="sequence">144</field>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = 'LOAN_INT' in inputs</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['LOAN_INT'].amount</field>
+        </record>
+        <record id="rule_off_guarantee" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักเงินค้ำประกันพนักงาน</field>
+            <field name="code">GUARANTEE</field>
+            <field name="sequence">146</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_guarantee"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['GUARANTEE'].amount</field>
+        </record>
+        <record id="rule_off_dorm" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักค่าหอพัก</field>
+            <field name="code">DORM</field>
+            <field name="sequence">148</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_dorm"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['DORM'].amount</field>
+        </record>
+        <record id="rule_off_utilities" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักน้ำ/ไฟ/โทรศัพท์</field>
+            <field name="code">UTILITIES</field>
+            <field name="sequence">150</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_utilities"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['UTILITIES'].amount</field>
+        </record>
+        <record id="rule_off_tools" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักค่าเครื่องมือ</field>
+            <field name="code">TOOLS</field>
+            <field name="sequence">152</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_tools"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['TOOLS'].amount</field>
+        </record>
+        <record id="rule_off_uniform_ded" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักค่าเครื่องแบบ</field>
+            <field name="code">UNIFORM_DED</field>
+            <field name="sequence">154</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_uniform_ded"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['UNIFORM_DED'].amount</field>
+        </record>
+        <record id="rule_off_per_diem_ded" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักเบี้ยเลี้ยง (จ่ายล่วงหน้า)</field>
+            <field name="code">PER_DIEM_DED</field>
+            <field name="sequence">156</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_per_diem_ded"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['PER_DIEM_DED'].amount</field>
+        </record>
+        <record id="rule_off_ded_other" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักอื่น ๆ</field>
+            <field name="code">DED_OTHER</field>
+            <field name="sequence">158</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_ded_other"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['DED_OTHER'].amount</field>
+        </record>
+        <record id="rule_off_sso_employer" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.COMP"/>
+            <field name="name">สมทบประกันสังคม (นายจ้าง)</field>
+            <field name="code">SSO_EMPLOYER</field>
+            <field name="sequence">190</field>
+            <field name="appears_on_payslip" eval="False"/>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_sso_employer"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_sso_employer"/>
+        </record>
+        <record id="rule_off_net" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_office"/>
+            <field name="category_id" ref="hr_payroll.NET"/>
+            <field name="name">เงินได้สุทธิ</field>
+            <field name="code">NET</field>
+            <field name="sequence">200</field>
+            <field name="appears_on_employee_cost_dashboard" eval="True"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = categories['BASIC'] + categories['ALW'] + categories['DED']</field>
+        </record>
+        <record id="structure_type_office" model="hr.payroll.structure.type">
+            <field name="default_struct_id" ref="structure_office"/>
+        </record>
+        <record id="structure_type_executive" model="hr.payroll.structure.type">
+            <field name="name">ผู้บริหาร (Legacy Import)</field>
+            <field name="country_id" eval="False"/>
+        </record>
+        <record id="structure_executive" model="hr.payroll.structure">
+            <field name="name">เงินเดือน - ผู้บริหาร (Legacy Import)</field>
+            <field name="type_id" ref="structure_type_executive"/>
+            <field name="country_id" eval="False"/>
+            <field name="use_worked_day_lines" eval="False"/>
+            <field name="rule_ids" eval="[(5, 0, 0)]"/>
+            <field name="input_line_type_ids" eval="[(6, 0, [ref('input_type_basic'), ref('input_type_pay_adjust'), ref('input_type_ot_x1'), ref('input_type_ot_x15'), ref('input_type_ot_x2'), ref('input_type_ot_x3'), ref('input_type_ot'), ref('input_type_position'), ref('input_type_professional'), ref('input_type_professional_2'), ref('input_type_diligence'), ref('input_type_diligence_extra'), ref('input_type_cost_living'), ref('input_type_cost_living_sso'), ref('input_type_meal_ot'), ref('input_type_meal_fix'), ref('input_type_transport'), ref('input_type_house_rent'), ref('input_type_phone'), ref('input_type_per_diem'), ref('input_type_incentive'), ref('input_type_piece_rate'), ref('input_type_bonus'), ref('input_type_bonus_qtr'), ref('input_type_leave_refund'), ref('input_type_welfare_adjust'), ref('input_type_uniform_pay'), ref('input_type_deposit_refund'), ref('input_type_severance'), ref('input_type_inc_other'), ref('input_type_sso'), ref('input_type_tax'), ref('input_type_tax_prev_year'), ref('input_type_student_loan'), ref('input_type_absence'), ref('input_type_late'), ref('input_type_early_leave'), ref('input_type_no_scan_in'), ref('input_type_no_scan_out'), ref('input_type_personal_leave'), ref('input_type_personal_leave_sp'), ref('input_type_sick_no_cert'), ref('input_type_sick_over_quota'), ref('input_type_maternity'), ref('input_type_ordination'), ref('input_type_company_leave'), ref('input_type_salary_cut_25'), ref('input_type_suspend'), ref('input_type_suspend_tax'), ref('input_type_advance'), ref('input_type_loan'), ref('input_type_guarantee'), ref('input_type_dorm'), ref('input_type_utilities'), ref('input_type_tools'), ref('input_type_uniform_ded'), ref('input_type_per_diem_ded'), ref('input_type_ded_other'), ref('input_type_sso_employer')])]"/>
+        </record>
+        <record id="rule_exe_basic" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.BASIC"/>
+            <field name="name">เงินเดือน</field>
+            <field name="code">BASIC</field>
+            <field name="sequence">1</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_basic"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_basic"/>
+        </record>
+        <record id="rule_exe_pay_adjust" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ตกหล่นเงินเดือน</field>
+            <field name="code">PAY_ADJUST</field>
+            <field name="sequence">4</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_pay_adjust"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_pay_adjust"/>
+        </record>
+        <record id="rule_exe_ot_x1" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าล่วงเวลา x1</field>
+            <field name="code">OT_X1</field>
+            <field name="sequence">6</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_ot_x1"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_ot_x1"/>
+        </record>
+        <record id="rule_exe_ot_x15" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าล่วงเวลา x1.5</field>
+            <field name="code">OT_X15</field>
+            <field name="sequence">8</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_ot_x15"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_ot_x15"/>
+        </record>
+        <record id="rule_exe_ot_x2" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าล่วงเวลา x2</field>
+            <field name="code">OT_X2</field>
+            <field name="sequence">10</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_ot_x2"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_ot_x2"/>
+        </record>
+        <record id="rule_exe_ot_x3" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าล่วงเวลา x3</field>
+            <field name="code">OT_X3</field>
+            <field name="sequence">12</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_ot_x3"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_ot_x3"/>
+        </record>
+        <record id="rule_exe_ot" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าล่วงเวลา (ไม่ระบุอัตรา)</field>
+            <field name="code">OT</field>
+            <field name="sequence">14</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_ot"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_ot"/>
+        </record>
+        <record id="rule_exe_position" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าตำแหน่ง</field>
+            <field name="code">POSITION</field>
+            <field name="sequence">16</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_position"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_position"/>
+        </record>
+        <record id="rule_exe_professional" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าวิชาชีพ</field>
+            <field name="code">PROFESSIONAL</field>
+            <field name="sequence">18</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_professional"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_professional"/>
+        </record>
+        <record id="rule_exe_professional_2" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าวิชาชีพ (2)</field>
+            <field name="code">PROFESSIONAL_2</field>
+            <field name="sequence">20</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_professional_2"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_professional_2"/>
+        </record>
+        <record id="rule_exe_diligence" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">เบี้ยขยัน</field>
+            <field name="code">DILIGENCE</field>
+            <field name="sequence">22</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_diligence"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_diligence"/>
+        </record>
+        <record id="rule_exe_diligence_extra" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">เบี้ยขยัน (เพิ่มเติม)</field>
+            <field name="code">DILIGENCE_EXTRA</field>
+            <field name="sequence">24</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_diligence_extra"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_diligence_extra"/>
+        </record>
+        <record id="rule_exe_cost_living" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าครองชีพ</field>
+            <field name="code">COST_LIVING</field>
+            <field name="sequence">26</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_cost_living"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_cost_living"/>
+        </record>
+        <record id="rule_exe_cost_living_sso" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าครองชีพ (SSO)</field>
+            <field name="code">COST_LIVING_SSO</field>
+            <field name="sequence">28</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_cost_living_sso"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_cost_living_sso"/>
+        </record>
+        <record id="rule_exe_meal_ot" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าอาหาร</field>
+            <field name="code">MEAL_OT</field>
+            <field name="sequence">30</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_meal_ot"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_meal_ot"/>
+        </record>
+        <record id="rule_exe_meal_fix" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าอาหาร (ฝังในประวัติ)</field>
+            <field name="code">MEAL_FIX</field>
+            <field name="sequence">32</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_meal_fix"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_meal_fix"/>
+        </record>
+        <record id="rule_exe_transport" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าพาหนะ</field>
+            <field name="code">TRANSPORT</field>
+            <field name="sequence">34</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_transport"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_transport"/>
+        </record>
+        <record id="rule_exe_house_rent" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าเช่าบ้าน</field>
+            <field name="code">HOUSE_RENT</field>
+            <field name="sequence">36</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_house_rent"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_house_rent"/>
+        </record>
+        <record id="rule_exe_phone" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าโทรศัพท์</field>
+            <field name="code">PHONE</field>
+            <field name="sequence">38</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_phone"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_phone"/>
+        </record>
+        <record id="rule_exe_per_diem" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">เบี้ยเลี้ยง</field>
+            <field name="code">PER_DIEM</field>
+            <field name="sequence">40</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_per_diem"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_per_diem"/>
+        </record>
+        <record id="rule_exe_incentive" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">Incentive</field>
+            <field name="code">INCENTIVE</field>
+            <field name="sequence">42</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_incentive"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_incentive"/>
+        </record>
+        <record id="rule_exe_piece_rate" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าแรงรายชิ้น</field>
+            <field name="code">PIECE_RATE</field>
+            <field name="sequence">44</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_piece_rate"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_piece_rate"/>
+        </record>
+        <record id="rule_exe_bonus" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">โบนัส</field>
+            <field name="code">BONUS</field>
+            <field name="sequence">46</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_bonus"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_bonus"/>
+        </record>
+        <record id="rule_exe_bonus_qtr" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">โบนัสไตรมาส</field>
+            <field name="code">BONUS_QTR</field>
+            <field name="sequence">48</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_bonus_qtr"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_bonus_qtr"/>
+        </record>
+        <record id="rule_exe_leave_refund" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">คืนเงินพักร้อน</field>
+            <field name="code">LEAVE_REFUND</field>
+            <field name="sequence">50</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_leave_refund"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_leave_refund"/>
+        </record>
+        <record id="rule_exe_welfare_adjust" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ตกหล่นสวัสดิการ</field>
+            <field name="code">WELFARE_ADJUST</field>
+            <field name="sequence">52</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_welfare_adjust"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_welfare_adjust"/>
+        </record>
+        <record id="rule_exe_uniform_pay" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าชุดฟอร์ม (จ่ายให้)</field>
+            <field name="code">UNIFORM_PAY</field>
+            <field name="sequence">54</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_uniform_pay"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_uniform_pay"/>
+        </record>
+        <record id="rule_exe_deposit_refund" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">คืนเงินประกันพนักงาน</field>
+            <field name="code">DEPOSIT_REFUND</field>
+            <field name="sequence">56</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_deposit_refund"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_deposit_refund"/>
+        </record>
+        <record id="rule_exe_severance" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">เงินชดเชยการเลิกจ้าง</field>
+            <field name="code">SEVERANCE</field>
+            <field name="sequence">58</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_severance"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_severance"/>
+        </record>
+        <record id="rule_exe_inc_other" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">เงินได้อื่น ๆ</field>
+            <field name="code">INC_OTHER</field>
+            <field name="sequence">60</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_inc_other"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_inc_other"/>
+        </record>
+        <record id="rule_exe_gross" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.GROSS"/>
+            <field name="name">รวมรายได้</field>
+            <field name="code">GROSS</field>
+            <field name="sequence">100</field>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = categories['BASIC'] + categories['ALW']</field>
+        </record>
+        <record id="rule_exe_sso" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักประกันสังคม</field>
+            <field name="code">SSO</field>
+            <field name="sequence">102</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_sso"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['SSO'].amount</field>
+        </record>
+        <record id="rule_exe_tax" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักภาษีเงินได้ (ภงด.1)</field>
+            <field name="code">TAX</field>
+            <field name="sequence">104</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_tax"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['TAX'].amount</field>
+        </record>
+        <record id="rule_exe_tax_prev_year" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักค่าภาษีปีที่แล้ว</field>
+            <field name="code">TAX_PREV_YEAR</field>
+            <field name="sequence">106</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_tax_prev_year"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['TAX_PREV_YEAR'].amount</field>
+        </record>
+        <record id="rule_exe_student_loan" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หัก กยศ.</field>
+            <field name="code">STUDENT_LOAN</field>
+            <field name="sequence">108</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_student_loan"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['STUDENT_LOAN'].amount</field>
+        </record>
+        <record id="rule_exe_absence" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักขาดงาน</field>
+            <field name="code">ABSENCE</field>
+            <field name="sequence">110</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_absence"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['ABSENCE'].amount</field>
+        </record>
+        <record id="rule_exe_late" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักมาสาย</field>
+            <field name="code">LATE</field>
+            <field name="sequence">112</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_late"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['LATE'].amount</field>
+        </record>
+        <record id="rule_exe_early_leave" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักกลับก่อนเวลา</field>
+            <field name="code">EARLY_LEAVE</field>
+            <field name="sequence">114</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_early_leave"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['EARLY_LEAVE'].amount</field>
+        </record>
+        <record id="rule_exe_no_scan_in" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักไม่ตอกบัตรเข้า</field>
+            <field name="code">NO_SCAN_IN</field>
+            <field name="sequence">116</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_no_scan_in"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['NO_SCAN_IN'].amount</field>
+        </record>
+        <record id="rule_exe_no_scan_out" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักไม่ตอกบัตรออก</field>
+            <field name="code">NO_SCAN_OUT</field>
+            <field name="sequence">118</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_no_scan_out"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['NO_SCAN_OUT'].amount</field>
+        </record>
+        <record id="rule_exe_personal_leave" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักลากิจ</field>
+            <field name="code">PERSONAL_LEAVE</field>
+            <field name="sequence">120</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_personal_leave"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['PERSONAL_LEAVE'].amount</field>
+        </record>
+        <record id="rule_exe_personal_leave_sp" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักลากิจ (พิเศษ)</field>
+            <field name="code">PERSONAL_LEAVE_SP</field>
+            <field name="sequence">122</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_personal_leave_sp"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['PERSONAL_LEAVE_SP'].amount</field>
+        </record>
+        <record id="rule_exe_sick_no_cert" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักป่วยไม่มีใบแพทย์</field>
+            <field name="code">SICK_NO_CERT</field>
+            <field name="sequence">124</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_sick_no_cert"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['SICK_NO_CERT'].amount</field>
+        </record>
+        <record id="rule_exe_sick_over_quota" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักลาป่วยเกินสิทธิ</field>
+            <field name="code">SICK_OVER_QUOTA</field>
+            <field name="sequence">126</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_sick_over_quota"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['SICK_OVER_QUOTA'].amount</field>
+        </record>
+        <record id="rule_exe_maternity" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักลาคลอด</field>
+            <field name="code">MATERNITY</field>
+            <field name="sequence">128</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_maternity"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['MATERNITY'].amount</field>
+        </record>
+        <record id="rule_exe_ordination" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักลาบวช</field>
+            <field name="code">ORDINATION</field>
+            <field name="sequence">130</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_ordination"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['ORDINATION'].amount</field>
+        </record>
+        <record id="rule_exe_company_leave" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักลาตามเงื่อนไขบริษัท</field>
+            <field name="code">COMPANY_LEAVE</field>
+            <field name="sequence">132</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_company_leave"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['COMPANY_LEAVE'].amount</field>
+        </record>
+        <record id="rule_exe_salary_cut_25" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักเงินเดือน 25%</field>
+            <field name="code">SALARY_CUT_25</field>
+            <field name="sequence">134</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_salary_cut_25"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['SALARY_CUT_25'].amount</field>
+        </record>
+        <record id="rule_exe_suspend" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักพักงาน</field>
+            <field name="code">SUSPEND</field>
+            <field name="sequence">136</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_suspend"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['SUSPEND'].amount</field>
+        </record>
+        <record id="rule_exe_suspend_tax" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักพักงาน (คิดภาษี)</field>
+            <field name="code">SUSPEND_TAX</field>
+            <field name="sequence">138</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_suspend_tax"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['SUSPEND_TAX'].amount</field>
+        </record>
+        <record id="rule_exe_advance" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักเงินเบิกล่วงหน้า</field>
+            <field name="code">ADVANCE</field>
+            <field name="sequence">140</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_advance"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['ADVANCE'].amount</field>
+        </record>
+        <record id="rule_exe_loan" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักเงินกู้</field>
+            <field name="code">LOAN</field>
+            <field name="sequence">142</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_loan"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['LOAN'].amount</field>
+        </record>
+        <record id="rule_exe_loan_int" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักดอกเบี้ยเงินกู้</field>
+            <field name="code">LOAN_INT</field>
+            <field name="sequence">144</field>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = 'LOAN_INT' in inputs</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['LOAN_INT'].amount</field>
+        </record>
+        <record id="rule_exe_guarantee" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักเงินค้ำประกันพนักงาน</field>
+            <field name="code">GUARANTEE</field>
+            <field name="sequence">146</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_guarantee"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['GUARANTEE'].amount</field>
+        </record>
+        <record id="rule_exe_dorm" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักค่าหอพัก</field>
+            <field name="code">DORM</field>
+            <field name="sequence">148</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_dorm"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['DORM'].amount</field>
+        </record>
+        <record id="rule_exe_utilities" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักน้ำ/ไฟ/โทรศัพท์</field>
+            <field name="code">UTILITIES</field>
+            <field name="sequence">150</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_utilities"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['UTILITIES'].amount</field>
+        </record>
+        <record id="rule_exe_tools" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักค่าเครื่องมือ</field>
+            <field name="code">TOOLS</field>
+            <field name="sequence">152</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_tools"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['TOOLS'].amount</field>
+        </record>
+        <record id="rule_exe_uniform_ded" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักค่าเครื่องแบบ</field>
+            <field name="code">UNIFORM_DED</field>
+            <field name="sequence">154</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_uniform_ded"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['UNIFORM_DED'].amount</field>
+        </record>
+        <record id="rule_exe_per_diem_ded" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักเบี้ยเลี้ยง (จ่ายล่วงหน้า)</field>
+            <field name="code">PER_DIEM_DED</field>
+            <field name="sequence">156</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_per_diem_ded"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['PER_DIEM_DED'].amount</field>
+        </record>
+        <record id="rule_exe_ded_other" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">หักอื่น ๆ</field>
+            <field name="code">DED_OTHER</field>
+            <field name="sequence">158</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_ded_other"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['DED_OTHER'].amount</field>
+        </record>
+        <record id="rule_exe_sso_employer" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.COMP"/>
+            <field name="name">สมทบประกันสังคม (นายจ้าง)</field>
+            <field name="code">SSO_EMPLOYER</field>
+            <field name="sequence">190</field>
+            <field name="appears_on_payslip" eval="False"/>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_sso_employer"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_sso_employer"/>
+        </record>
+        <record id="rule_exe_net" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_executive"/>
+            <field name="category_id" ref="hr_payroll.NET"/>
+            <field name="name">เงินได้สุทธิ</field>
+            <field name="code">NET</field>
+            <field name="sequence">200</field>
+            <field name="appears_on_employee_cost_dashboard" eval="True"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = categories['BASIC'] + categories['ALW'] + categories['DED']</field>
+        </record>
+        <record id="structure_type_executive" model="hr.payroll.structure.type">
+            <field name="default_struct_id" ref="structure_executive"/>
+        </record>
+    </data>
+</odoo>

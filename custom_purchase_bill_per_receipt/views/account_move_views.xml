@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_move_form_bill_per_receipt" model="ir.ui.view">
+        <field name="name">account.move.form.bill.per.receipt</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_receipt_pickings"
+                    type="object"
+                    class="oe_stat_button"
+                    icon="fa-truck"
+                    invisible="receipt_picking_count == 0">
+                    <field name="receipt_picking_count" widget="statinfo" string="ใบรับสินค้า"/>
+                </button>
+            </xpath>
+            <xpath expr="//field[@name='payment_reference']" position="after">
+                <field name="receipt_picking_ids" widget="many2many_tags"
+                    invisible="not receipt_picking_ids"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

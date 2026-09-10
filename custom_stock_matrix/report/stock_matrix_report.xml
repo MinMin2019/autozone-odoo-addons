@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_smx" model="report.paperformat">
+        <field name="name">A4 Landscape Stock Matrix</field>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">8</field>
+        <field name="margin_bottom">8</field>
+        <field name="margin_left">5</field>
+        <field name="margin_right">5</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_stock_matrix" model="ir.actions.report">
+        <field name="name">Stock Matrix (สินค้า × สาขา)</field>
+        <field name="model">stock.matrix.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">custom_stock_matrix.report_smx_template</field>
+        <field name="report_file">custom_stock_matrix.report_smx_template</field>
+        <field name="print_report_name">'StockMatrix %s' % (object.date_to)</field>
+        <field name="paperformat_id" ref="paperformat_smx"/>
+    </record>
+
+    <template id="report_smx_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <style>
+                        .header, .footer { display: none !important; }
+                        .page { font-family: Sarabun, sans-serif; font-size: 9px; color: #000; }
+                        h3.mx-title { font-size: 14px; font-weight: bold; margin: 0 0 2px 0; }
+                        .mx-sub { margin-bottom: 6px; font-size: 10px; }
+                        table.mx { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+                        table.mx th, table.mx td { border: 1px solid #666; padding: 1px 2px; vertical-align: top; }
+                        table.mx th { background: #e6e6e6; text-align: center; font-weight: bold; }
+                        table.mx td.num { text-align: right; white-space: nowrap; }
+                        table.mx td.tot, table.mx tr.tot td { background: #e4f1dc; font-weight: bold; }
+                        .neg { color: #b00000; }
+                        .pb { page-break-before: always; }
+                    </style>
+                    <div class="page">
+                        <t t-set="rows" t-value="o.matrix_rows()"/>
+                        <t t-set="chunks" t-value="o.warehouse_chunks()"/>
+                        <t t-foreach="chunks" t-as="whs">
+                            <div t-att-class="'pb' if not whs_first else ''">
+                                <h3 class="mx-title"><t t-esc="o.company_id.name"/> — Stock Matrix สินค้า × สาขา (<t t-esc="'จำนวน' if o.measure == 'qty' else 'มูลค่า'"/>)</h3>
+                                <div class="mx-sub">ณ วันที่ <t t-esc="o.thai_date(o.date_to)"/> &#160;|&#160; สาขาชุดที่ <t t-esc="whs_index + 1"/>/<t t-esc="len(chunks)"/>
+                                    &#160;|&#160; <t t-esc="len(rows)"/> สินค้า &#160;|&#160; คอลัมน์ "รวม" = รวมทุกสาขาในรายงาน (ไม่ใช่เฉพาะชุดนี้)</div>
+                                <table class="mx">
+                                    <thead>
+                                        <tr>
+                                            <th style="width:9%">รหัส</th>
+                                            <th>สินค้า</th>
+                                            <th style="width:4%">หน่วย</th>
+                                            <t t-foreach="whs" t-as="w"><th style="width:5.2%"><t t-esc="w.name"/></th></t>
+                                            <th style="width:6%">รวม</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-set="col_tot" t-value="o.column_totals()"/>
+                                        <t t-set="grand" t-value="sum(r['total'] for r in rows)"/>
+                                        <tr t-foreach="rows" t-as="r">
+                                            <td><t t-esc="r['code']"/></td>
+                                            <td><t t-esc="r['name']"/></td>
+                                            <td><t t-esc="r['uom']"/></td>
+                                            <t t-foreach="whs" t-as="w">
+                                                <t t-set="v" t-value="r['cells'].get(w.id, 0.0)"/>
+                                                <td t-att-class="'num neg' if v &lt; 0 else 'num'"><t t-esc="'{:,.0f}'.format(v) if (v and o.measure == 'qty' and v == int(v)) else ('{:,.2f}'.format(v) if v else '')"/></td>
+                                            </t>
+                                            <td class="num tot"><t t-esc="'{:,.2f}'.format(r['total'])"/></td>
+                                        </tr>
+                                        <tr class="tot">
+                                            <td colspan="3">รวม</td>
+                                            <t t-foreach="whs" t-as="w"><td class="num"><t t-esc="'{:,.2f}'.format(col_tot.get(w.id, 0.0))"/></td></t>
+                                            <td class="num"><t t-esc="'{:,.2f}'.format(grand)"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

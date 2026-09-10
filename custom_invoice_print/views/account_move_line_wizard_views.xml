@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Wizard Form -->
+        <record id="view_account_move_line_long_desc_wizard_form" model="ir.ui.view">
+            <field name="name">account.move.line.long.desc.wizard.form</field>
+            <field name="model">account.move.line.long.desc.wizard</field>
+            <field name="arch" type="xml">
+                <form string="รายละเอียดเต็ม">
+                    <group>
+                        <field name="move_line_id" invisible="1"/>
+                        <field name="x_custom_name_long"
+                               widget="text"
+                               nolabel="1"
+                               placeholder="พิมพ์รายละเอียดเต็มหลายบรรทัด เช่น 1 VIN ต่อ 1 บรรทัด"/>
+                    </group>
+                    <footer>
+                        <button name="action_apply" type="object" string="บันทึก" class="btn-primary"/>
+                        <button string="ยกเลิก" special="cancel" class="btn-secondary"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <!-- Add button in invoice line list -->
+        <record id="view_move_form_inherit_long_desc_button" model="ir.ui.view">
+            <field name="name">account.move.form.inherit.long.desc.button</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_move_form"/>
+            <field name="arch" type="xml">
+
+                <xpath expr="//field[@name='invoice_line_ids']//list//field[@name='x_custom_name']" position="after">
+                    <button name="action_open_long_desc_wizard"
+                            type="object"
+                            string="Details"
+                            icon="fa-pencil-square-o"
+                            class="btn-link o_long_desc_btn"
+                            column_invisible="parent.move_type != 'out_invoice'"/>
+                </xpath>
+
+            </field>
+        </record>
+
+    </data>
+</odoo>

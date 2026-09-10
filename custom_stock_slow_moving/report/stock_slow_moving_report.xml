@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_ssm" model="report.paperformat">
+        <field name="name">A4 Landscape Slow Moving</field>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">10</field>
+        <field name="margin_bottom">10</field>
+        <field name="margin_left">7</field>
+        <field name="margin_right">7</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_stock_slow_moving" model="ir.actions.report">
+        <field name="name">สินค้าเคลื่อนไหวช้า (Slow / Dead Stock)</field>
+        <field name="model">stock.slow.moving.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">custom_stock_slow_moving.report_ssm_template</field>
+        <field name="report_file">custom_stock_slow_moving.report_ssm_template</field>
+        <field name="print_report_name">'SlowMoving %s' % (object.date_to)</field>
+        <field name="paperformat_id" ref="paperformat_ssm"/>
+    </record>
+
+    <template id="report_ssm_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <style>
+                        .header, .footer { display: none !important; }
+                        .page { font-family: Sarabun, sans-serif; font-size: 10.5px; color: #000; }
+                        h3.sm-title { font-size: 16px; font-weight: bold; margin: 0 0 2px 0; }
+                        .sm-sub { margin-bottom: 8px; }
+                        table.sm { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+                        table.sm th, table.sm td { border: 1px solid #555; padding: 2px 3px; vertical-align: top; }
+                        table.sm th { background: #e6e6e6; text-align: center; font-weight: bold; }
+                        table.sm td.num { text-align: right; white-space: nowrap; }
+                        table.sm tr.grp td { background: #dde8f5; font-weight: bold; }
+                        table.sm tr.tot td { background: #c9dfc0; font-weight: bold; }
+                        .dead { color: #b00000; font-weight: bold; }
+                        .slow { color: #a35c00; font-weight: bold; }
+                        table.sm.small { width: 70%; }
+                    </style>
+                    <div class="page">
+                        <t t-set="t" t-value="o.total_summary()"/>
+                        <h3 class="sm-title"><t t-esc="o.company_id.name"/></h3>
+                        <div class="sm-sub">
+                            <b>สินค้าเคลื่อนไหวช้า / ไม่เคลื่อนไหว</b> ณ <t t-esc="o.thai_date(o.date_to)"/>
+                            &#160;|&#160; Dead = ไม่ได้ใช้เกิน <t t-esc="o.dead_days"/> วัน
+                            &#160;|&#160; Slow = พอใช้เกิน <t t-esc="'{:.1f}'.format(o.slow_months)"/> เดือน
+                            &#160;|&#160; ค่าเฉลี่ยจากย้อนหลัง <t t-esc="o.lookback_days"/> วัน<t t-if="o.effective_days and o.effective_days &lt; o.lookback_days"> (มีข้อมูลจริง <t t-esc="o.effective_days"/> วัน)</t>
+                            <t t-if="o.group_all"> &#160;|&#160; รวมทุกสาขา</t>
+                        </div>
+
+                        <table class="sm small">
+                            <thead>
+                                <tr><th>สาขา</th><th>Dead (รายการ)</th><th>Dead (มูลค่า)</th><th>Slow (รายการ)</th><th>Slow (มูลค่า)</th>
+                                    <th>Normal (รายการ)</th><th>Normal (มูลค่า)</th><th>รวม (มูลค่า)</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.warehouse_summary()" t-as="g">
+                                    <td><t t-esc="g[0].name if g[0] else 'ทุกสาขา'"/></td>
+                                    <td class="num"><t t-esc="g[2]['dead'][0]"/></td>
+                                    <td class="num dead"><t t-esc="'{:,.2f}'.format(g[2]['dead'][1])"/></td>
+                                    <td class="num"><t t-esc="g[2]['slow'][0]"/></td>
+                                    <td class="num slow"><t t-esc="'{:,.2f}'.format(g[2]['slow'][1])"/></td>
+                                    <td class="num"><t t-esc="g[2]['normal'][0]"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(g[2]['normal'][1])"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(g[2]['total'][1])"/></td>
+                                </tr>
+                                <tr class="tot">
+                                    <td>รวม</td>
+                                    <td class="num"><t t-esc="t['dead'][0]"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(t['dead'][1])"/></td>
+                                    <td class="num"><t t-esc="t['slow'][0]"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(t['slow'][1])"/></td>
+                                    <td class="num"><t t-esc="t['normal'][0]"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(t['normal'][1])"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(t['total'][1])"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <table class="sm">
+                            <thead>
+                                <tr>
+                                    <th style="width:9%">รหัส</th>
+                                    <th>สินค้า</th>
+                                    <th style="width:5%">หน่วย</th>
+                                    <th style="width:5%">ชั้น</th>
+                                    <th style="width:6%">คงเหลือ</th>
+                                    <th style="width:8%">มูลค่า</th>
+                                    <th style="width:7%">ใช้ล่าสุด</th>
+                                    <th style="width:5%">ไม่ได้ใช้ (วัน)</th>
+                                    <th style="width:6%">ใช้ 90 วัน</th>
+                                    <th style="width:6%">ใช้ 365 วัน</th>
+                                    <th style="width:6%">เฉลี่ย/เดือน</th>
+                                    <th style="width:6%">พอใช้ (เดือน)</th>
+                                    <th style="width:16%">สาขาที่ยังใช้ (90 วัน)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="o.warehouse_summary()" t-as="g">
+                                    <tr class="grp"><td colspan="13"><t t-esc="g[0].name if g[0] else 'ทุกสาขา'"/> (Dead <t t-esc="'{:,.2f}'.format(g[2]['dead'][1])"/> / Slow <t t-esc="'{:,.2f}'.format(g[2]['slow'][1])"/>)</td></tr>
+                                    <tr t-foreach="g[1]" t-as="l">
+                                        <td><t t-esc="l.default_code"/></td>
+                                        <td><t t-esc="l.product_name"/></td>
+                                        <td><t t-esc="l.uom_id.name"/></td>
+                                        <td t-att-class="l.classification"><t t-esc="l.classification.upper()"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.qty)"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.value)"/></td>
+                                        <td><t t-esc="o.thai_date(l.last_out_date) or '-'"/></td>
+                                        <td class="num"><t t-esc="l.days_no_use"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.use_90)"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.use_365)"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.avg_monthly)"/></td>
+                                        <td class="num"><t t-esc="'ไม่มีการใช้' if l.no_usage else '{:,.1f}'.format(l.months_cover)"/></td>
+                                        <td><t t-esc="l.other_users"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

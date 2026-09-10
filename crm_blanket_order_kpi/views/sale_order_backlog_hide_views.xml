@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <!--
+      Bridge with sale_service_remaining_qty: the "Remaining" / "Add Delivered"
+      columns are meaningless on a contract-source quotation (it is never
+      confirmed/delivered), so hide them there to avoid confusion. Execution is
+      tracked on the Blanket Order -> SO Release instead.
+      Remove this file + the sale_service_remaining_qty dependency if that module
+      is not installed.
+    -->
+    <record id="view_order_form_hide_backlog_contract_source" model="ir.ui.view">
+        <field name="name">sale.order.form.hide.backlog.contract.source</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form" />
+        <field name="priority">50</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='order_line']/list/field[@name='x_remaining_qty']" position="attributes">
+                <attribute name="column_invisible">parent.is_contract_source</attribute>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/list/field[@name='x_delivered_add_qty']" position="attributes">
+                <attribute name="column_invisible">parent.is_contract_source</attribute>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/list/button[@name='action_add_delivered_qty']" position="attributes">
+                <attribute name="column_invisible">parent.is_contract_source</attribute>
+                <attribute name="title">Add Delivered</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

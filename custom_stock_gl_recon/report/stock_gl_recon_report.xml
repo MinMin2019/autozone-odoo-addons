@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_sgr" model="report.paperformat">
+        <field name="name">A4 Landscape Stock GL Recon</field>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">10</field>
+        <field name="margin_bottom">10</field>
+        <field name="margin_left">7</field>
+        <field name="margin_right">7</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_stock_gl_recon" model="ir.actions.report">
+        <field name="name">กระทบยอดสต็อกกับบัญชี</field>
+        <field name="model">stock.gl.recon.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">custom_stock_gl_recon.report_sgr_template</field>
+        <field name="report_file">custom_stock_gl_recon.report_sgr_template</field>
+        <field name="print_report_name">'StockGLRecon %s' % (object.date_to)</field>
+        <field name="paperformat_id" ref="paperformat_sgr"/>
+    </record>
+
+    <template id="report_sgr_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <style>
+                        .header, .footer { display: none !important; }
+                        .page { font-family: Sarabun, sans-serif; font-size: 11px; color: #000; }
+                        h3.sg-title { font-size: 16px; font-weight: bold; margin: 0 0 2px 0; }
+                        h4.sg-sec { font-size: 13px; font-weight: bold; margin: 12px 0 4px 0; border-left: 4px solid #444; padding-left: 6px; }
+                        table.sg { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+                        table.sg th, table.sg td { border: 1px solid #555; padding: 3px 4px; vertical-align: top; }
+                        table.sg th { background: #e6e6e6; text-align: center; font-weight: bold; }
+                        table.sg td.num { text-align: right; white-space: nowrap; }
+                        table.sg tr.tot td { background: #e4f1dc; font-weight: bold; }
+                        .neg { color: #b00000; }
+                        .note { font-size: 10px; color: #333; margin-top: 4px; }
+                        .note li { margin-bottom: 2px; }
+                    </style>
+                    <div class="page">
+                        <h3 class="sg-title"><t t-esc="o.company_id.name"/></h3>
+                        <div><b>รายงานกระทบยอดสต็อกกับบัญชี</b> ณ วันที่ <t t-esc="o.thai_date(o.date_to)"/></div>
+
+                        <h4 class="sg-sec">ส่วน A บัญชีสินค้าคงเหลือ: ของในคลัง / ระบบสต็อก / ยอดในบัญชี</h4>
+                        <table class="sg">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2" style="width:7%">บัญชี</th>
+                                    <th rowspan="2">ชื่อบัญชี</th>
+                                    <th rowspan="2" style="width:9%">① ของในคลัง<br/>(จำนวน×ต้นทุน)</th>
+                                    <th rowspan="2" style="width:9%">② ระบบสต็อก<br/>(SVL)</th>
+                                    <th rowspan="2" style="width:9%">③ ยอดในบัญชี<br/>(GL)</th>
+                                    <th rowspan="2" style="width:9%">③ − ②</th>
+                                    <th colspan="3">สาเหตุของ ③ − ②</th>
+                                    <th rowspan="2" style="width:9%">② − ①<br/>(สินค้าผี/ต้นทุนต่าง)</th>
+                                </tr>
+                                <tr>
+                                    <th style="width:9%">สต็อกไม่ลงบัญชี<br/>(SVL ไม่มี JE)</th>
+                                    <th style="width:9%">บัญชีไม่ได้มาจากสต็อก<br/>(JE ไม่มี SVL)</th>
+                                    <th style="width:9%">ผูกกันแต่<br/>ยอด/วันที่ไม่ตรง</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.valuation_lines()" t-as="l" t-att-class="'tot' if l.is_total else ''">
+                                    <td><t t-esc="l.account_code"/></td>
+                                    <td><t t-esc="l.account_name"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(l.physical_value)"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(l.svl_value)"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(l.gl_value)"/></td>
+                                    <td t-att-class="'num neg' if abs(l.diff_gl_svl) &gt;= 1 else 'num'"><t t-esc="'{:,.2f}'.format(l.diff_gl_svl)"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(l.svl_no_je)"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(l.je_no_svl)"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(l.linked_diff)"/></td>
+                                    <td t-att-class="'num neg' if abs(l.diff_svl_phys) &gt;= 1 else 'num'"><t t-esc="'{:,.2f}'.format(l.diff_svl_phys)"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <ul class="note">
+                            <li>③ − ② = (บัญชีไม่ได้มาจากสต็อก) − (สต็อกไม่ลงบัญชี) + (ผูกกันแต่ยอด/วันที่ไม่ตรง)</li>
+                            <li><b>สต็อกไม่ลงบัญชี</b> = valuation layer ที่ไม่มี JE (หมวดสินค้าตั้ง Manual หรือสินค้าไม่เก็บสต็อก) — ต้องตั้งหมวดเป็น Automated แล้วล้าง layer ค้าง</li>
+                            <li><b>บัญชีไม่ได้มาจากสต็อก</b> = บรรทัด GL ที่ JE ไม่ได้เกิดจากใบรับ/ใบส่ง (ลงตรงจากบิล / ใบจ่ายเงิน / JV) — ดูรายสมุดรายวันในไฟล์ Excel</li>
+                            <li><b>ผูกกันแต่ยอด/วันที่ไม่ตรง</b> = JE กับ layer เป็นคู่กันแต่ลงคนละงวด (เช่น ยกยอด JE 31 ธ.ค. แต่ layer 10 มี.ค.) หรือยอดไม่เท่า — เป็นเรื่อง cut-off</li>
+                            <li><b>② − ①</b> = layer ของสินค้าที่ไม่มีของจริงในคลัง (สินค้าผี) หรือต้นทุนใน layer ต่างจากต้นทุนมาตรฐานปัจจุบัน — เจาะรายสินค้าได้ในหน้าจอ/Excel</li>
+                        </ul>
+
+                        <h4 class="sg-sec">ส่วน B บัญชีพักสินค้าขาเข้า / ขาออก (ยอดคงค้าง ณ วันที่)</h4>
+                        <table class="sg">
+                            <thead>
+                                <tr>
+                                    <th style="width:7%">บัญชี</th>
+                                    <th>ชื่อบัญชี</th>
+                                    <th style="width:8%">ประเภท</th>
+                                    <th style="width:11%">ยอดคงค้าง (GL)</th>
+                                    <th style="width:11%">มาจากใบรับ/ใบส่ง</th>
+                                    <th style="width:11%">ลงมือ / จากบิล-JV</th>
+                                    <th style="width:11%">ยังไม่จับคู่</th>
+                                    <th style="width:10%">Allow Reconciliation</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.suspense_lines()" t-as="l">
+                                    <td><t t-esc="l.account_code"/></td>
+                                    <td><t t-esc="l.account_name"/></td>
+                                    <td><t t-esc="'ขาเข้า' if l.suspense_kind == 'input' else 'ขาออก'"/></td>
+                                    <td t-att-class="'num neg' if abs(l.gl_value) &gt;= 1 else 'num'"><t t-esc="'{:,.2f}'.format(l.gl_value)"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(l.gl_linked)"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(l.je_no_svl)"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(l.gl_unreconciled)"/></td>
+                                    <td style="text-align:center"><t t-esc="'เปิด' if l.is_reconcilable else 'ปิด'"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <ul class="note">
+                            <li>บัญชีพักขาเข้า: ใบรับสินค้าลงเครดิต บิลผู้ขายลงเดบิต — ยอดคงค้างติดลบ = รับของแล้วยังไม่ตั้งหนี้ (หรือบิลลงบัญชีอื่น)</li>
+                            <li>บัญชีพักขาออก: ใบส่งสินค้าลงเดบิต ใบกำกับขายลงเครดิต — ยอดคงค้าง = ส่งของกับออกใบกำกับไม่ครบคู่</li>
+                            <li>"ยังไม่จับคู่" มีความหมายเมื่อบัญชีเปิด Allow Reconciliation แล้วเท่านั้น ถ้าปิดอยู่ทุกบรรทัดจะนับเป็นยังไม่จับคู่</li>
+                        </ul>
+
+                        <h4 class="sg-sec">สาเหตุรายสมุดรายวัน (บรรทัดที่ไม่ได้มาจากระบบสต็อก)</h4>
+                        <table class="sg">
+                            <thead>
+                                <tr>
+                                    <th style="width:7%">บัญชี</th>
+                                    <th>สมุดรายวัน</th>
+                                    <th style="width:11%">เดบิต</th>
+                                    <th style="width:11%">เครดิต</th>
+                                    <th style="width:11%">คงเหลือ</th>
+                                    <th style="width:8%">บรรทัด</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="o.line_ids.filtered(lambda l: not l.is_total)" t-as="l">
+                                    <tr t-foreach="l.detail_ids.filtered(lambda d: d.kind == 'journal' and not d.linked and abs(d.balance) &gt;= 0.005)" t-as="d">
+                                        <td><t t-esc="l.account_code"/></td>
+                                        <td><t t-esc="d.journal_id.display_name"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(d.debit)"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(d.credit)"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(d.balance)"/></td>
+                                        <td class="num"><t t-esc="d.line_count"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

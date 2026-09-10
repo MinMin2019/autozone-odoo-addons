@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- คอลัมน์ทะเบียนรถใน list "รายการวิเคราะห์" (Analytic Items) -->
+    <record id="view_account_analytic_line_tree_car_reg" model="ir.ui.view">
+        <field name="name">account.analytic.line.list.car.reg</field>
+        <field name="model">account.analytic.line</field>
+        <field name="inherit_id" ref="analytic.view_account_analytic_line_tree"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="before">
+                <field name="x_car_reg_reference" optional="show"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- ช่องค้นหา + จัดกลุ่มตามทะเบียนรถ -->
+    <record id="view_account_analytic_line_filter_car_reg" model="ir.ui.view">
+        <field name="name">account.analytic.line.select.car.reg</field>
+        <field name="model">account.analytic.line</field>
+        <field name="inherit_id" ref="analytic.view_account_analytic_line_filter"/>
+        <field name="arch" type="xml">
+            <field name="date" position="after">
+                <field name="x_car_reg_reference"/>
+            </field>
+            <group name="groupby" position="inside">
+                <filter string="Car Registration" name="group_by_car_reg"
+                        context="{'group_by': 'x_car_reg_reference'}"/>
+            </group>
+        </field>
+    </record>
+
+    <!-- แสดงบนฟอร์มบรรทัดวิเคราะห์ด้วย (อ่านอย่างเดียว) -->
+    <record id="view_account_analytic_line_form_car_reg" model="ir.ui.view">
+        <field name="name">account.analytic.line.form.car.reg</field>
+        <field name="model">account.analytic.line</field>
+        <field name="inherit_id" ref="analytic.view_account_analytic_line_form"/>
+        <field name="arch" type="xml">
+            <field name="date" position="after">
+                <field name="x_car_reg_reference"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>

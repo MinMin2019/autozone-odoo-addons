@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_scv" model="report.paperformat">
+        <field name="name">A4 Landscape Count Variance</field>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">10</field>
+        <field name="margin_bottom">10</field>
+        <field name="margin_left">7</field>
+        <field name="margin_right">7</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_stock_count_variance" model="ir.actions.report">
+        <field name="name">ผลต่างตรวจนับ (Count Variance)</field>
+        <field name="model">stock.count.variance.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">custom_stock_count_variance.report_scv_template</field>
+        <field name="report_file">custom_stock_count_variance.report_scv_template</field>
+        <field name="print_report_name">'CountVariance %s %s' % (object.mode, object.date_to)</field>
+        <field name="paperformat_id" ref="paperformat_scv"/>
+    </record>
+
+    <template id="report_scv_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <style>
+                        .header, .footer { display: none !important; }
+                        .page { font-family: Sarabun, sans-serif; font-size: 10.5px; color: #000; }
+                        h3.cv-title { font-size: 16px; font-weight: bold; margin: 0 0 2px 0; }
+                        .cv-sub { margin-bottom: 8px; }
+                        table.cv { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+                        table.cv th, table.cv td { border: 1px solid #555; padding: 2px 3px; vertical-align: top; }
+                        table.cv th { background: #e6e6e6; text-align: center; font-weight: bold; }
+                        table.cv td.num { text-align: right; white-space: nowrap; }
+                        table.cv tr.grp td { background: #dde8f5; font-weight: bold; }
+                        table.cv tr.sub td { background: #e4f1dc; font-weight: bold; }
+                        table.cv tr.tot td { background: #c9dfc0; font-weight: bold; }
+                        .neg { color: #b00000; }
+                        .pos { color: #0a6b2f; }
+                        .muted { color: #777; }
+                        .sign { margin-top: 18px; width: 100%; }
+                        .sign td { width: 33%; text-align: center; padding-top: 28px; }
+                    </style>
+                    <div class="page">
+                        <t t-set="pending" t-value="o.mode == 'pending'"/>
+                        <t t-set="t" t-value="o.total_stats()"/>
+                        <h3 class="cv-title"><t t-esc="o.company_id.name"/></h3>
+                        <div class="cv-sub">
+                            <b>รายงานผลต่างตรวจนับสต็อก</b>
+                            &#160;|&#160; <t t-esc="'รอปรับปรุง ณ ' + o.thai_date(o.date_to) if pending else 'ปรับปรุงแล้ว ' + o.thai_date(o.date_from) + ' - ' + o.thai_date(o.date_to)"/>
+                            &#160;|&#160; <t t-esc="t['counted']"/> รายการนับ
+                            <t t-if="t['uncounted']"> / ยังไม่นับ <t t-esc="t['uncounted']"/></t>
+                            &#160;|&#160; ความแม่นยำ <t t-esc="'{:.2f}'.format(t['accuracy'])"/>%
+                        </div>
+
+                        <!-- สรุปต่อสาขา -->
+                        <table class="cv">
+                            <thead>
+                                <tr>
+                                    <th>สาขา</th><th>รายการนับ</th><th>ตรง</th>
+                                    <th>ขาด (รายการ)</th><th>มูลค่าขาด</th>
+                                    <th>เกิน (รายการ)</th><th>มูลค่าเกิน</th>
+                                    <th>สุทธิ</th><th>ผลต่างรวม (abs)</th><th>ความแม่นยำ %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.warehouse_summary()" t-as="g">
+                                    <td><t t-esc="g[0].name if g[0] else '-'"/></td>
+                                    <td class="num"><t t-esc="g[2]['counted']"/></td>
+                                    <td class="num"><t t-esc="g[2]['matched']"/></td>
+                                    <td class="num"><t t-esc="g[2]['short_lines']"/></td>
+                                    <td class="num neg"><t t-esc="'{:,.2f}'.format(g[2]['short_value'])"/></td>
+                                    <td class="num"><t t-esc="g[2]['over_lines']"/></td>
+                                    <td class="num pos"><t t-esc="'{:,.2f}'.format(g[2]['over_value'])"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(g[2]['net_value'])"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(g[2]['abs_value'])"/></td>
+                                    <td class="num"><t t-esc="'{:.2f}'.format(g[2]['accuracy'])"/></td>
+                                </tr>
+                                <tr class="tot">
+                                    <td>รวม</td>
+                                    <td class="num"><t t-esc="t['counted']"/></td>
+                                    <td class="num"><t t-esc="t['matched']"/></td>
+                                    <td class="num"><t t-esc="t['short_lines']"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(t['short_value'])"/></td>
+                                    <td class="num"><t t-esc="t['over_lines']"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(t['over_value'])"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(t['net_value'])"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(t['abs_value'])"/></td>
+                                    <td class="num"><t t-esc="'{:.2f}'.format(t['accuracy'])"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- รายการ -->
+                        <table class="cv">
+                            <thead>
+                                <tr>
+                                    <th style="width:7%">วันที่</th>
+                                    <th style="width:9%">ตำแหน่ง</th>
+                                    <th style="width:10%">รหัส</th>
+                                    <th>สินค้า</th>
+                                    <th style="width:5%">หน่วย</th>
+                                    <th style="width:7%">ยอดระบบ</th>
+                                    <th style="width:7%">ยอดนับ</th>
+                                    <th style="width:7%">ผลต่าง</th>
+                                    <th style="width:7%">ต้นทุน/หน่วย</th>
+                                    <th style="width:8%">มูลค่าผลต่าง</th>
+                                    <th style="width:10%"><t t-esc="'ผู้นับ' if pending else 'ผู้ปรับปรุง'"/></th>
+                                    <th style="width:10%">อ้างอิง / เหตุผล</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="o.warehouse_summary()" t-as="g">
+                                    <tr class="grp"><td colspan="12"><t t-esc="g[0].name if g[0] else '-'"/></td></tr>
+                                    <tr t-foreach="g[1]" t-as="l" t-att-class="'muted' if l.state == 'uncounted' else ''">
+                                        <td><t t-esc="o.local_date(l.date) if l.date else ('กำหนด ' + o.thai_date(l.inventory_date))"/></td>
+                                        <td><t t-esc="l.location_id.name"/></td>
+                                        <td><t t-esc="l.default_code"/></td>
+                                        <td><t t-esc="l.product_name"/><t t-if="l.lot_id"> [<t t-esc="l.lot_id.name"/>]</t></td>
+                                        <td><t t-esc="l.uom_id.name"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.system_qty)"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.counted_qty) if l.state != 'uncounted' else 'ยังไม่นับ'"/></td>
+                                        <td t-att-class="'num neg' if l.diff_qty &lt; 0 else ('num pos' if l.diff_qty &gt; 0 else 'num')"><t t-esc="'{:,.2f}'.format(l.diff_qty)"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.unit_cost)"/></td>
+                                        <td t-att-class="'num neg' if l.diff_value &lt; 0 else ('num pos' if l.diff_value &gt; 0 else 'num')"><t t-esc="'{:,.2f}'.format(l.diff_value)"/></td>
+                                        <td><t t-esc="l.user_id.name"/></td>
+                                        <td><t t-esc="l.reference"/></td>
+                                    </tr>
+                                    <tr class="sub">
+                                        <td colspan="9">รวม <t t-esc="g[0].name if g[0] else '-'"/> (ขาด <t t-esc="'{:,.2f}'.format(g[2]['short_value'])"/> / เกิน <t t-esc="'{:,.2f}'.format(g[2]['over_value'])"/>)</td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(g[2]['net_value'])"/></td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <table class="sign">
+                            <tr>
+                                <td>ผู้นับ ____________________</td>
+                                <td>ผู้ตรวจสอบ ____________________</td>
+                                <td>ผู้อนุมัติ ____________________</td>
+                            </tr>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_sto" model="report.paperformat">
+        <field name="name">A4 Landscape Turnover</field>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">10</field>
+        <field name="margin_bottom">10</field>
+        <field name="margin_left">7</field>
+        <field name="margin_right">7</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_stock_turnover" model="ir.actions.report">
+        <field name="name">อัตราหมุนเวียนสินค้า (Turnover)</field>
+        <field name="model">stock.turnover.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">custom_stock_turnover.report_sto_template</field>
+        <field name="report_file">custom_stock_turnover.report_sto_template</field>
+        <field name="print_report_name">'Turnover %s-%s' % (object.date_from, object.date_to)</field>
+        <field name="paperformat_id" ref="paperformat_sto"/>
+    </record>
+
+    <template id="report_sto_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <style>
+                        .header, .footer { display: none !important; }
+                        .page { font-family: Sarabun, sans-serif; font-size: 11px; color: #000; }
+                        h3.to-title { font-size: 16px; font-weight: bold; margin: 0 0 2px 0; }
+                        h4.to-sec { font-size: 13px; font-weight: bold; margin: 12px 0 4px 0; border-left: 4px solid #444; padding-left: 6px; }
+                        table.to { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+                        table.to th, table.to td { border: 1px solid #555; padding: 3px 4px; vertical-align: top; }
+                        table.to th { background: #e6e6e6; text-align: center; font-weight: bold; }
+                        table.to td.num { text-align: right; white-space: nowrap; }
+                        table.to tr.tot td { background: #c9dfc0; font-weight: bold; }
+                        .low { color: #b00000; font-weight: bold; }
+                        .note { font-size: 10px; color: #333; }
+                    </style>
+                    <div class="page">
+                        <h3 class="to-title"><t t-esc="o.company_id.name"/></h3>
+                        <div><b>อัตราหมุนเวียนสินค้า (Inventory Turnover)</b>
+                            <t t-esc="o.thai_date(o.date_from)"/> - <t t-esc="o.thai_date(o.date_to)"/> (<t t-esc="o.period_days"/> วัน)
+                            &#160;|&#160; มูลค่าเฉลี่ย: <t t-esc="o.avg_method_label()"/>
+                        </div>
+
+                        <t t-set="sections" t-value="[('ทั้งบริษัท', 'company'), ('ระดับสาขา', 'warehouse'), ('ระดับหมวดสินค้า', 'categ')]"/>
+                        <t t-foreach="sections" t-as="sec">
+                            <h4 class="to-sec"><t t-esc="sec[0]"/></h4>
+                            <table class="to">
+                                <thead>
+                                    <tr>
+                                        <th>รายการ</th>
+                                        <th style="width:10%">ยกมา</th>
+                                        <th style="width:10%">รับ</th>
+                                        <th style="width:10%">ใช้ไป</th>
+                                        <th style="width:9%">จ่ายอื่น</th>
+                                        <th style="width:10%">ยกไป</th>
+                                        <th style="width:10%">เฉลี่ยที่ถือ</th>
+                                        <th style="width:8%">Turnover<br/>(รอบ/ปี)</th>
+                                        <th style="width:8%">Days of<br/>Inventory</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="o.lines_of(sec[1]).sorted(lambda l: -l.avg_value)" t-as="l">
+                                        <td><t t-esc="l.name"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.opening_value)"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.in_value)"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.use_value)"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.other_out_value)"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.closing_value)"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.avg_value)"/></td>
+                                        <td t-att-class="'num low' if l.turnover &lt; 1 and l.avg_value &gt; 0 else 'num'"><t t-esc="'{:.2f}'.format(l.turnover)"/></td>
+                                        <td class="num"><t t-esc="'{:,.0f}'.format(l.days_inventory) if l.days_inventory else '-'"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </t>
+                        <ul class="note">
+                            <li>Turnover = มูลค่าที่ใช้ไปในช่วง ÷ มูลค่าเฉลี่ยที่ถือ ปรับเป็นรายปี (× 365/จำนวนวันในช่วง) — ยิ่งสูงยิ่งดี</li>
+                            <li>Days of Inventory = 365 ÷ Turnover = ของที่ถืออยู่พอใช้ไปอีกกี่วันตามอัตราปัจจุบัน — ยิ่งต่ำยิ่งดี</li>
+                            <li>"ใช้ไป" = ส่งขาย / เบิกใช้ / โอนออกไปสาขาอื่น; "จ่ายอื่น" = คืนผู้ขาย / ปรับปรุงนับ (ไม่นับเป็นการใช้)</li>
+                            <li>ระดับทั้งบริษัท ไม่นับการโอนระหว่างสาขา จึงเป็นอัตราที่ของออกจากบริษัทจริง; ระดับสาขาของ H.O. จะสูงเพราะกระจายของให้สาขา</li>
+                            <li>รายสินค้า × สาขา ดูได้ในหน้าจอหรือไฟล์ Excel</li>
+                        </ul>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_stock_aging_wizard_stock,stock.aging.wizard stock user,model_stock_aging_wizard,stock.group_stock_user,1,1,1,1
+access_stock_aging_line_stock,stock.aging.line stock user,model_stock_aging_line,stock.group_stock_user,1,1,1,1
+access_stock_aging_layer_stock,stock.aging.layer stock user,model_stock_aging_layer,stock.group_stock_user,1,1,1,1
+access_stock_aging_wizard_account,stock.aging.wizard account user,model_stock_aging_wizard,account.group_account_readonly,1,1,1,1
+access_stock_aging_line_account,stock.aging.line account user,model_stock_aging_line,account.group_account_readonly,1,1,1,1
+access_stock_aging_layer_account,stock.aging.layer account user,model_stock_aging_layer,account.group_account_readonly,1,1,1,1

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ฟอร์ม Users (Settings > Users) -->
+    <record id="view_users_form_purchase_signature" model="ir.ui.view">
+        <field name="name">res.users.form.purchase.signature</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <field name="signature" position="after">
+                <field name="purchase_signature" widget="image"
+                       options="{'size': [180, 90]}"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- ฟอร์ม Preferences (ผู้ใช้แก้ไขโปรไฟล์ตัวเอง) -->
+    <record id="view_users_form_simple_modif_purchase_signature" model="ir.ui.view">
+        <field name="name">res.users.preferences.form.purchase.signature</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form_simple_modif"/>
+        <field name="arch" type="xml">
+            <field name="signature" position="after">
+                <field name="purchase_signature" widget="image" readonly="0"
+                       options="{'size': [180, 90]}"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>

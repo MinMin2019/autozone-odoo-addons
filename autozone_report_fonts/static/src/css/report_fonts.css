@@ -1,0 +1,48 @@
+/* ============================================================
+   Sarabun — ฝังมากับโมดูล ไม่พึ่งฟอนต์ที่ติดตั้งใน OS ของ server
+   CSS นี้ถูกโหลดผ่าน asset bundle 'web.report_assets_common'
+   ซึ่ง Odoo เรียกใน report layout ทุกตัว => ใช้ได้กับทุก PDF report
+   ============================================================ */
+
+@font-face {
+    font-family: 'Sarabun';
+    font-style: normal;
+    font-weight: 300;
+    src: url('/autozone_report_fonts/static/fonts/Sarabun-Light.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'Sarabun';
+    font-style: normal;
+    font-weight: 400;
+    src: url('/autozone_report_fonts/static/fonts/Sarabun-Regular.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'Sarabun';
+    font-style: normal;
+    font-weight: 700;
+    src: url('/autozone_report_fonts/static/fonts/Sarabun-Bold.ttf') format('truetype');
+}
+
+/* ------------------------------------------------------------
+   Droid Sans Fallback — ฟอนต์ CJK (จีนตัวย่อ/ตัวเต็ม ญี่ปุ่น เกาหลี)
+   ฝังเป็น .ttf เพราะฟอนต์จีนของ Windows เป็น .ttc ซึ่ง wkhtmltopdf
+   โหลดไม่ได้ (ตัวจีนจะกลายเป็นกล่อง □ แม้เครื่องมีฟอนต์)
+   ใช้เป็นตัวสำรองต่อท้าย Sarabun: glyph ไหน Sarabun ไม่มีค่อยตกมาที่นี่
+   ------------------------------------------------------------ */
+@font-face {
+    font-family: 'Droid Sans Fallback';
+    font-style: normal;
+    font-weight: normal;
+    src: url('/autozone_report_fonts/static/fonts/DroidSansFallback.ttf') format('truetype');
+}
+
+/* ------------------------------------------------------------
+   ค่าเริ่มต้นของทุกรายงาน: ใช้ Sarabun (ตัวจีนตกไป Droid Sans Fallback)
+   (CSS นี้โหลดเฉพาะใน report layout จึงไม่กระทบหน้าจอ backend)
+   ถ้ารายงานไหนอยากใช้ฟอนต์อื่น ให้ override font-family ในเทมเพลตนั้น
+   ------------------------------------------------------------ */
+body {
+    font-family: 'Sarabun', 'Droid Sans Fallback', sans-serif;
+}

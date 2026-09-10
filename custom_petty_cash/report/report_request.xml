@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_request_structure">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <t t-call="custom_petty_cash.pc_style" />
+                    <t t-set="company" t-value="o.company_id" />
+                    <div class="page">
+                        <div class="pc-body">
+                        <t t-call="custom_petty_cash.pc_company_header" />
+
+                        <div style="text-align: center; margin-top: 55px; margin-bottom: 10px;">
+                            <div class="text-bold" style="font-size: 28px; letter-spacing: 1px;">
+                                ใบเบิกเงินสดย่อย <span class="text-bold" style="font-size: 22px;">/ PETTY CASH ADVANCE</span>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 40px;">
+                            <table class="layout-table">
+                                <tr>
+                                    <td style="width: 62%; padding-right: 20px;">
+                                        <div style="margin-bottom: 10px;">
+                                            <span class="text-bold">กองเงินสดย่อย / สาขา :</span>
+                                            <span t-esc="o.fund_id.display_name" />
+                                        </div>
+                                        <div style="margin-bottom: 10px;">
+                                            <span class="text-bold">ผู้ขอเบิก :</span>
+                                            <span t-esc="o.requester_name" />
+                                        </div>
+                                        <div style="margin-bottom: 10px;">
+                                            <span class="text-bold">วัตถุประสงค์ :</span>
+                                            <span t-esc="o.purpose" />
+                                        </div>
+                                    </td>
+                                    <td style="width: 38%; padding-left: 20px;">
+                                        <table class="layout-table">
+                                            <tr>
+                                                <td style="width: 45%; padding-bottom: 5px; white-space: nowrap;">เลขที่เอกสาร / No. :</td>
+                                                <td style="width: 55%; padding-bottom: 5px;">
+                                                    <div class="text-bold" style="font-size: 19px;">
+                                                        <span t-esc="o.name" />
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding-bottom: 5px; white-space: nowrap;">วันที่เบิก / Date :</td>
+                                                <td style="padding-bottom: 5px;">
+                                                    <span t-esc="o.date and o.date.strftime('%d/%m/%Y') or ''" />
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div style="margin-top: 30px;">
+                            <table class="data-table">
+                                <tr style="height: 60px;">
+                                    <td style="width: 70%; vertical-align: middle; padding-left: 10px; font-weight: bold; font-style: italic;">
+                                        <span t-esc="o.currency_id.with_context(lang='th_TH').amount_to_text(o.amount)" />
+                                    </td>
+                                    <td class="num" style="width: 30%; vertical-align: middle; font-weight: bold; font-size: 22px;">
+                                        <span t-esc="'{:,.2f}'.format(o.amount)" /> บาท
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div t-if="o.note" style="margin-top: 20px;">
+                            <span class="text-bold">หมายเหตุ :</span>
+                            <span t-esc="o.note" />
+                        </div>
+
+                        </div>
+
+                        <t t-set="sign_boxes"
+                            t-value="[('ผู้ขอเบิก', 'Requested By', o.requester_name), ('ผู้อนุมัติ', 'Approved By', o.fund_id.approver_name), ('ผู้จ่ายเงิน', 'Paid By', o.fund_id.custodian_name), ('ผู้รับเงิน', 'Received By', False)]" />
+                        <t t-call="custom_petty_cash.pc_sign_boxes" />
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

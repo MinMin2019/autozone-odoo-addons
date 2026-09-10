@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_petty_cash_fund_list" model="ir.ui.view">
+        <field name="name">petty.cash.fund.list</field>
+        <field name="model">petty.cash.fund</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="code" />
+                <field name="name" />
+                <field name="custodian_name" optional="show" />
+                <field name="approver_name" optional="show" />
+                <field name="amount_limit" sum="รวม" />
+                <field name="open_request_amount" />
+                <field name="unreplenished_amount" />
+                <field name="balance" />
+                <field name="currency_id" column_invisible="1" />
+            </list>
+        </field>
+    </record>
+
+    <record id="view_petty_cash_fund_form" model="ir.ui.view">
+        <field name="name">petty.cash.fund.form</field>
+        <field name="model">petty.cash.fund</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger"
+                        invisible="active" />
+                    <group>
+                        <group string="สาขา">
+                            <field name="active" invisible="1" />
+                            <field name="code" />
+                            <field name="name" />
+                            <field name="custodian_name" />
+                            <field name="approver_name" />
+                        </group>
+                        <group string="การเงิน/บัญชี">
+                            <field name="amount_limit" />
+                            <field name="balance" />
+                            <field name="open_request_amount" />
+                            <field name="unreplenished_amount" />
+                            <field name="journal_id" />
+                            <field name="bill_journal_id" />
+                            <field name="analytic_account_id" />
+                            <field name="company_id" groups="base.group_multi_company" />
+                            <field name="currency_id" invisible="1" />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_petty_cash_fund" model="ir.actions.act_window">
+        <field name="name">กองเงินสดย่อย</field>
+        <field name="res_model">petty.cash.fund</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

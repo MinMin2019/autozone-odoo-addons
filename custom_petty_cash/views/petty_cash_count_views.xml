@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_petty_cash_count_list" model="ir.ui.view">
+        <field name="name">petty.cash.count.list</field>
+        <field name="model">petty.cash.count</field>
+        <field name="arch" type="xml">
+            <list default_order="date desc, name desc">
+                <field name="name" />
+                <field name="date" />
+                <field name="fund_id" />
+                <field name="counter_name" optional="show" />
+                <field name="expected_amount" />
+                <field name="counted_amount" />
+                <field name="difference"
+                    decoration-danger="difference != 0" />
+                <field name="state" widget="badge"
+                    decoration-success="state == 'done'"
+                    decoration-muted="state == 'cancel'" />
+                <field name="currency_id" column_invisible="1" />
+            </list>
+        </field>
+    </record>
+
+    <record id="view_petty_cash_count_form" model="ir.ui.view">
+        <field name="name">petty.cash.count.form</field>
+        <field name="model">petty.cash.count</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_done" string="ยืนยันผลนับ" type="object"
+                        class="btn-primary" invisible="state != 'draft'" />
+                    <button name="action_refresh_expected" string="ดึงยอดทะเบียน" type="object"
+                        invisible="state != 'draft'" />
+                    <button name="action_cancel" string="ยกเลิก" type="object"
+                        invisible="state == 'cancel'" />
+                    <button name="action_reset_draft" string="กลับเป็นร่าง" type="object"
+                        invisible="state != 'cancel'" />
+                    <field name="state" widget="statusbar" statusbar_visible="draft,done" />
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <field name="name_editable" invisible="1" />
+                        <h1><field name="name" readonly="not name_editable"
+                            placeholder="ระบบออกเลขให้เมื่อบันทึก" /></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="fund_id" readonly="state != 'draft'" />
+                            <field name="date" readonly="state != 'draft'" />
+                            <field name="counter_name" readonly="state != 'draft'" />
+                            <field name="witness_name" readonly="state != 'draft'" />
+                        </group>
+                        <group>
+                            <field name="expected_amount" />
+                            <field name="fund_balance_now" />
+                            <field name="counted_amount" />
+                            <field name="difference"
+                                decoration-danger="difference != 0" />
+                            <field name="currency_id" invisible="1" />
+                            <field name="company_id" invisible="1" />
+                        </group>
+                    </group>
+                    <group string="แตกชนิดเงินที่นับได้">
+                        <group>
+                            <field name="qty_1000" readonly="state != 'draft'" />
+                            <field name="qty_500" readonly="state != 'draft'" />
+                            <field name="qty_100" readonly="state != 'draft'" />
+                            <field name="qty_50" readonly="state != 'draft'" />
+                            <field name="qty_20" readonly="state != 'draft'" />
+                        </group>
+                        <group>
+                            <field name="qty_10" readonly="state != 'draft'" />
+                            <field name="qty_5" readonly="state != 'draft'" />
+                            <field name="qty_2" readonly="state != 'draft'" />
+                            <field name="qty_1" readonly="state != 'draft'" />
+                            <field name="amount_satang" readonly="state != 'draft'" />
+                        </group>
+                    </group>
+                    <group>
+                        <field name="note" readonly="state not in ('draft',)"
+                            placeholder="อธิบายผลต่าง เช่น เงินขาดจากบิลที่ยังไม่ส่งเคลียร์..." />
+                    </group>
+                </sheet>
+                <chatter />
+            </form>
+        </field>
+    </record>
+
+    <record id="action_petty_cash_count" model="ir.actions.act_window">
+        <field name="name">นับเงินสดย่อย</field>
+        <field name="res_model">petty.cash.count</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

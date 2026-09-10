@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_payment_duplicate_wizard_form" model="ir.ui.view">
+        <field name="name">payment.duplicate.wizard.form</field>
+        <field name="model">payment.duplicate.wizard</field>
+        <field name="arch" type="xml">
+            <form string="คัดลอก Payment ไปเดือนใหม่">
+                <group>
+                    <field name="date"/>
+                </group>
+                <field name="payment_ids" readonly="1">
+                    <list>
+                        <field name="date"/>
+                        <field name="name"/>
+                        <field name="journal_id"/>
+                        <field name="partner_id"/>
+                        <field name="amount" sum="Total"/>
+                    </list>
+                </field>
+                <footer>
+                    <button string="คัดลอกพร้อมรายการบัญชี" name="action_duplicate"
+                            type="object" class="btn-primary" data-hotkey="q"/>
+                    <button string="ยกเลิก" special="cancel" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_payment_duplicate_wizard" model="ir.actions.act_window">
+        <field name="name">คัดลอกไปเดือนใหม่ (พร้อมรายการบัญชี)</field>
+        <field name="res_model">payment.duplicate.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="account.model_account_payment"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="groups_id" eval="[(4, ref('account.group_account_invoice'))]"/>
+    </record>
+
+</odoo>

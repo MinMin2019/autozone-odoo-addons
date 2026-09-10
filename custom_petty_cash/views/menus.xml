@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- เกาะใต้แอป Accounting (Enterprise: accountant.menu_accounting) ที่ทีมใช้จริง
+         ไม่ใช่แอป Invoicing (account.menu_finance) ซึ่งซ่อนอยู่ -->
+    <menuitem id="menu_petty_cash_root" name="เงินสดย่อย"
+        parent="accountant.menu_accounting" sequence="25"
+        groups="account.group_account_invoice" />
+    <menuitem id="menu_petty_cash_request" name="ใบเบิก"
+        parent="menu_petty_cash_root" action="action_petty_cash_request" sequence="10" />
+    <menuitem id="menu_petty_cash_clearing" name="ใบเคลียร์"
+        parent="menu_petty_cash_root" action="action_petty_cash_clearing" sequence="20" />
+    <menuitem id="menu_petty_cash_replenish" name="ขอเติมเงิน"
+        parent="menu_petty_cash_root" action="action_petty_cash_replenish" sequence="30" />
+    <menuitem id="menu_petty_cash_count" name="นับเงินสด"
+        parent="menu_petty_cash_root" action="action_petty_cash_count" sequence="35" />
+    <menuitem id="menu_petty_cash_fund" name="กองเงินสดย่อย"
+        parent="menu_petty_cash_root" action="action_petty_cash_fund" sequence="40" />
+</odoo>

@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_smx_wizard_stock,stock.matrix.wizard stock user,model_stock_matrix_wizard,stock.group_stock_user,1,1,1,1
+access_smx_cell_stock,stock.matrix.cell stock user,model_stock_matrix_cell,stock.group_stock_user,1,1,1,1
+access_smx_wizard_account,stock.matrix.wizard account user,model_stock_matrix_wizard,account.group_account_readonly,1,1,1,1
+access_smx_cell_account,stock.matrix.cell account user,model_stock_matrix_cell,account.group_account_readonly,1,1,1,1

@@ -1,0 +1,304 @@
+{
+ "import": {
+  "1": {
+   "code": "BASIC",
+   "name": "เงินเดือน",
+   "kind": "earning"
+  },
+  "1554": {
+   "code": "PAY_ADJUST",
+   "name": "ตกหล่นเงินเดือน",
+   "kind": "earning"
+  },
+  "1110": {
+   "code": "OT_X1",
+   "name": "ค่าล่วงเวลา x1",
+   "kind": "earning"
+  },
+  "1120": {
+   "code": "OT_X15",
+   "name": "ค่าล่วงเวลา x1.5",
+   "kind": "earning"
+  },
+  "1130": {
+   "code": "OT_X2",
+   "name": "ค่าล่วงเวลา x2",
+   "kind": "earning"
+  },
+  "1140": {
+   "code": "OT_X3",
+   "name": "ค่าล่วงเวลา x3",
+   "kind": "earning"
+  },
+  "1150": {
+   "code": "OT",
+   "name": "ค่าล่วงเวลา (ไม่ระบุอัตรา)",
+   "kind": "earning"
+  },
+  "1230": {
+   "code": "POSITION",
+   "name": "ค่าตำแหน่ง",
+   "kind": "earning"
+  },
+  "1553": {
+   "code": "PROFESSIONAL",
+   "name": "ค่าวิชาชีพ",
+   "kind": "earning"
+  },
+  "1222": {
+   "code": "PROFESSIONAL_2",
+   "name": "ค่าวิชาชีพ (2)",
+   "kind": "earning"
+  },
+  "16": {
+   "code": "DILIGENCE",
+   "name": "เบี้ยขยัน",
+   "kind": "earning"
+  },
+  "1410": {
+   "code": "DILIGENCE_EXTRA",
+   "name": "เบี้ยขยัน (เพิ่มเติม)",
+   "kind": "earning"
+  },
+  "1240": {
+   "code": "COST_LIVING",
+   "name": "ค่าครองชีพ",
+   "kind": "earning"
+  },
+  "1241": {
+   "code": "COST_LIVING_SSO",
+   "name": "ค่าครองชีพ (SSO)",
+   "kind": "earning"
+  },
+  "1330": {
+   "code": "MEAL_OT",
+   "name": "ค่าอาหาร",
+   "kind": "earning"
+  },
+  "1331": {
+   "code": "MEAL_FIX",
+   "name": "ค่าอาหาร (ฝังในประวัติ)",
+   "kind": "earning"
+  },
+  "1520": {
+   "code": "TRANSPORT",
+   "name": "ค่าพาหนะ",
+   "kind": "earning"
+  },
+  "1320": {
+   "code": "HOUSE_RENT",
+   "name": "ค่าเช่าบ้าน",
+   "kind": "earning"
+  },
+  "1350": {
+   "code": "PHONE",
+   "name": "ค่าโทรศัพท์",
+   "kind": "earning"
+  },
+  "1530": {
+   "code": "PER_DIEM",
+   "name": "เบี้ยเลี้ยง",
+   "kind": "earning"
+  },
+  "1552": {
+   "code": "INCENTIVE",
+   "name": "Incentive",
+   "kind": "earning"
+  },
+  "1571": {
+   "code": "PIECE_RATE",
+   "name": "ค่าแรงรายชิ้น",
+   "kind": "earning"
+  },
+  "1440": {
+   "code": "BONUS",
+   "name": "โบนัส",
+   "kind": "earning"
+  },
+  "1441": {
+   "code": "BONUS_QTR",
+   "name": "โบนัสไตรมาส",
+   "kind": "earning"
+  },
+  "1557": {
+   "code": "LEAVE_REFUND",
+   "name": "คืนเงินพักร้อน",
+   "kind": "earning"
+  },
+  "1555": {
+   "code": "WELFARE_ADJUST",
+   "name": "ตกหล่นสวัสดิการ",
+   "kind": "earning"
+  },
+  "1556": {
+   "code": "DEPOSIT_REFUND",
+   "name": "คืนเงินประกันพนักงาน",
+   "kind": "earning"
+  },
+  "1573": {
+   "code": "SEVERANCE",
+   "name": "เงินชดเชยการเลิกจ้าง",
+   "kind": "earning"
+  },
+  "1550": {
+   "code": "INC_OTHER",
+   "name": "เงินได้อื่น ๆ",
+   "kind": "earning"
+  },
+  "7": {
+   "code": "SSO",
+   "name": "หักประกันสังคม",
+   "kind": "deduction"
+  },
+  "13": {
+   "code": "TAX",
+   "name": "หักภาษีเงินได้ (ภงด.1)",
+   "kind": "deduction"
+  },
+  "2240": {
+   "code": "STUDENT_LOAN",
+   "name": "หัก กยศ.",
+   "kind": "deduction"
+  },
+  "2110": {
+   "code": "ABSENCE",
+   "name": "หักขาดงาน",
+   "kind": "deduction"
+  },
+  "2120": {
+   "code": "LATE",
+   "name": "หักมาสาย",
+   "kind": "deduction"
+  },
+  "2430": {
+   "code": "EARLY_LEAVE",
+   "name": "หักกลับก่อนเวลา",
+   "kind": "deduction"
+  },
+  "2410": {
+   "code": "NO_SCAN_IN",
+   "name": "หักไม่ตอกบัตรเข้า",
+   "kind": "deduction"
+  },
+  "2420": {
+   "code": "NO_SCAN_OUT",
+   "name": "หักไม่ตอกบัตรออก",
+   "kind": "deduction"
+  },
+  "2150": {
+   "code": "PERSONAL_LEAVE",
+   "name": "หักลากิจ",
+   "kind": "deduction"
+  },
+  "2151": {
+   "code": "PERSONAL_LEAVE_SP",
+   "name": "หักลากิจ (พิเศษ)",
+   "kind": "deduction"
+  },
+  "2130": {
+   "code": "SICK_NO_CERT",
+   "name": "หักป่วยไม่มีใบแพทย์",
+   "kind": "deduction"
+  },
+  "10028": {
+   "code": "SICK_OVER_QUOTA",
+   "name": "หักลาป่วยเกินสิทธิ",
+   "kind": "deduction"
+  },
+  "2170": {
+   "code": "MATERNITY",
+   "name": "หักลาคลอด",
+   "kind": "deduction"
+  },
+  "2180": {
+   "code": "ORDINATION",
+   "name": "หักลาบวช",
+   "kind": "deduction"
+  },
+  "2182": {
+   "code": "COMPANY_LEAVE",
+   "name": "หักลาตามเงื่อนไขบริษัท",
+   "kind": "deduction"
+  },
+  "2111": {
+   "code": "SALARY_CUT_25",
+   "name": "หักเงินเดือน 25%",
+   "kind": "deduction"
+  },
+  "2901": {
+   "code": "SUSPEND",
+   "name": "หักพักงาน",
+   "kind": "deduction"
+  },
+  "2902": {
+   "code": "SUSPEND_TAX",
+   "name": "หักพักงาน (คิดภาษี)",
+   "kind": "deduction"
+  },
+  "2330": {
+   "code": "ADVANCE",
+   "name": "หักเงินเบิกล่วงหน้า",
+   "kind": "deduction"
+  },
+  "2320": {
+   "code": "LOAN",
+   "name": "หักเงินกู้",
+   "kind": "loan"
+  },
+  "11": {
+   "code": "GUARANTEE",
+   "name": "หักเงินค้ำประกันพนักงาน",
+   "kind": "deduction"
+  },
+  "2210": {
+   "code": "DORM",
+   "name": "หักค่าหอพัก",
+   "kind": "deduction"
+  },
+  "2250": {
+   "code": "UTILITIES",
+   "name": "หักน้ำ/ไฟ/โทรศัพท์",
+   "kind": "deduction"
+  },
+  "2310": {
+   "code": "TOOLS",
+   "name": "หักค่าเครื่องมือ",
+   "kind": "deduction"
+  },
+  "2260": {
+   "code": "UNIFORM_DED",
+   "name": "หักค่าเครื่องแบบ",
+   "kind": "deduction"
+  },
+  "2342": {
+   "code": "PER_DIEM_DED",
+   "name": "หักเบี้ยเลี้ยง (จ่ายล่วงหน้า)",
+   "kind": "deduction"
+  },
+  "2340": {
+   "code": "DED_OTHER",
+   "name": "หักอื่น ๆ",
+   "kind": "deduction"
+  },
+  "8": {
+   "code": "SSO_EMPLOYER",
+   "name": "สมทบประกันสังคม (นายจ้าง)",
+   "kind": "company"
+  }
+ },
+ "skip": {
+  "15": "NET",
+  "29": "INFO",
+  "2123": "STAT",
+  "2160": "STAT",
+  "2161": "STAT",
+  "2162": "STAT",
+  "2190": "STAT",
+  "2171": "STAT",
+  "2122": "STAT",
+  "2140": "STAT",
+  "10036": "STAT",
+  "2124": "STAT",
+  "2121": "STAT"
+ }
+}

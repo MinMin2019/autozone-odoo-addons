@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- server action: reload catalog from CSV -->
+    <record id="action_reload_catalog_csv" model="ir.actions.server">
+        <field name="name">Reload Catalog from CSV</field>
+        <field name="model_id" ref="model_access_catalog"/>
+        <field name="binding_model_id" ref="model_access_catalog"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_reload_from_csv()</field>
+    </record>
+
+    <!-- server action: remove unused (orphan) groups from deleted roles -->
+    <record id="action_cleanup_orphans" model="ir.actions.server">
+        <field name="name">Remove Unused Groups</field>
+        <field name="model_id" ref="model_access_role"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_cleanup_orphans()</field>
+    </record>
+
+    <!-- server action: hard reset all generated menus -->
+    <record id="action_rebuild_menus" model="ir.actions.server">
+        <field name="name">Rebuild All Menus</field>
+        <field name="model_id" ref="model_access_role"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_rebuild_all_menus()</field>
+    </record>
+
+    <!-- server action: harden standard menus (gate wide-open root menus) -->
+    <record id="action_menu_hardening" model="ir.actions.server">
+        <field name="name">Harden Standard Menus</field>
+        <field name="model_id" ref="model_access_role"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_apply_menu_hardening()</field>
+    </record>
+
+    <!-- server action: reset default-user template (new users start with Internal User only) -->
+    <record id="action_reset_default_user" model="ir.actions.server">
+        <field name="name">Reset Default User Template</field>
+        <field name="model_id" ref="model_access_role"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_reset_default_user_template()</field>
+    </record>
+
+    <menuitem id="menu_arb_root" name="Access Control"
+              web_icon="account,static/description/icon.png"
+              groups="group_arb_manager" sequence="90"/>
+
+    <!-- ═══ กลุ่ม 1: Roles — งานหลักที่ใช้ประจำ ═══ -->
+    <menuitem id="menu_arb_roles" name="Roles"
+              parent="menu_arb_root" action="action_access_role" sequence="10"/>
+
+    <!-- ═══ กลุ่ม 2: Users — ตั้ง role membership + warehouse scope ═══ -->
+    <menuitem id="menu_arb_users" name="Users"
+              parent="menu_arb_root" action="base.action_res_users" sequence="20"/>
+
+    <!-- ═══ กลุ่ม 3: Catalog — จัดการ menu catalog ═══ -->
+    <menuitem id="menu_arb_catalog_group" name="Catalog"
+              parent="menu_arb_root" sequence="30"/>
+
+    <menuitem id="menu_arb_catalog" name="Menu Catalog"
+              parent="menu_arb_catalog_group" action="action_access_catalog" sequence="10"/>
+
+    <menuitem id="menu_arb_import" name="Import from App Menu"
+              parent="menu_arb_catalog_group" action="action_access_catalog_import" sequence="20"/>
+
+    <menuitem id="menu_arb_reload" name="Reload Catalog from CSV"
+              parent="menu_arb_catalog_group" action="action_reload_catalog_csv" sequence="30"/>
+
+    <!-- ═══ กลุ่ม 4: Maintenance — เครื่องมือซ่อมบำรุง (นานๆ ใช้ที) ═══ -->
+    <menuitem id="menu_arb_maintenance_group" name="Maintenance"
+              parent="menu_arb_root" sequence="40"/>
+
+    <menuitem id="menu_arb_rebuild" name="Rebuild All Menus"
+              parent="menu_arb_maintenance_group" action="action_rebuild_menus" sequence="10"/>
+
+    <menuitem id="menu_arb_hardening" name="Harden Standard Menus"
+              parent="menu_arb_maintenance_group" action="action_menu_hardening" sequence="20"/>
+
+    <menuitem id="menu_arb_cleanup" name="Remove Unused Groups"
+              parent="menu_arb_maintenance_group" action="action_cleanup_orphans" sequence="30"/>
+
+    <menuitem id="menu_arb_reset_default_user" name="Reset Default User Template"
+              parent="menu_arb_maintenance_group" action="action_reset_default_user" sequence="40"/>
+
+    <menuitem id="menu_arb_role_export" name="Export Roles"
+              parent="menu_arb_maintenance_group" action="action_role_export" sequence="50"/>
+
+    <menuitem id="menu_arb_role_import" name="Import Roles"
+              parent="menu_arb_maintenance_group" action="action_role_import" sequence="60"/>
+
+</odoo>

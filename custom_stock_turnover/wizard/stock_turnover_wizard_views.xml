@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sto_wizard_form" model="ir.ui.view">
+        <field name="name">stock.turnover.wizard.form</field>
+        <field name="model">stock.turnover.wizard</field>
+        <field name="arch" type="xml">
+            <form string="อัตราหมุนเวียนสินค้า">
+                <group>
+                    <group string="ช่วงเวลา">
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                        <field name="avg_method" widget="radio"/>
+                        <field name="company_id" invisible="1"/>
+                    </group>
+                    <group string="ขอบเขต">
+                        <field name="warehouse_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="ทุกสาขา"/>
+                        <field name="categ_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="ทุกหมวด"/>
+                        <field name="product_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="ทุกสินค้า"/>
+                        <field name="include_non_storable"/>
+                    </group>
+                </group>
+                <div class="text-muted small">
+                    Turnover (รอบ/ปี) = มูลค่าที่ใช้ไปในช่วง ÷ มูลค่าเฉลี่ยที่ถือ ปรับเป็นรายปี &#160;|&#160;
+                    Days of Inventory = 365 ÷ Turnover = ของนอนเฉลี่ยกี่วันก่อนถูกใช้ &#160;|&#160;
+                    "ใช้ไป" = ส่งขาย / เบิกใช้ / โอนออกไปสาขาอื่น (ระดับทั้งบริษัทไม่นับโอนระหว่างสาขา) &#160;|&#160;
+                    ผลลัพธ์มี 4 ระดับ สลับด้วยฟิลเตอร์
+                </div>
+                <footer>
+                    <button name="action_view" string="ดูรายงาน" type="object" class="btn-primary"/>
+                    <button name="action_export_xlsx" string="Excel" type="object" class="btn-secondary"/>
+                    <button name="action_print_pdf" string="PDF" type="object" class="btn-secondary"/>
+                    <button string="ยกเลิก" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sto_wizard" model="ir.actions.act_window">
+        <field name="name">อัตราหมุนเวียนสินค้า (Turnover)</field>
+        <field name="res_model">stock.turnover.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_sto" name="อัตราหมุนเวียนสินค้า (Turnover)"
+              parent="stock.menu_warehouse_report" action="action_sto_wizard" sequence="51"/>
+
+    <record id="view_sto_line_list" model="ir.ui.view">
+        <field name="name">stock.turnover.line.list</field>
+        <field name="model">stock.turnover.line</field>
+        <field name="arch" type="xml">
+            <list string="อัตราหมุนเวียนสินค้า" create="false" edit="false" delete="false"
+                  decoration-danger="turnover &lt; 1 and avg_value &gt; 0" decoration-warning="turnover &gt;= 1 and turnover &lt; 2">
+                <field name="level" optional="show"/>
+                <field name="name"/>
+                <field name="warehouse_id" optional="hide"/>
+                <field name="categ_id" optional="hide"/>
+                <field name="uom_id" optional="hide"/>
+                <field name="opening_value" sum="รวม" optional="show"/>
+                <field name="in_value" sum="รวม" optional="hide"/>
+                <field name="use_value" sum="รวม"/>
+                <field name="other_out_value" sum="รวม" optional="hide"/>
+                <field name="closing_value" sum="รวม" optional="show"/>
+                <field name="avg_value" sum="รวม"/>
+                <field name="turnover"/>
+                <field name="days_inventory"/>
+                <field name="opening_qty" optional="hide"/>
+                <field name="in_qty" optional="hide"/>
+                <field name="use_qty" optional="hide"/>
+                <field name="closing_qty" optional="hide"/>
+                <field name="product_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_sto_line_search" model="ir.ui.view">
+        <field name="name">stock.turnover.line.search</field>
+        <field name="model">stock.turnover.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="default_code"/>
+                <field name="product_id"/>
+                <field name="warehouse_id"/>
+                <field name="categ_id"/>
+                <filter name="level_company" string="ทั้งบริษัท" domain="[('level', '=', 'company')]"/>
+                <filter name="level_warehouse" string="ระดับสาขา" domain="[('level', '=', 'warehouse')]"/>
+                <filter name="level_categ" string="ระดับหมวด" domain="[('level', '=', 'categ')]"/>
+                <filter name="level_product" string="ระดับสินค้า × สาขา" domain="[('level', '=', 'product')]"/>
+                <separator/>
+                <filter name="low" string="หมุนช้า (ต่ำกว่า 1 รอบ/ปี)" domain="[('turnover', '&lt;', 1), ('avg_value', '&gt;', 0)]"/>
+                <filter name="fast" string="หมุนเร็ว (6 รอบ/ปีขึ้นไป)" domain="[('turnover', '&gt;=', 6)]"/>
+                <group expand="0" string="จัดกลุ่ม">
+                    <filter name="group_level" string="ระดับ" context="{'group_by': 'level'}"/>
+                    <filter name="group_warehouse" string="สาขา / คลัง" context="{'group_by': 'warehouse_id'}"/>
+                    <filter name="group_categ" string="หมวดสินค้า" context="{'group_by': 'categ_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sto_line_pivot" model="ir.ui.view">
+        <field name="name">stock.turnover.line.pivot</field>
+        <field name="model">stock.turnover.line</field>
+        <field name="arch" type="xml">
+            <pivot string="อัตราหมุนเวียนสินค้า" disable_linking="1">
+                <field name="warehouse_id" type="row"/>
+                <field name="avg_value" type="measure"/>
+                <field name="use_value" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_sto_line_graph" model="ir.ui.view">
+        <field name="name">stock.turnover.line.graph</field>
+        <field name="model">stock.turnover.line</field>
+        <field name="arch" type="xml">
+            <graph string="อัตราหมุนเวียนสินค้า" type="bar">
+                <field name="name"/>
+                <field name="turnover" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_sto_line_form" model="ir.ui.view">
+        <field name="name">stock.turnover.line.form</field>
+        <field name="model">stock.turnover.line</field>
+        <field name="arch" type="xml">
+            <form string="อัตราหมุนเวียนสินค้า" create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="oe_title"><h2><field name="name" readonly="1"/></h2></div>
+                    <group>
+                        <group string="ขอบเขต">
+                            <field name="level" readonly="1"/>
+                            <field name="warehouse_id" readonly="1" invisible="not warehouse_id"/>
+                            <field name="categ_id" readonly="1" invisible="not categ_id"/>
+                            <field name="product_id" readonly="1" invisible="not product_id"/>
+                            <field name="uom_id" readonly="1" invisible="not uom_id"/>
+                            <field name="date_from" readonly="1"/>
+                            <field name="date_to" readonly="1"/>
+                        </group>
+                        <group string="ผลลัพธ์">
+                            <field name="avg_value" readonly="1"/>
+                            <field name="use_value" readonly="1"/>
+                            <field name="turnover" readonly="1"/>
+                            <field name="days_inventory" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="มูลค่า">
+                            <field name="opening_value" readonly="1"/>
+                            <field name="in_value" readonly="1"/>
+                            <field name="use_value" readonly="1"/>
+                            <field name="other_out_value" readonly="1"/>
+                            <field name="closing_value" readonly="1"/>
+                        </group>
+                        <group string="จำนวน">
+                            <field name="opening_qty" readonly="1"/>
+                            <field name="in_qty" readonly="1"/>
+                            <field name="use_qty" readonly="1"/>
+                            <field name="other_out_qty" readonly="1"/>
+                            <field name="closing_qty" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

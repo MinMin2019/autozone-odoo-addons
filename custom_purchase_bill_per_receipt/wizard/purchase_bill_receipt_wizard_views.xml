@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="purchase_bill_receipt_wizard_form" model="ir.ui.view">
+        <field name="name">purchase.bill.receipt.wizard.form</field>
+        <field name="model">purchase.bill.receipt.wizard</field>
+        <field name="arch" type="xml">
+            <form string="สร้างบิลจากใบรับสินค้า">
+                <div class="alert alert-warning" role="alert" invisible="not warning_text">
+                    <field name="warning_text" readonly="1" nolabel="1"/>
+                </div>
+                <group>
+                    <group>
+                        <field name="purchase_order_id"/>
+                        <field name="partner_id"/>
+                    </group>
+                    <group>
+                        <field name="available_picking_ids" invisible="1"/>
+                        <field name="picking_ids" widget="many2many_tags"
+                            options="{'no_create': True}"
+                            domain="[('id', 'in', available_picking_ids)]"/>
+                        <field name="company_id" invisible="1"/>
+                        <field name="currency_id" invisible="1"/>
+                        <field name="has_other_lines" invisible="1"/>
+                    </group>
+                </group>
+                <notebook>
+                    <page string="รายการในใบรับ" name="receipt_lines">
+                        <field name="line_ids" nolabel="1"
+                            domain="[('source', '=', 'receipt')]"
+                            context="{'default_source': 'receipt'}">
+                            <list editable="bottom" create="false" delete="false">
+                                <field name="sequence" column_invisible="1"/>
+                                <field name="source" column_invisible="1"/>
+                                <field name="currency_id" column_invisible="1"/>
+                                <field name="purchase_line_id" column_invisible="1"/>
+                                <field name="selected" string="เลือก"/>
+                                <field name="product_id" readonly="1"/>
+                                <field name="name" readonly="1" optional="hide"/>
+                                <field name="qty_receipt" readonly="1"/>
+                                <field name="qty_pending" readonly="1" optional="show"/>
+                                <field name="qty"/>
+                                <field name="product_uom_id" readonly="1" optional="show"/>
+                                <field name="price_unit" readonly="1"/>
+                                <field name="price_subtotal" readonly="1" sum="รวม"/>
+                            </list>
+                        </field>
+                    </page>
+                    <page string="บรรทัดอื่นที่ยังค้างตั้งหนี้" name="other_lines"
+                        invisible="not has_other_lines">
+                        <div class="text-muted mb-2">
+                            บรรทัดเหล่านี้ไม่ได้อยู่ในใบรับที่เลือก (เช่น ค่าขนส่ง
+                            หรือของที่รับรอบก่อนแล้วยังไม่ได้ตั้งหนี้) —
+                            ติ๊ก "เลือก" ถ้าต้องการพ่วงเข้าบิลใบนี้
+                        </div>
+                        <field name="line_ids" nolabel="1"
+                            domain="[('source', '=', 'other')]"
+                            context="{'default_source': 'other'}">
+                            <list editable="bottom" create="false" delete="false">
+                                <field name="sequence" column_invisible="1"/>
+                                <field name="source" column_invisible="1"/>
+                                <field name="currency_id" column_invisible="1"/>
+                                <field name="purchase_line_id" column_invisible="1"/>
+                                <field name="selected" string="เลือก"/>
+                                <field name="product_id" readonly="1"/>
+                                <field name="name" readonly="1" optional="hide"/>
+                                <field name="qty_pending" readonly="1"/>
+                                <field name="qty"/>
+                                <field name="product_uom_id" readonly="1" optional="show"/>
+                                <field name="price_unit" readonly="1"/>
+                                <field name="price_subtotal" readonly="1" sum="รวม"/>
+                            </list>
+                        </field>
+                    </page>
+                </notebook>
+                <footer>
+                    <button name="action_generate_bill" type="object" string="สร้างบิล"
+                        class="btn-primary" data-hotkey="q"/>
+                    <button string="ยกเลิก" class="btn-secondary" special="cancel"
+                        data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

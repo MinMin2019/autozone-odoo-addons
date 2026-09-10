@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_count_structure">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <t t-call="custom_petty_cash.pc_style" />
+                    <t t-set="company" t-value="o.company_id" />
+                    <div class="page">
+                        <div class="pc-body">
+                        <t t-call="custom_petty_cash.pc_company_header" />
+
+                        <div style="text-align: center; margin-top: 55px; margin-bottom: 10px;">
+                            <div class="text-bold" style="font-size: 28px; letter-spacing: 1px;">
+                                ใบนับเงินสดย่อย <span class="text-bold" style="font-size: 22px;">/ PETTY CASH COUNT</span>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 40px;">
+                            <table class="layout-table">
+                                <tr>
+                                    <td style="width: 62%; padding-right: 20px;">
+                                        <div style="margin-bottom: 10px;">
+                                            <span class="text-bold">กองเงินสดย่อย / สาขา :</span>
+                                            <span t-esc="o.fund_id.display_name" />
+                                        </div>
+                                        <div style="margin-bottom: 10px;">
+                                            <span class="text-bold">ผู้ถือเงิน :</span>
+                                            <span t-esc="o.fund_id.custodian_name or ''" />
+                                        </div>
+                                        <div style="margin-bottom: 10px;">
+                                            <span class="text-bold">ผู้นับเงิน :</span>
+                                            <span t-esc="o.counter_name" />
+                                            <span t-if="o.witness_name">
+                                                &#160;&#160;<span class="text-bold">ผู้ร่วมนับ :</span>
+                                                <span t-esc="o.witness_name" />
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td style="width: 38%; padding-left: 20px;">
+                                        <table class="layout-table">
+                                            <tr>
+                                                <td style="width: 45%; padding-bottom: 5px; white-space: nowrap;">เลขที่เอกสาร / No. :</td>
+                                                <td style="width: 55%; padding-bottom: 5px;">
+                                                    <div class="text-bold" style="font-size: 19px;">
+                                                        <span t-esc="o.name" />
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding-bottom: 5px; white-space: nowrap;">วันที่นับ / Date :</td>
+                                                <td style="padding-bottom: 5px;">
+                                                    <span t-esc="o.date and o.date.strftime('%d/%m/%Y') or ''" />
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding-bottom: 5px; white-space: nowrap;">วงเงินกอง / Float :</td>
+                                                <td style="padding-bottom: 5px;">
+                                                    <span t-esc="'{:,.2f}'.format(o.fund_id.amount_limit)" />
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div style="margin-top: 25px;">
+                            <table class="layout-table">
+                                <tr>
+                                    <!-- ตารางแตกชนิดเงิน -->
+                                    <td style="width: 55%; padding-right: 15px;">
+                                        <div class="text-bold" style="margin-bottom: 8px;">แตกชนิดเงินที่นับได้</div>
+                                        <table class="data-table">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width: 40%;">ชนิด</th>
+                                                    <th style="width: 20%;">จำนวน</th>
+                                                    <th style="width: 40%;">รวม (บาท)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr t-foreach="o.get_denomination_rows()" t-as="row">
+                                                    <td><span t-esc="row[0]" /></td>
+                                                    <td class="num">
+                                                        <span t-if="row[1]" t-esc="'{:,}'.format(row[1])" />
+                                                    </td>
+                                                    <td class="num">
+                                                        <span t-if="row[3]" t-esc="'{:,.2f}'.format(row[3])" />
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="2">เศษสตางค์ / อื่น ๆ</td>
+                                                    <td class="num">
+                                                        <span t-if="o.amount_satang" t-esc="'{:,.2f}'.format(o.amount_satang)" />
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                            <tfoot>
+                                                <tr style="background-color: #f9f9f9; font-weight: bold;">
+                                                    <td colspan="2">ยอดนับได้จริง</td>
+                                                    <td class="num">
+                                                        <span t-esc="'{:,.2f}'.format(o.counted_amount)" />
+                                                    </td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </td>
+                                    <!-- สรุปเทียบทะเบียน -->
+                                    <td style="width: 45%; padding-left: 15px;">
+                                        <div class="text-bold" style="margin-bottom: 8px;">เทียบกับทะเบียน</div>
+                                        <table class="data-table">
+                                            <tr>
+                                                <td style="width: 60%;">ยอดนับได้จริง</td>
+                                                <td class="num" style="width: 40%;">
+                                                    <span t-esc="'{:,.2f}'.format(o.counted_amount)" />
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>ยอดตามทะเบียน</td>
+                                                <td class="num">
+                                                    <span t-esc="'{:,.2f}'.format(o.expected_amount)" />
+                                                </td>
+                                            </tr>
+                                            <tr style="font-weight: bold;">
+                                                <td>
+                                                    <t t-if="not o.difference">ผลต่าง (ครบถ้วน)</t>
+                                                    <t t-elif="o.difference &gt; 0">เงินเกิน</t>
+                                                    <t t-else="">เงินขาด</t>
+                                                </td>
+                                                <td class="num">
+                                                    <span t-esc="'{:,.2f}'.format(abs(o.difference))" />
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        <div t-if="o.note" style="margin-top: 15px;">
+                                            <span class="text-bold">หมายเหตุ :</span>
+                                            <div style="margin-left: 10px;"><span t-esc="o.note" /></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        </div>
+
+                        <t t-set="sign_boxes"
+                            t-value="[('ผู้นับเงิน', 'Counted By', o.counter_name), ('ผู้ถือเงิน', 'Custodian', o.fund_id.custodian_name), ('ผู้ตรวจสอบ', 'Inspector', False)]" />
+                        <t t-call="custom_petty_cash.pc_sign_boxes" />
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

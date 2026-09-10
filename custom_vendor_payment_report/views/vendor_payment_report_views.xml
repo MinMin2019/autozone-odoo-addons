@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 1. List View (หน้ารายการรวม) -->
+    <record id="view_vendor_payment_report_list" model="ir.ui.view">
+        <field name="name">vendor.payment.report.list</field>
+        <field name="model">vendor.payment.report</field>
+        <field name="arch" type="xml">
+            <list string="Payment Reports" default_order="date desc, name desc"
+                decoration-muted="state == 'draft'" decoration-info="state == 'cancel'">
+                <field name="currency_id" column_invisible="1" />
+
+                <field name="name" string="เลขที่รายงาน" decoration-bf="1" />
+                <field name="partner_id" string="ผู้ขาย" />
+                <field name="date" string="วันที่จัดทำ" />
+                <field name="period_display" string="ช่วงเวลา" optional="show" />
+
+                <field name="amount_total" string="ยอดรวมบิล" widget="monetary"
+                    sum="ยอดรวมทั้งหมด" decoration-bf="1" />
+                <field name="amount_wht" string="หัก ณ ที่จ่าย" widget="monetary"
+                    sum="รวมหัก ณ ที่จ่าย" optional="show" />
+                <field name="amount_net" string="ยอดจ่ายสุทธิ" widget="monetary"
+                    sum="รวมยอดจ่ายสุทธิ" decoration-bf="1"
+                    decoration-warning="state == 'confirmed'"
+                    decoration-success="state == 'done'" />
+
+                <field name="state" string="สถานะ" widget="badge"
+                    decoration-info="state == 'draft'"
+                    decoration-warning="state == 'confirmed'"
+                    decoration-success="state == 'done'" />
+            </list>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_vendor_payment_report_search" model="ir.ui.view">
+        <field name="name">vendor.payment.report.search</field>
+        <field name="model">vendor.payment.report</field>
+        <field name="arch" type="xml">
+            <search string="ค้นหารายงานการชำระเงิน">
+                <field name="name" string="เลขที่ / ผู้ขาย"
+                    filter_domain="['|', ('name', 'ilike', self), ('partner_id', 'child_of', self)]" />
+                <field name="partner_id" string="ผู้ขาย" />
+
+                <filter string="รอชำระ (ยืนยันแล้ว)" name="filter_confirmed"
+                    domain="[('state', '=', 'confirmed')]" />
+                <filter string="ชำระแล้ว" name="filter_done" domain="[('state', '=', 'done')]" />
+
+                <group expand="0" string="Group By">
+                    <filter string="ผู้ขาย" name="group_partner"
+                        context="{'group_by': 'partner_id'}" />
+                    <filter string="สถานะ" name="group_state" context="{'group_by': 'state'}" />
+                    <filter string="เดือนที่จัดทำ" name="group_date"
+                        context="{'group_by': 'date:month'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- 2. Form View (หน้ากรอกข้อมูลแต่ละใบ) -->
+    <record id="view_vendor_payment_report_form" model="ir.ui.view">
+        <field name="name">vendor.payment.report.form</field>
+        <field name="model">vendor.payment.report</field>
+        <field name="arch" type="xml">
+            <form string="Payment Report">
+                <header>
+                    <button name="action_confirm" string="Confirm" type="object"
+                        class="oe_highlight" invisible="state != 'draft'" />
+
+                    <button name="action_draft" string="Reset to Draft" type="object"
+                        invisible="state not in ('cancel', 'confirmed')" />
+
+                    <button name="action_cancel" string="Cancel" type="object"
+                        invisible="state in ('done', 'cancel')" />
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,done" />
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="state != 'draft'" />
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="partner_id" readonly="state != 'draft'" />
+                            <field name="period_display" readonly="state != 'draft'" />
+                        </group>
+                        <group>
+                            <field name="date" readonly="state != 'draft'" />
+                            <field name="currency_id" invisible="1" />
+                            <field name="company_id" invisible="1" />
+
+                            <!-- ต้องวาง available_bill_ids ไว้แบบซ่อน เพื่อให้ View รู้จักตัวแปร -->
+                            <field name="available_bill_ids" invisible="1" />
+                        </group>
+                    </group>
+
+                    <!-- แท็บแสดงรายการบิล (Many2many) -->
+                    <notebook>
+                        <page string="Vendor Bills" name="bills">
+
+                            <field name="bill_ids" readonly="state != 'draft'" nolabel="1"
+                                domain="[('id', 'in', available_bill_ids)]">
+                                <list>
+                                    <field name="currency_id" column_invisible="1" />
+                                    <field name="invoice_date" string="วันที่เอกสาร" width="13%" />
+                                    <field name="name" string="เลขที่เอกสาร AP" width="18%" />
+                                    <field name="ref" string="เลขที่บิล" width="18%" />
+                                    <field name="invoice_date_due" string="วันครบกำหนด" width="13%" />
+                                    <field name="payment_state" widget="badge" width="15%" />
+                                    <field name="move_type" column_invisible="1" />
+                                    <field name="amount_total" widget="float" width="12%" />
+                                </list>
+                            </field>
+
+                            <div class="row">
+                                <div class="col-8">
+                                </div>
+
+                                <div class="col-4">
+                                    <table class="table table-sm table-borderless">
+                                        <tr style="border-top: 1px solid #ced4da;">
+                                            <td class="text-start">
+                                                <strong>ยอดรวมบิล</strong>
+                                            </td>
+                                            <td class="text-end">
+                                                <field name="amount_total" widget="monetary"
+                                                    options="{'currency_field': 'currency_id'}" />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-start">
+                                                <strong>รวมหัก ณ ที่จ่าย</strong>
+                                            </td>
+                                            <td class="text-end">
+                                                <field name="amount_wht" widget="monetary"
+                                                    options="{'currency_field': 'currency_id'}" />
+                                            </td>
+                                        </tr>
+                                        <tr
+                                            style="border-top: 1px solid #ced4da; border-bottom: 3px double #ced4da;">
+                                            <td class="text-start">
+                                                <strong>ยอดจ่ายสุทธิ</strong>
+                                            </td>
+                                            <td class="text-end">
+                                                <strong>
+                                                    <field name="amount_net" widget="monetary"
+                                                        options="{'currency_field': 'currency_id'}" />
+                                                </strong>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </page>
+                    </notebook>
+
+                </sheet>
+
+                <chatter />
+
+            </form>
+        </field>
+    </record>
+
+</odoo>

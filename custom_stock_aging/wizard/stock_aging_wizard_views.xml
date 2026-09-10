@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ================= Wizard ================= -->
+    <record id="view_stock_aging_wizard_form" model="ir.ui.view">
+        <field name="name">stock.aging.wizard.form</field>
+        <field name="model">stock.aging.wizard</field>
+        <field name="arch" type="xml">
+            <form string="อายุสินค้าคงคลัง (Stock Aging)">
+                <group>
+                    <group string="วันที่">
+                        <field name="date_to"/>
+                        <field name="min_days"/>
+                        <field name="company_id" invisible="1"/>
+                    </group>
+                    <group string="ขอบเขต">
+                        <field name="warehouse_ids" widget="many2many_tags"
+                               options="{'no_create': True}" placeholder="ทุกสาขา"/>
+                        <field name="categ_ids" widget="many2many_tags"
+                               options="{'no_create': True}" placeholder="ทุกหมวด"/>
+                        <field name="product_ids" widget="many2many_tags"
+                               options="{'no_create': True}" placeholder="ทุกสินค้า"/>
+                    </group>
+                </group>
+                <group string="ตัวเลือก">
+                    <field name="split_by_location"/>
+                    <field name="include_non_storable"/>
+                </group>
+                <div class="text-muted small">
+                    อายุนับจากวันที่ของถูกรับเข้าสาขานั้น (ของที่เหลือถือว่าเป็นของที่รับเข้าล่าสุด ตามหลัก FIFO)
+                    โอนเข้าสาขาใหม่ = นับอายุใหม่ / ยอดยกยอดตอน go-live นับจากวันยกยอด
+                </div>
+                <footer>
+                    <button name="action_view" string="ดูรายงาน" type="object" class="btn-primary"/>
+                    <button name="action_export_xlsx" string="Excel" type="object" class="btn-secondary"/>
+                    <button name="action_print_pdf" string="PDF" type="object" class="btn-secondary"/>
+                    <button string="ยกเลิก" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_stock_aging_wizard" model="ir.actions.act_window">
+        <field name="name">อายุสินค้าคงคลัง (Stock Aging)</field>
+        <field name="res_model">stock.aging.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_stock_aging"
+              name="อายุสินค้าคงคลัง (Stock Aging)"
+              parent="stock.menu_warehouse_report"
+              action="action_stock_aging_wizard"
+              sequence="46"/>
+
+    <!-- ================= ผลลัพธ์ ================= -->
+    <record id="view_stock_aging_line_list" model="ir.ui.view">
+        <field name="name">stock.aging.line.list</field>
+        <field name="model">stock.aging.line</field>
+        <field name="arch" type="xml">
+            <list string="อายุสินค้าคงคลัง" create="false" edit="false" delete="false"
+                  default_order="warehouse_id, location_id, default_code, product_id">
+                <field name="warehouse_id" optional="show"/>
+                <field name="location_id" optional="show"
+                       column_invisible="not context.get('split_by_location')"/>
+                <field name="default_code"/>
+                <field name="product_name"/>
+                <field name="categ_id" optional="hide"/>
+                <field name="uom_id"/>
+                <field name="qty" decoration-danger="qty &lt; 0"/>
+                <field name="unit_cost" optional="hide"/>
+                <field name="value" sum="รวม"/>
+                <field name="b1_qty" optional="show"/>
+                <field name="b2_qty" optional="show"/>
+                <field name="b3_qty" optional="show"/>
+                <field name="b4_qty" optional="show"/>
+                <field name="b5_qty" optional="show"/>
+                <field name="b6_qty" optional="show"/>
+                <field name="unknown_qty" optional="hide"/>
+                <field name="b1_value" sum="รวม" optional="hide"/>
+                <field name="b2_value" sum="รวม" optional="hide"/>
+                <field name="b3_value" sum="รวม" optional="hide"/>
+                <field name="b4_value" sum="รวม" optional="hide"/>
+                <field name="b5_value" sum="รวม" optional="hide"/>
+                <field name="b6_value" sum="รวม" optional="hide"/>
+                <field name="oldest_days" optional="show"/>
+                <field name="last_in_date" optional="show"/>
+                <field name="last_out_date" optional="show"/>
+                <field name="days_no_move" optional="show"
+                       decoration-warning="days_no_move &gt;= 90 and days_no_move &lt; 180"
+                       decoration-danger="days_no_move &gt;= 180"/>
+                <field name="product_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_stock_aging_line_search" model="ir.ui.view">
+        <field name="name">stock.aging.line.search</field>
+        <field name="model">stock.aging.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="default_code"/>
+                <field name="product_name"/>
+                <field name="product_id"/>
+                <field name="warehouse_id"/>
+                <field name="location_id"/>
+                <field name="categ_id"/>
+                <filter name="over90" string="ไม่เคลื่อนไหวเกิน 90 วัน" domain="[('days_no_move', '&gt;=', 90)]"/>
+                <filter name="over180" string="ไม่เคลื่อนไหวเกิน 180 วัน" domain="[('days_no_move', '&gt;=', 180)]"/>
+                <filter name="old365" string="มีของอายุเกิน 365 วัน" domain="[('b6_qty', '&gt;', 0)]"/>
+                <filter name="negative" string="ยอดติดลบ" domain="[('qty', '&lt;', 0)]"/>
+                <filter name="unknown" string="มีของไม่ทราบอายุ" domain="[('unknown_qty', '&gt;', 0)]"/>
+                <group expand="0" string="จัดกลุ่ม">
+                    <filter name="group_warehouse" string="สาขา / คลัง" context="{'group_by': 'warehouse_id'}"/>
+                    <filter name="group_location" string="ตำแหน่ง" context="{'group_by': 'location_id'}"/>
+                    <filter name="group_categ" string="หมวดสินค้า" context="{'group_by': 'categ_id'}"/>
+                    <filter name="group_product" string="สินค้า" context="{'group_by': 'product_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_stock_aging_line_pivot" model="ir.ui.view">
+        <field name="name">stock.aging.line.pivot</field>
+        <field name="model">stock.aging.line</field>
+        <field name="arch" type="xml">
+            <pivot string="อายุสินค้าคงคลัง" disable_linking="1">
+                <field name="warehouse_id" type="row"/>
+                <field name="b1_value" type="measure"/>
+                <field name="b2_value" type="measure"/>
+                <field name="b3_value" type="measure"/>
+                <field name="b4_value" type="measure"/>
+                <field name="b5_value" type="measure"/>
+                <field name="b6_value" type="measure"/>
+                <field name="value" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_stock_aging_line_graph" model="ir.ui.view">
+        <field name="name">stock.aging.line.graph</field>
+        <field name="model">stock.aging.line</field>
+        <field name="arch" type="xml">
+            <graph string="อายุสินค้าคงคลัง" type="bar" stacked="1">
+                <field name="warehouse_id"/>
+                <field name="b1_value" type="measure"/>
+                <field name="b2_value" type="measure"/>
+                <field name="b3_value" type="measure"/>
+                <field name="b4_value" type="measure"/>
+                <field name="b5_value" type="measure"/>
+                <field name="b6_value" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_stock_aging_line_form" model="ir.ui.view">
+        <field name="name">stock.aging.line.form</field>
+        <field name="model">stock.aging.line</field>
+        <field name="arch" type="xml">
+            <form string="อายุสินค้าคงคลัง" create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h2><field name="name" readonly="1"/></h2>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="product_id" readonly="1"/>
+                            <field name="categ_id" readonly="1"/>
+                            <field name="uom_id" readonly="1"/>
+                            <field name="warehouse_id" readonly="1"/>
+                            <field name="location_id" readonly="1" invisible="not location_id"/>
+                        </group>
+                        <group>
+                            <field name="date_to" readonly="1"/>
+                            <field name="qty" readonly="1"/>
+                            <field name="unit_cost" readonly="1"/>
+                            <field name="value" readonly="1"/>
+                            <field name="unknown_qty" readonly="1" invisible="not unknown_qty"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="จำนวนตามอายุ">
+                            <field name="b1_qty" readonly="1"/>
+                            <field name="b2_qty" readonly="1"/>
+                            <field name="b3_qty" readonly="1"/>
+                            <field name="b4_qty" readonly="1"/>
+                            <field name="b5_qty" readonly="1"/>
+                            <field name="b6_qty" readonly="1"/>
+                        </group>
+                        <group string="การเคลื่อนไหว">
+                            <field name="oldest_days" readonly="1"/>
+                            <field name="last_in_date" readonly="1"/>
+                            <field name="last_out_date" readonly="1"/>
+                            <field name="days_no_move" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="ของคงเหลือมาจากการรับเข้าครั้งไหน">
+                            <field name="layer_ids" readonly="1">
+                                <list create="false" edit="false" delete="false">
+                                    <field name="date" widget="date"/>
+                                    <field name="reference"/>
+                                    <field name="origin" optional="show"/>
+                                    <field name="source_location_id"/>
+                                    <field name="received_qty"/>
+                                    <field name="qty" sum="รวม"/>
+                                    <field name="unit_cost"/>
+                                    <field name="value" sum="รวม"/>
+                                    <field name="days"/>
+                                    <field name="bucket"/>
+                                    <field name="picking_id" column_invisible="1"/>
+                                    <button name="action_open_picking" type="object"
+                                            icon="fa-external-link" title="เปิดเอกสาร"
+                                            invisible="not picking_id"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

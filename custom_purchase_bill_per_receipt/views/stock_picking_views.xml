@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_picking_form_bill_per_receipt" model="ir.ui.view">
+        <field name="name">stock.picking.form.bill.per.receipt</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_create_bill_from_receipt"
+                    string="สร้างบิลผู้ขาย"
+                    type="object"
+                    class="oe_highlight"
+                    invisible="purchase_bill_status != 'to_bill'"
+                    groups="account.group_account_invoice"/>
+                <button name="action_create_bill_from_receipt"
+                    string="สร้างบิลผู้ขายเพิ่ม"
+                    type="object"
+                    invisible="purchase_bill_status != 'billed'"
+                    groups="account.group_account_invoice"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_receipt_bills"
+                    type="object"
+                    class="oe_stat_button"
+                    icon="fa-pencil-square-o"
+                    invisible="bill_count == 0">
+                    <field name="bill_count" widget="statinfo" string="บิลผู้ขาย"/>
+                </button>
+                <field name="purchase_bill_status" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="vpicktree_bill_per_receipt" model="ir.ui.view">
+        <field name="name">stock.picking.list.bill.per.receipt</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.vpicktree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="before">
+                <field name="purchase_bill_status" optional="hide"
+                    decoration-warning="purchase_bill_status == 'to_bill'"
+                    decoration-success="purchase_bill_status == 'billed'"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_picking_internal_search_bill_per_receipt" model="ir.ui.view">
+        <field name="name">stock.picking.search.bill.per.receipt</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_internal_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='starred']" position="after">
+                <separator/>
+                <filter name="receipt_to_bill" string="ใบรับที่ยังไม่ตั้งหนี้"
+                    domain="[('purchase_bill_status', '=', 'to_bill')]"/>
+                <filter name="receipt_billed" string="ใบรับที่ตั้งหนี้แล้ว"
+                    domain="[('purchase_bill_status', '=', 'billed')]"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

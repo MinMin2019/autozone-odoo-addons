@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_location_form_consumption" model="ir.ui.view">
+        <field name="name">stock.location.form.consumption</field>
+        <field name="model">stock.location</field>
+        <field name="inherit_id" ref="stock.view_location_form"/>
+        <field name="arch" type="xml">
+            <field name="usage" position="after">
+                <field name="is_expense_consumption"
+                       invisible="usage not in ('production', 'inventory')"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_pickingtype_filter_consumption" model="ir.ui.view">
+        <field name="name">stock.picking.type.select.consumption</field>
+        <field name="model">stock.picking.type</field>
+        <field name="inherit_id" ref="stock.view_pickingtype_filter"/>
+        <field name="arch" type="xml">
+            <filter name="favorites" position="after">
+                <filter name="filter_consumption" string="เบิกใช้วัสดุ"
+                        domain="[('sequence_code', '=', 'CONS')]"/>
+            </filter>
+        </field>
+    </record>
+
+    <!-- ใบโอนภายใน/ใบเบิก (เฉพาะ internal — ใบรับ/ใบส่งคงเดิม):
+         1) คอลัมน์ On Hand ในตัวเลือกสินค้าแสดงยอดของ location ต้นทางแทนยอดรวมบริษัท
+         2) หน้าต่างค้นสินค้าเปิดมาพร้อม filter "Available Products" (ถอดออกได้)
+            = เห็นเฉพาะของที่มีในคลังนี้ก่อน กด x ที่ filter เพื่อดูทั้งหมด -->
+    <record id="view_picking_form_consumption" model="ir.ui.view">
+        <field name="name">stock.picking.form.consumption</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='move_ids_without_package']/list/field[@name='product_id']"
+                   position="attributes">
+                <attribute name="context">{'default_is_storable': True, 'location': parent.picking_type_code == 'internal' and parent.location_id or False, 'search_default_filter_available_here': parent.picking_type_code == 'internal' and 1 or 0}</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- filter "มีของคงเหลือ" ใน search view หลักของ product.product —
+         ตัว Available Products ของ stock เป็น mode=primary ไม่โผล่ใน dialog เลือกสินค้า
+         จึงต้องเพิ่มเองที่ view หลัก (คำนวณตาม context location ถ้ามี) -->
+    <record id="product_search_form_view_available" model="ir.ui.view">
+        <field name="name">product.product.search.available.here</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_search_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='inactive']" position="before">
+                <filter name="filter_available_here" string="มีของคงเหลือ"
+                        domain="[('qty_available', '&gt;', 0)]"/>
+                <separator/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_picking_type_form_consumption" model="ir.ui.view">
+        <field name="name">stock.picking.type.form.consumption</field>
+        <field name="model">stock.picking.type</field>
+        <field name="inherit_id" ref="stock.view_picking_type_form"/>
+        <field name="arch" type="xml">
+            <field name="return_picking_type_id" position="after">
+                <field name="consumption_analytic_account_id"
+                       invisible="code != 'internal'"
+                       groups="analytic.group_analytic_accounting"/>
+            </field>
+        </field>
+    </record>
+</odoo>

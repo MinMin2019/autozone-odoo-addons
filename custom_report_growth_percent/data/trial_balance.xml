@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- เปิดคอลัมน์ % เทียบงวดก่อนให้ Trial Balance (Enterprise ปิดมาจากโรงงาน)
+         มีผลเฉพาะตอนผู้ใช้เปิด Comparison — ปกติหน้าตาเดิมทุกอย่าง -->
+    <record id="account_reports.trial_balance_report" model="account.report">
+        <field name="filter_growth_comparison" eval="True"/>
+    </record>
+</odoo>

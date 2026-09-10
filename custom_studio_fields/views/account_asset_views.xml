@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- จำลอง view customization ของ Studio บน account.asset
+         (studio_customization.odoo_studio_account__0c977fae / __cb745f41)
+         ถ้าติดตั้งโมดูลนี้บน DB ที่ยังมี Studio view เดิมอยู่ ให้ลบ/ปิด
+         Studio view ก่อน ไม่งั้นฟิลด์จะโผล่ซ้ำ — ดู README.md -->
+
+    <record id="view_account_asset_form_studio_fields" model="ir.ui.view">
+        <field name="name">account.asset.form.studio.fields</field>
+        <field name="model">account.asset</field>
+        <field name="inherit_id" ref="account_asset.view_account_asset_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='x_location_id']" position="replace">
+                <field name="x_studio_location"/>
+            </xpath>
+            <xpath expr="//form[1]/sheet[1]/group[1]/group[2]/field[@name='account_asset_id']" position="attributes">
+                <attribute name="groups"/>
+                <attribute name="force_save">1</attribute>
+                <attribute name="invisible">False</attribute>
+                <attribute name="readonly">state == "close"</attribute>
+                <attribute name="required">True</attribute>
+            </xpath>
+            <xpath expr="//field[@name='original_value']" position="before">
+                <field name="x_studio_asset_code"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_account_asset_list_studio_fields" model="ir.ui.view">
+        <field name="name">account.asset.list.studio.fields</field>
+        <field name="model">account.asset</field>
+        <field name="inherit_id" ref="account_asset.view_account_asset_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list[1]/field[@name='name']" position="after">
+                <field name="x_studio_asset_code" optional="show"/>
+            </xpath>
+            <xpath expr="//field[@name='value_residual']" position="after">
+                <field name="x_class_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

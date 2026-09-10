@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- List view -->
+    <record id="view_sale_order_line_service_backlog_menu_list" model="ir.ui.view">
+        <field name="name">sale.order.line.service.backlog.menu.list</field>
+        <field name="model">sale.order.line</field>
+        <field name="arch" type="xml">
+            <list string="Order Backlog"
+                create="false"
+                edit="true"
+                delete="false"
+                decoration-warning="x_is_due_today"
+                decoration-danger="x_is_overdue"
+                default_order="x_due_date asc, order_id asc, id asc">
+
+                <button name="action_open_sale_order"
+                    type="object"
+                    string="Open SO"
+                    icon="fa-external-link" />
+
+                <field name="x_due_date" string="Due Date" optional="show"
+                    decoration-warning="x_is_due_today"
+                    decoration-danger="x_is_overdue" />
+
+                <field name="x_order_name" string="SO" />
+                <field name="x_client_order_ref" string="Customer Reference" />
+                <field name="x_partner_id" string="Customer" />
+                <field name="product_id" />
+                <field name="product_uom_qty" string="Ordered" />
+                <field name="qty_delivered" string="Delivered" />
+                <field name="x_remaining_qty" string="Remaining"
+                    decoration-warning="x_is_due_today"
+                    decoration-danger="x_is_overdue" />
+                <field name="price_unit" optional="hide" />
+                <field name="price_subtotal" optional="hide" />
+                <field name="salesman_id" optional="hide" />
+            </list>
+        </field>
+    </record>
+
+
+    <!-- Form view -->
+    <record id="view_sale_order_line_service_backlog_form" model="ir.ui.view">
+        <field name="name">sale.order.line.service.backlog.form</field>
+        <field name="model">sale.order.line</field>
+        <field name="arch" type="xml">
+            <form string="Order Backlog Line">
+                <header>
+                    <button name="action_open_sale_order"
+                        type="object"
+                        string="Open SO"
+                        class="btn-primary"
+                        icon="fa-external-link" />
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="order_id" readonly="1" />
+                            <field name="x_client_order_ref" readonly="1" />
+                            <field name="x_partner_id" readonly="1" />
+                            <field name="x_due_date" readonly="1" />
+                        </group>
+                        <group>
+                            <field name="product_id" readonly="1" />
+                            <field name="product_uom_qty" readonly="1" />
+                            <field name="qty_delivered" />
+                            <field name="x_remaining_qty" readonly="1" />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search view: อันนี้คือส่วนที่ขาด -->
+    <record id="view_sale_order_line_service_backlog_search" model="ir.ui.view">
+        <field name="name">sale.order.line.service.backlog.search</field>
+        <field name="model">sale.order.line</field>
+        <field name="arch" type="xml">
+            <search string="Order Backlog">
+                <field name="x_order_name" string="SO" />
+                <field name="x_client_order_ref" string="Customer Reference" />
+                <field name="x_partner_id" string="Customer" />
+                <field name="product_id" />
+
+                <filter name="service_open"
+                    string="Open Backlog"
+                    domain="[('x_is_service_line', '=', True), ('x_remaining_qty', '&gt;', 0)]" />
+
+                <filter name="my_orders"
+                    string="My Orders"
+                    domain="[('salesman_id', '=', uid)]" />
+
+                <separator />
+
+                <filter name="group_customer"
+                    string="Customer"
+                    context="{'group_by': 'x_partner_id'}" />
+
+                <filter name="group_customer_ref"
+                    string="Customer Reference"
+                    context="{'group_by': 'x_client_order_ref'}" />
+
+                <filter name="group_so"
+                    string="SO"
+                    context="{'group_by': 'order_id'}" />
+
+                <filter name="group_product"
+                    string="Product"
+                    context="{'group_by': 'product_id'}" />
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_service_backlog_lines" model="ir.actions.act_window">
+        <field name="name">Order Backlog</field>
+        <field name="res_model">sale.order.line</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id"
+            ref="sale_service_remaining_qty.view_sale_order_line_service_backlog_search" />
+        <field name="domain">[('x_is_service_line', '=', True), ('x_remaining_qty', '&gt;', 0)]</field>
+        <field name="context">{'search_default_service_open': 1}</field>
+    </record>
+
+    <!-- Action views -->
+    <record id="action_service_backlog_lines_list_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1" />
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_sale_order_line_service_backlog_menu_list" />
+        <field name="act_window_id" ref="action_service_backlog_lines" />
+    </record>
+
+    <record id="action_service_backlog_lines_form_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2" />
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_sale_order_line_service_backlog_form" />
+        <field name="act_window_id" ref="action_service_backlog_lines" />
+    </record>
+
+    <menuitem id="menu_service_backlog_root"
+        name="Order Backlog"
+        parent="sale.sale_menu_root"
+        action="action_service_backlog_lines"
+        groups="sales_team.group_sale_salesman"
+        sequence="45" />
+
+
+</odoo>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_stock_backdate_bulk_form" model="ir.ui.view">
+        <field name="name">stock.backdate.bulk.form</field>
+        <field name="model">stock.backdate.bulk</field>
+        <field name="arch" type="xml">
+            <form string="แก้วันที่รับจริงเป็นชุด">
+                <group>
+                    <field name="picking_ids" invisible="1"/>
+                    <field name="date_source" widget="radio"/>
+                    <field name="fixed_date"
+                           invisible="date_source != 'fixed'"
+                           required="date_source == 'fixed'"/>
+                    <field name="skip_forward"/>
+                    <field name="same_month_only"/>
+                </group>
+                <field name="preview" widget="html" readonly="1"/>
+                <footer>
+                    <button name="action_apply" type="object" string="ยืนยันแก้ทั้งชุด"
+                            class="btn-primary"
+                            confirm="ยืนยันแก้ทั้งชุด? ใบสำคัญบัญชีจะถูกดึงกลับเป็นร่างแล้วลงบัญชีใหม่ ใบที่ข้ามเดือนจะได้เลขที่ใหม่"/>
+                    <button string="ยกเลิก" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_stock_backdate_bulk" model="ir.actions.act_window">
+        <field name="name">แก้วันที่รับจริงเป็นชุด</field>
+        <field name="res_model">stock.backdate.bulk</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="stock.model_stock_picking"/>
+        <field name="binding_view_types">list</field>
+        <field name="groups_id" eval="[(4, ref('account.group_account_manager'))]"/>
+        <field name="context">{'default_picking_ids': active_ids}</field>
+    </record>
+</odoo>

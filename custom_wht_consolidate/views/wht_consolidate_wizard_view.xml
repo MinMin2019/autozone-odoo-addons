@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 1. วาดหน้าต่าง (Form View) -->
+    <record id="view_wht_consolidate_wizard_form" model="ir.ui.view">
+        <field name="name">wht.consolidate.wizard.form</field>
+        <field name="model">wht.consolidate.wizard</field>
+        <field name="arch" type="xml">
+             <form string="รวมใบหัก ณ ที่จ่าย (Consolidate WHT)">
+                <!-- ซ่อนฟิลด์ state ไว้ใช้เช็คเงื่อนไข -->
+                <field name="state" invisible="1"/>
+                
+                <!-- โซนของ Step 1 -->
+                <group invisible="state != 'step1'">
+                    <field name="partner_id"/>
+                    <field name="date_from"/>
+                    <field name="date_to"/>
+                </group>
+
+                <!-- โซนของ Step 2 (ตารางรายการ) -->
+                <group invisible="state != 'step2'">
+                    <!-- แจ้งเตือนให้ User ทราบว่าลบรายการได้ -->
+                    <div class="alert alert-info w-100" role="alert">
+                        ระบบดึงรายการภาษีที่ค้นพบมาให้แล้ว หากมีรายการใดที่ไม่ต้องการรวมในใบนี้ ให้กดไอคอนถังขยะหรือกากบาทด้านขวาสุดของบรรทัดนั้นๆ
+                    </div>
+                    <!-- ตารางโชว์ข้อมูล -->
+                    <field name="wht_line_ids" nolabel="1" colspan="2">
+                        <!-- create="0" คือไม่ให้สร้างใหม่ในนี้, edit="0" คือไม่ให้แก้ตัวเลขในตารางนี้ -->
+                        <list create="0" edit="0">
+                            <field name="date" string="วันที่บัญชี"/>
+                            <field name="move_id" string="เลขที่เอกสาร (Journal Entry)"/>
+                            <field name="name" string="คำอธิบาย"/>
+                            <field name="credit" string="ยอดภาษีหัก (บาท)" sum="รวมภาษี"/>
+                        </list>
+                    </field>
+                </group>
+
+                <footer>
+                    <!-- ปุ่มสำหรับ Step 1 -->
+                    <button name="action_get_lines" string="ดึงข้อมูล" type="object" class="btn-primary" invisible="state != 'step1'"/>
+                    
+                    <!-- ปุ่มสำหรับ Step 2 -->
+                    <button name="action_back_to_step1" string="ย้อนกลับ" type="object" class="btn-secondary" invisible="state != 'step2'"/>
+                    <button name="action_generate_wht_cert" string="สร้างใบ 50 ทวิ" type="object" class="btn-primary" invisible="state != 'step2'"/>
+                    
+                    <!-- ปุ่มยกเลิก มีในทุก Step -->
+                    <button string="ยกเลิก" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- 2. สร้าง Action เพื่อเปิดหน้าต่างด้านบน -->
+    <record id="action_wht_consolidate_wizard" model="ir.actions.act_window">
+        <field name="name">รวมใบหัก ณ ที่จ่าย (Consolidate)</field>
+        <field name="res_model">wht.consolidate.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field> <!-- target="new" คือให้เด้งเป็น Popup -->
+    </record>
+
+    <!-- 3. สร้างเมนูไปแปะไว้ใต้หมวด Vendors ของบัญชี -->
+    <menuitem id="menu_wht_consolidate"
+              name="รวมใบหัก ณ ที่จ่าย"
+              parent="account.menu_finance_payables"
+              action="action_wht_consolidate_wizard"
+              sequence="100"/>
+</odoo>

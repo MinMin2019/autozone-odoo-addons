@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Standalone list for smart button result -->
+    <record id="view_sale_order_line_service_backlog_list" model="ir.ui.view">
+        <field name="name">sale.order.line.service.backlog.list</field>
+        <field name="model">sale.order.line</field>
+        <field name="arch" type="xml">
+            <list string="Order Backlog" create="false" edit="false" delete="false"
+                decoration-danger="x_remaining_qty &gt; 0">
+                <field name="order_id" />
+                <field name="order_partner_id" />
+                <field name="product_id" />
+                <field name="product_uom_qty" />
+                <field name="qty_delivered" />
+                <field name="x_remaining_qty" />
+                <field name="price_unit" />
+                <field name="price_subtotal" />
+            </list>
+        </field>
+    </record>
+
+    <!-- SO form: line color + remaining column + smart button -->
+    <record id="view_order_form_inherit_service_remaining_qty" model="ir.ui.view">
+        <field name="name">sale.order.form.service.remaining.qty</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form" />
+        <field name="arch" type="xml">
+
+            <!-- Smart Button -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button type="object"
+                    name="action_view_service_backlog_lines"
+                    class="oe_stat_button"
+                    icon="fa-paint-brush"
+                    invisible="x_service_backlog_count == 0">
+                    <field name="x_service_backlog_count" widget="statinfo" string="Order Backlog" />
+                </button>
+            </xpath>
+
+            <xpath expr="//field[@name='order_line']/list/field[@name='qty_delivered']"
+                position="after">
+                <field name="x_delivered_add_qty" optional="show" />
+                <button name="action_add_delivered_qty"
+                    type="object"
+                    icon="fa-plus" />
+            </xpath>
+
+            <xpath expr="//field[@name='order_line']/list/field[@name='qty_delivered']"
+                position="after">
+                <field name="x_remaining_qty" optional="show" />
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- SO list: customer ref + totals + red row -->
+    <record id="view_quotation_tree_inherit_service_remaining_qty" model="ir.ui.view">
+        <field name="name">sale.order.list.service.remaining.qty</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_quotation_tree_with_onboarding" />
+        <field name="arch" type="xml">
+
+            <xpath expr="//list" position="attributes">
+                <attribute name="decoration-danger">x_service_remaining_total &gt; 0</attribute>
+            </xpath>
+
+            <xpath expr="//list/field[@name='client_order_ref']" position="attributes">
+                <attribute name="optional">show</attribute>
+            </xpath>
+
+            <xpath expr="//list/field[@name='amount_total']" position="before">
+                <field name="x_service_delivered_total" optional="show" />
+                <field name="x_service_remaining_total" optional="show"
+                    decoration-danger="x_service_remaining_total &gt; 0" />
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="view_sale_order_list_upload_inherit_service_remaining_qty" model="ir.ui.view">
+        <field name="name">sale.order.list.upload.service.remaining.qty</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.sale_order_list_upload" />
+        <field name="arch" type="xml">
+
+            <xpath expr="//list" position="attributes">
+                <attribute name="decoration-danger">x_service_remaining_total &gt; 0</attribute>
+            </xpath>
+
+            <xpath expr="//list/field[@name='client_order_ref']" position="replace">
+                <field name="client_order_ref" string="Customer Reference" optional="show" />
+            </xpath>
+
+            <xpath expr="//list/field[@name='amount_total']" position="before">
+                <field name="x_service_delivered_total" optional="show" />
+                <field name="x_service_remaining_total" optional="show"
+                    decoration-danger="x_service_remaining_total &gt; 0" />
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Search filters -->
+    <record id="view_sales_order_filter_inherit_service_remaining_qty" model="ir.ui.view">
+        <field name="name">sale.order.search.service.remaining.qty</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_sales_order_filter" />
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <filter name="service_remaining"
+                    string="Remaining"
+                    domain="[('x_service_remaining_total', '&gt;', 0)]" />
+                <field name="client_order_ref" />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

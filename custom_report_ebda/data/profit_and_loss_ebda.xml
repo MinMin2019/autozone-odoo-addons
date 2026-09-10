@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- EBDA = กำไรก่อนหักค่าเสื่อมราคา (Less Other Expenses ของผังนี้มีแต่บัญชีค่าเสื่อม)
+         วางระหว่าง Plus Other Income (seq 80) กับ Less Other Expenses (seq 90) -->
+    <record id="pl_line_ebda" model="account.report.line">
+        <field name="name">EBDA</field>
+        <field name="report_id" ref="account_reports.profit_and_loss"/>
+        <field name="code">AZ_EBDA</field>
+        <field name="sequence">85</field>
+        <field name="hierarchy_level">0</field>
+        <field name="expression_ids">
+            <record id="pl_line_ebda_balance" model="account.report.expression">
+                <field name="label">balance</field>
+                <field name="engine">aggregation</field>
+                <field name="formula">INC.balance + OIN.balance</field>
+                <field name="green_on_positive" eval="True"/>
+                <field name="date_scope">strict_range</field>
+            </record>
+        </field>
+    </record>
+</odoo>

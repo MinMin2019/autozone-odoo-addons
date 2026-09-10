@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- account_asset.view_account_asset_form ประกาศกลุ่ม Accounting ไว้ 2 ชุด
+         ชุดที่ 1 = ฟอร์ม Asset Model  -> sheet/group[1]/group[2]
+         ชุดที่ 2 = ฟอร์มสินทรัพย์ปกติ -> sheet/notebook/page[main_page]/group[1]/group[4]
+         xpath ของ Odoo หยิบ node แรกที่ match เท่านั้น จึงต้องเขียนแยกทั้ง 2 ชุด
+         และห้ามใช้ @string เป็น selector (Odoo บล็อกไว้) จึงต้องอ้างด้วยตำแหน่ง -->
+
+    <record id="view_account_asset_form_prepaid" model="ir.ui.view">
+        <field name="name">account.asset.form.prepaid.account</field>
+        <field name="model">account.asset</field>
+        <field name="inherit_id" ref="account_asset.view_account_asset_form"/>
+        <field name="arch" type="xml">
+
+            <!-- ชุดที่ 1: Asset Model -->
+            <xpath expr="//form[1]/sheet[1]/group[1]/group[2]/field[@name='account_asset_id']" position="attributes">
+                <attribute name="domain">[('company_ids', 'parent_of', company_id), ('account_type', 'in', ('asset_fixed', 'asset_non_current', 'asset_current', 'asset_prepayments'))]</attribute>
+            </xpath>
+            <xpath expr="//form[1]/sheet[1]/group[1]/group[2]/field[@name='account_depreciation_id']" position="attributes">
+                <attribute name="domain">[('company_ids', 'parent_of', company_id), ('account_type', 'in', ('asset_fixed', 'asset_non_current', 'asset_current', 'asset_prepayments'))]</attribute>
+            </xpath>
+
+            <!-- ชุดที่ 2: ฟอร์มสินทรัพย์ปกติ -->
+            <xpath expr="//form[1]/sheet[1]/notebook[1]/page[@name='main_page']/group[1]/group[4]/field[@name='account_asset_id']" position="attributes">
+                <attribute name="domain">[('company_ids', 'parent_of', company_id), ('account_type', 'in', ('asset_fixed', 'asset_non_current', 'asset_current', 'asset_prepayments'))]</attribute>
+            </xpath>
+            <xpath expr="//form[1]/sheet[1]/notebook[1]/page[@name='main_page']/group[1]/group[4]/field[@name='account_depreciation_id']" position="attributes">
+                <attribute name="domain">[('company_ids', 'parent_of', company_id), ('account_type', 'in', ('asset_fixed', 'asset_non_current', 'asset_current', 'asset_prepayments'))]</attribute>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>

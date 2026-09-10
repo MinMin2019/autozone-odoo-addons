@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- ผู้ที่เข้า Role Builder ได้ (กุญแจห้องนิรภัย) — จำกัดเฉพาะ IT/Admin -->
+    <record id="group_arb_manager" model="res.groups">
+        <field name="name">Access Role Builder / Manager</field>
+        <field name="category_id" ref="base.module_category_administration"/>
+    </record>
+
+    <!-- ผู้ดูแลระบบ (Settings) ได้สิทธิ์นี้อัตโนมัติ -->
+    <record id="base.group_system" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('group_arb_manager'))]"/>
+    </record>
+
+</odoo>

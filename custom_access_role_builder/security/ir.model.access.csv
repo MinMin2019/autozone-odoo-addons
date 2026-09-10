@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_catalog_mgr,access.catalog.mgr,model_access_catalog,group_arb_manager,1,1,1,1
+access_role_mgr,access.role.mgr,model_access_role,group_arb_manager,1,1,1,1
+access_role_line_mgr,access.role.line.mgr,model_access_role_line,group_arb_manager,1,1,1,1
+access_catalog_import_mgr,access.catalog.import.mgr,model_access_catalog_import,group_arb_manager,1,1,1,1
+access_role_line_add_mgr,access.role.line.add.mgr,model_access_role_line_add,group_arb_manager,1,1,1,1
+access_role_export_mgr,access.role.export.mgr,model_access_role_export,group_arb_manager,1,1,1,1
+access_role_import_mgr,access.role.import.mgr,model_access_role_import,group_arb_manager,1,1,1,1

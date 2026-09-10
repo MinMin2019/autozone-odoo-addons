@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_access_catalog_list" model="ir.ui.view">
+        <field name="name">access.catalog.list</field>
+        <field name="model">access.catalog</field>
+        <field name="arch" type="xml">
+            <list string="Menu Catalog" multi_edit="1">
+                <field name="app"/>
+                <field name="section"/>
+                <field name="name"/>
+                <field name="model_name"/>
+                <field name="needs_rule"/>
+                <field name="domain" optional="show"/>
+                <field name="default_level"/>
+                <field name="needs_review" decoration-danger="needs_review == True"/>
+                <field name="note" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_access_catalog_form" model="ir.ui.view">
+        <field name="name">access.catalog.form</field>
+        <field name="model">access.catalog</field>
+        <field name="arch" type="xml">
+            <form string="Catalog Entry">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="app"/>
+                            <field name="section"/>
+                            <field name="menu_path"/>
+                            <field name="default_level"/>
+                        </group>
+                        <group>
+                            <field name="model_id"/>
+                            <field name="model_name"/>
+                            <field name="action_id"/>
+                            <field name="client_action_id"/>
+                            <field name="view_mode" invisible="action_id or client_action_id"/>
+                            <field name="needs_rule"/>
+                            <field name="domain"/>
+                            <field name="domain_hint" readonly="1"/>
+                            <field name="needs_review"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="extra_read_model_ids" widget="many2many_tags"/>
+                        <field name="note"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Import from App Menu wizard -->
+    <record id="view_access_catalog_import_form" model="ir.ui.view">
+        <field name="name">access.catalog.import.form</field>
+        <field name="model">access.catalog.import</field>
+        <field name="arch" type="xml">
+            <form string="Import Catalog from App Menu">
+                <p class="text-muted">
+                    Pick a top-level app menu (standard or custom). Its menu tree is
+                    scanned and turned into catalog entries you can assign to roles.
+                </p>
+                <group>
+                    <field name="menu_id"/>
+                    <field name="overwrite"/>
+                </group>
+                <footer>
+                    <button name="action_import" type="object" string="Import"
+                            class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_access_catalog_import" model="ir.actions.act_window">
+        <field name="name">Import from App Menu</field>
+        <field name="res_model">access.catalog.import</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="view_access_catalog_search" model="ir.ui.view">
+        <field name="name">access.catalog.search</field>
+        <field name="model">access.catalog</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="model_name"/>
+                <filter name="needs_rule" string="Needs rule" domain="[('needs_rule','=',True)]"/>
+                <filter name="needs_review" string="Needs review" domain="[('needs_review','=',True)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_app" string="App" context="{'group_by':'app'}"/>
+                    <filter name="group_section" string="Section" context="{'group_by':'section'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_access_catalog" model="ir.actions.act_window">
+        <field name="name">Menu Catalog</field>
+        <field name="res_model">access.catalog</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_group_app': 1}</field>
+    </record>
+
+</odoo>

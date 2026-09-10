@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_scv_wizard_form" model="ir.ui.view">
+        <field name="name">stock.count.variance.wizard.form</field>
+        <field name="model">stock.count.variance.wizard</field>
+        <field name="arch" type="xml">
+            <form string="ผลต่างตรวจนับสต็อก">
+                <group>
+                    <group string="โหมด / วันที่">
+                        <field name="mode" widget="radio"/>
+                        <field name="date_from" invisible="mode != 'applied'" required="mode == 'applied'"/>
+                        <field name="date_to"/>
+                        <field name="company_id" invisible="1"/>
+                    </group>
+                    <group string="ขอบเขต">
+                        <field name="warehouse_ids" widget="many2many_tags"
+                               options="{'no_create': True}" placeholder="ทุกสาขา"/>
+                        <field name="categ_ids" widget="many2many_tags"
+                               options="{'no_create': True}" placeholder="ทุกหมวด"/>
+                        <field name="product_ids" widget="many2many_tags"
+                               options="{'no_create': True}" placeholder="ทุกสินค้า"/>
+                    </group>
+                </group>
+                <group string="ตัวเลือก">
+                    <field name="only_diff"/>
+                    <field name="include_uncounted" invisible="mode != 'pending'"/>
+                </group>
+                <div class="text-muted small">
+                    รอปรับปรุง = รายการที่กรอกยอดนับใน Physical Inventory แล้วแต่ยังไม่กด Apply (ตรวจมูลค่าผลต่างก่อนอนุมัติ)
+                    &#160;|&#160; ปรับปรุงแล้ว = ประวัติการปรับปรุงจากการนับตามช่วงวันที่ (ไม่รวม Scrap)
+                </div>
+                <footer>
+                    <button name="action_view" string="ดูรายงาน" type="object" class="btn-primary"/>
+                    <button name="action_export_xlsx" string="Excel" type="object" class="btn-secondary"/>
+                    <button name="action_print_pdf" string="PDF" type="object" class="btn-secondary"/>
+                    <button string="ยกเลิก" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_scv_wizard" model="ir.actions.act_window">
+        <field name="name">ผลต่างตรวจนับ (Count Variance)</field>
+        <field name="res_model">stock.count.variance.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_scv" name="ผลต่างตรวจนับ (Count Variance)"
+              parent="stock.menu_warehouse_report" action="action_scv_wizard" sequence="47"/>
+
+    <record id="view_scv_line_list" model="ir.ui.view">
+        <field name="name">stock.count.variance.line.list</field>
+        <field name="model">stock.count.variance.line</field>
+        <field name="arch" type="xml">
+            <list string="ผลต่างตรวจนับ" create="false" edit="false" delete="false"
+                  decoration-muted="state == 'uncounted'">
+                <field name="warehouse_id" optional="show"/>
+                <field name="location_id" optional="show"/>
+                <field name="default_code"/>
+                <field name="product_name"/>
+                <field name="categ_id" optional="hide"/>
+                <field name="lot_id" optional="hide"/>
+                <field name="uom_id"/>
+                <field name="state" optional="show"/>
+                <field name="date" widget="date" optional="show"/>
+                <field name="inventory_date" optional="hide"/>
+                <field name="system_qty"/>
+                <field name="counted_qty"/>
+                <field name="diff_qty" decoration-danger="diff_qty &lt; 0" decoration-success="diff_qty &gt; 0"/>
+                <field name="diff_pct" optional="hide"/>
+                <field name="unit_cost" optional="show"/>
+                <field name="diff_value" sum="รวม" decoration-danger="diff_value &lt; 0" decoration-success="diff_value &gt; 0"/>
+                <field name="abs_diff_value" sum="รวม" optional="hide"/>
+                <field name="user_id" optional="show"/>
+                <field name="reference" optional="show"/>
+                <field name="is_outdated" optional="show" column_invisible="context.get('mode') != 'pending'" widget="boolean"/>
+                <field name="product_id" column_invisible="1"/>
+                <field name="move_id" column_invisible="1"/>
+                <field name="quant_id" column_invisible="1"/>
+                <button name="action_open_source" type="object" icon="fa-external-link"
+                        title="เปิดรายการต้นทาง" invisible="not move_id and not quant_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_scv_line_search" model="ir.ui.view">
+        <field name="name">stock.count.variance.line.search</field>
+        <field name="model">stock.count.variance.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="default_code"/>
+                <field name="product_name"/>
+                <field name="product_id"/>
+                <field name="warehouse_id"/>
+                <field name="location_id"/>
+                <field name="categ_id"/>
+                <field name="user_id"/>
+                <filter name="has_diff" string="มีผลต่าง" domain="[('diff_qty', '!=', 0)]"/>
+                <filter name="short" string="ขาด" domain="[('diff_qty', '&lt;', 0)]"/>
+                <filter name="over" string="เกิน" domain="[('diff_qty', '&gt;', 0)]"/>
+                <filter name="matched" string="นับตรง" domain="[('diff_qty', '=', 0), ('state', '!=', 'uncounted')]"/>
+                <filter name="uncounted" string="ยังไม่นับ" domain="[('state', '=', 'uncounted')]"/>
+                <filter name="outdated" string="ยอดระบบขยับหลังนับ" domain="[('is_outdated', '=', True)]"/>
+                <filter name="big" string="ผลต่างเกิน 1,000 บาท" domain="[('abs_diff_value', '&gt;=', 1000)]"/>
+                <group expand="0" string="จัดกลุ่ม">
+                    <filter name="group_warehouse" string="สาขา / คลัง" context="{'group_by': 'warehouse_id'}"/>
+                    <filter name="group_location" string="ตำแหน่ง" context="{'group_by': 'location_id'}"/>
+                    <filter name="group_categ" string="หมวดสินค้า" context="{'group_by': 'categ_id'}"/>
+                    <filter name="group_user" string="ผู้นับ / ผู้ปรับ" context="{'group_by': 'user_id'}"/>
+                    <filter name="group_state" string="สถานะ" context="{'group_by': 'state'}"/>
+                    <filter name="group_date" string="วันที่" context="{'group_by': 'date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_scv_line_pivot" model="ir.ui.view">
+        <field name="name">stock.count.variance.line.pivot</field>
+        <field name="model">stock.count.variance.line</field>
+        <field name="arch" type="xml">
+            <pivot string="ผลต่างตรวจนับ" disable_linking="1">
+                <field name="warehouse_id" type="row"/>
+                <field name="diff_value" type="measure"/>
+                <field name="abs_diff_value" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_scv_line_graph" model="ir.ui.view">
+        <field name="name">stock.count.variance.line.graph</field>
+        <field name="model">stock.count.variance.line</field>
+        <field name="arch" type="xml">
+            <graph string="ผลต่างตรวจนับ" type="bar">
+                <field name="warehouse_id"/>
+                <field name="diff_value" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_scv_line_form" model="ir.ui.view">
+        <field name="name">stock.count.variance.line.form</field>
+        <field name="model">stock.count.variance.line</field>
+        <field name="arch" type="xml">
+            <form string="ผลต่างตรวจนับ" create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="oe_title"><h2><field name="name" readonly="1"/></h2></div>
+                    <group>
+                        <group>
+                            <field name="product_id" readonly="1"/>
+                            <field name="categ_id" readonly="1"/>
+                            <field name="uom_id" readonly="1"/>
+                            <field name="lot_id" readonly="1" invisible="not lot_id"/>
+                            <field name="warehouse_id" readonly="1"/>
+                            <field name="location_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="state" readonly="1"/>
+                            <field name="date" readonly="1"/>
+                            <field name="inventory_date" readonly="1"/>
+                            <field name="user_id" readonly="1"/>
+                            <field name="reference" readonly="1"/>
+                            <field name="is_outdated" readonly="1" invisible="state != 'counted'"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="จำนวน">
+                            <field name="system_qty" readonly="1"/>
+                            <field name="counted_qty" readonly="1"/>
+                            <field name="diff_qty" readonly="1"/>
+                            <field name="diff_pct" readonly="1"/>
+                        </group>
+                        <group string="มูลค่า">
+                            <field name="unit_cost" readonly="1"/>
+                            <field name="diff_value" readonly="1"/>
+                        </group>
+                    </group>
+                    <button name="action_open_source" type="object" string="เปิดรายการต้นทาง"
+                            class="btn-secondary" invisible="not move_id and not quant_id"/>
+                    <field name="move_id" invisible="1"/>
+                    <field name="quant_id" invisible="1"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

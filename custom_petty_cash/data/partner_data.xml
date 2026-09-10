@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- partner กลางสำหรับบิลย่อยที่ไม่มีชื่อร้าน/ไม่มีใบเสร็จ
+             ห้ามใช้กับรายการขอคืน VAT (โมดูลบังคับไว้ตอนสร้างบิล) -->
+        <record id="partner_no_receipt" model="res.partner">
+            <field name="name">ใบรับรองแทนใบเสร็จรับเงิน</field>
+            <field name="company_type">company</field>
+            <field name="supplier_rank">1</field>
+            <field name="customer_rank">0</field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_payslip_run_form_inherit_loan" model="ir.ui.view">
+        <field name="name">hr.payslip.run.form.inherit.loan</field>
+        <field name="model">hr.payslip.run</field>
+        <field name="inherit_id" ref="hr_payroll.hr_payslip_run_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_draft']" position="after">
+                <button name="%(action_hr_employee_loan_push_wizard)d"
+                        string="หักเงินกู้พนักงาน"
+                        type="action"
+                        invisible="state not in ('draft', 'verify') or not slip_ids"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

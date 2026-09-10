@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_stock_backdate_fix_form" model="ir.ui.view">
+        <field name="name">stock.backdate.fix.form</field>
+        <field name="model">stock.backdate.fix</field>
+        <field name="arch" type="xml">
+            <form string="แก้วันที่รับจริง">
+                <group>
+                    <field name="picking_id" invisible="1"/>
+                    <field name="current_date"/>
+                    <field name="new_date"/>
+                </group>
+                <field name="warning" widget="html" readonly="1"/>
+                <field name="entry_ids" readonly="1" nolabel="1">
+                    <list>
+                        <field name="name"/>
+                        <field name="date"/>
+                        <field name="journal_id"/>
+                        <field name="amount_total_signed"/>
+                    </list>
+                </field>
+                <footer>
+                    <button name="action_apply" type="object" string="ยืนยันแก้วันที่"
+                            class="btn-primary"
+                            confirm="ยืนยันแก้วันที่? ใบสำคัญบัญชีจะถูกดึงกลับเป็นร่างแล้วลงบัญชีใหม่"/>
+                    <button string="ยกเลิก" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

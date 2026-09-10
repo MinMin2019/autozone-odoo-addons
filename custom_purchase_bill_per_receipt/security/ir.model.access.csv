@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_purchase_bill_receipt_wizard_invoice,purchase.bill.receipt.wizard invoice,model_purchase_bill_receipt_wizard,account.group_account_invoice,1,1,1,1
+access_purchase_bill_receipt_wizard_line_invoice,purchase.bill.receipt.wizard.line invoice,model_purchase_bill_receipt_wizard_line,account.group_account_invoice,1,1,1,1
+access_purchase_bill_receipt_wizard_purchase,purchase.bill.receipt.wizard purchase,model_purchase_bill_receipt_wizard,purchase.group_purchase_user,1,1,1,1
+access_purchase_bill_receipt_wizard_line_purchase,purchase.bill.receipt.wizard.line purchase,model_purchase_bill_receipt_wizard_line,purchase.group_purchase_user,1,1,1,1
+access_stock_picking_account_invoice,stock.picking account invoice (read),stock.model_stock_picking,account.group_account_invoice,1,0,0,0
+access_stock_move_account_invoice,stock.move account invoice (read),stock.model_stock_move,account.group_account_invoice,1,0,0,0

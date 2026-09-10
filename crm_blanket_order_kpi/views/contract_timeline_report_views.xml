@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="contract_timeline_report_view_pivot" model="ir.ui.view">
+        <field name="name">crm.contract.timeline.report.pivot</field>
+        <field name="model">crm.contract.timeline.report</field>
+        <field name="arch" type="xml">
+            <pivot string="Timeline ตามเวลา / Contract Timeline" sample="1">
+                <field name="date" type="row" interval="year" />
+                <field name="event_type" type="col" />
+                <field name="product_qty" type="measure" />
+                <field name="amount_untaxed" type="measure" />
+            </pivot>
+        </field>
+    </record>
+
+    <record id="contract_timeline_report_view_graph" model="ir.ui.view">
+        <field name="name">crm.contract.timeline.report.graph</field>
+        <field name="model">crm.contract.timeline.report</field>
+        <field name="arch" type="xml">
+            <graph string="Timeline ตามเวลา / Contract Timeline" sample="1" type="bar">
+                <field name="date" interval="year" />
+                <field name="event_type" />
+                <field name="product_qty" type="measure" />
+            </graph>
+        </field>
+    </record>
+
+    <record id="contract_timeline_report_view_list" model="ir.ui.view">
+        <field name="name">crm.contract.timeline.report.list</field>
+        <field name="model">crm.contract.timeline.report</field>
+        <field name="arch" type="xml">
+            <list string="Timeline ตามเวลา / Contract Timeline" create="false">
+                <field name="date" />
+                <field name="opportunity_id" />
+                <field name="partner_id" optional="hide" />
+                <field name="product_id" />
+                <field name="event_type" />
+                <field name="product_qty" sum="Quantity" />
+                <field name="currency_id" column_invisible="True" />
+                <field name="amount_untaxed" sum="Amount" widget="monetary" />
+            </list>
+        </field>
+    </record>
+
+    <record id="contract_timeline_report_view_search" model="ir.ui.view">
+        <field name="name">crm.contract.timeline.report.search</field>
+        <field name="model">crm.contract.timeline.report</field>
+        <field name="arch" type="xml">
+            <search string="Contract Timeline">
+                <field name="opportunity_id" />
+                <field name="partner_id" />
+                <field name="product_id" />
+                <filter name="released" string="เรียกแล้ว / Released" domain="[('event_type', '=', 'released')]" />
+                <filter name="invoiced" string="วางบิล / Invoiced" domain="[('event_type', '=', 'invoiced')]" />
+                <separator />
+                <filter name="filter_date" string="Date" date="date" />
+                <group expand="0" string="Group By">
+                    <filter name="group_event" string="เหตุการณ์ / Event" context="{'group_by': 'event_type'}" />
+                    <filter name="group_year" string="ปี / Year" context="{'group_by': 'date:year'}" />
+                    <filter name="group_quarter" string="ไตรมาส / Quarter" context="{'group_by': 'date:quarter'}" />
+                    <filter name="group_month" string="เดือน / Month" context="{'group_by': 'date:month'}" />
+                    <filter name="group_opportunity" string="Opportunity" context="{'group_by': 'opportunity_id'}" />
+                    <filter name="group_product" string="สินค้า / Product" context="{'group_by': 'product_id'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_contract_timeline_report" model="ir.actions.act_window">
+        <field name="name">Timeline ตามเวลา / Contract Timeline</field>
+        <field name="res_model">crm.contract.timeline.report</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="view_id" ref="contract_timeline_report_view_pivot" />
+        <field name="search_view_id" ref="contract_timeline_report_view_search" />
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No contract activity yet</p>
+            <p>Released (SO) and Invoiced (posted) events of contract Blanket Orders, over time.</p>
+        </field>
+    </record>
+
+    <menuitem
+        id="menu_contract_timeline_report"
+        name="Timeline ตามเวลา / Contract Timeline"
+        parent="crm.crm_menu_report"
+        action="action_contract_timeline_report"
+        sequence="27"
+    />
+</odoo>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ใส่ flag ไว้ในตารางแท็บ Tax Invoice แบบซ่อน เพื่อให้ onchange ส่งค่ากลับมาที่ฟอร์มได้ -->
+    <record id="view_move_form_az_tax_invoice_autofill" model="ir.ui.view">
+        <field name="name">account.move.form.az.tax.invoice.autofill</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="l10n_th_account_tax.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='tax_invoice_ids']/list/field[@name='tax_invoice_number']" position="before">
+                <field name="az_auto_number" column_invisible="1"/>
+                <field name="az_auto_date" column_invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

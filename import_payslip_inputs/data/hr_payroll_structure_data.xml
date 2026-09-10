@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- noupdate=1: อัปเกรดโมดูลแล้วไม่ทับบัญชี Dr/Cr ที่ฝ่ายบัญชีตั้งไว้บน Rule -->
+    <data noupdate="1">
+
+        <!-- Structure Type เฉพาะของการนำเข้า: ตั้งบนสัญญาจ้างของพนักงานแล้ว
+             ตอน Generate Payslips ระบบจะเลือก Structure Legacy Import ให้อัตโนมัติ
+             (default_struct_id ถูกเซ็ตท้ายไฟล์ หลังจากสร้าง structure แล้ว) -->
+        <record id="structure_type_legacy" model="hr.payroll.structure.type">
+            <field name="name">พนักงาน - นำเข้าจากระบบเดิม (Legacy Import)</field>
+            <field name="country_id" eval="False"/>
+        </record>
+
+        <!-- Structure แบบ Pass-through (โมเดล A): ระบบเดิมเป็นเครื่องคิดเลข
+             Odoo รับยอดสำเร็จรูปผ่าน Other Inputs แล้วออกสลิป + ลงบัญชีเท่านั้น
+             rule_ids ตั้ง (5,0,0) เพื่อกันไม่ให้ copy default rules ของ Odoo เข้ามาปน -->
+        <record id="structure_legacy_import" model="hr.payroll.structure">
+            <field name="name">เงินเดือน - นำเข้าจากระบบเดิม (Legacy Import)</field>
+            <field name="code">LEGACY</field>
+            <field name="type_id" ref="structure_type_legacy"/>
+            <field name="country_id" eval="False"/>
+            <field name="use_worked_day_lines" eval="False"/>
+            <field name="rule_ids" eval="[(5, 0, 0)]"/>
+            <field name="input_line_type_ids" eval="[(6, 0, [
+                ref('input_type_basic'), ref('input_type_ot'), ref('input_type_bonus'),
+                ref('input_type_commission'), ref('input_type_diligence'), ref('input_type_allowance'),
+                ref('input_type_inc_other'), ref('input_type_sso'), ref('input_type_tax'),
+                ref('input_type_pvd'), ref('input_type_late'), ref('input_type_advance'),
+                ref('input_type_loan'), ref('input_type_ded_other')])]"/>
+        </record>
+
+        <!-- ===== รายได้: rule แบบ input ตรง ๆ ไม่ต้องเขียน Python ===== -->
+        <record id="rule_legacy_basic" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_legacy_import"/>
+            <field name="category_id" ref="hr_payroll.BASIC"/>
+            <field name="name">เงินเดือน</field>
+            <field name="code">BASIC</field>
+            <field name="sequence">1</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_basic"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_basic"/>
+        </record>
+        <record id="rule_legacy_ot" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_legacy_import"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าล่วงเวลา</field>
+            <field name="code">OT</field>
+            <field name="sequence">10</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_ot"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_ot"/>
+        </record>
+        <record id="rule_legacy_bonus" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_legacy_import"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">โบนัส</field>
+            <field name="code">BONUS</field>
+            <field name="sequence">20</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_bonus"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_bonus"/>
+        </record>
+        <record id="rule_legacy_commission" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_legacy_import"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">ค่าคอมมิชชั่น</field>
+            <field name="code">COMMISSION</field>
+            <field name="sequence">30</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_commission"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_commission"/>
+        </record>
+        <record id="rule_legacy_diligence" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_legacy_import"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">เบี้ยขยัน</field>
+            <field name="code">DILIGENCE</field>
+            <field name="sequence">40</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_diligence"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_diligence"/>
+        </record>
+        <record id="rule_legacy_allowance" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_legacy_import"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">เบี้ยเลี้ยง/ค่าตำแหน่ง</field>
+            <field name="code">ALLOWANCE</field>
+            <field name="sequence">50</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_allowance"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_allowance"/>
+        </record>
+        <record id="rule_legacy_inc_other" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_legacy_import"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="name">รายได้อื่น ๆ</field>
+            <field name="code">INC_OTHER</field>
+            <field name="sequence">60</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_inc_other"/>
+            <field name="amount_select">input</field>
+            <field name="amount_other_input_id" ref="input_type_inc_other"/>
+        </record>
+
+        <!-- ===== รวมรายได้ ===== -->
+        <record id="rule_legacy_gross" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_legacy_import"/>
+            <field name="category_id" ref="hr_payroll.GROSS"/>
+            <field name="name">รวมรายได้</field>
+            <field name="code">GROSS</field>
+            <field name="sequence">100</field>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = categories['BASIC'] + categories['ALW']</field>
+        </record>
+
+        <!-- ===== รายการหัก: รับค่าบวกจากไฟล์ แล้วติดลบใน rule (idiom เดียวกับ Odoo) ===== -->
+        <record id="rule_legacy_sso" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_legacy_import"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">ประกันสังคม</field>
+            <field name="code">SSO</field>
+            <field name="sequence">110</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_sso"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['SSO'].amount</field>
+        </record>
+        <record id="rule_legacy_tax" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_legacy_import"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">ภาษีเงินได้หัก ณ ที่จ่าย</field>
+            <field name="code">TAX</field>
+            <field name="sequence">120</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_tax"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['TAX'].amount</field>
+        </record>
+        <record id="rule_legacy_pvd" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_legacy_import"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">กองทุนสำรองเลี้ยงชีพ</field>
+            <field name="code">PVD</field>
+            <field name="sequence">130</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_pvd"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['PVD'].amount</field>
+        </record>
+        <record id="rule_legacy_late" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_legacy_import"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">มาสาย/ขาดงาน</field>
+            <field name="code">LATE</field>
+            <field name="sequence">140</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_late"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['LATE'].amount</field>
+        </record>
+        <record id="rule_legacy_advance" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_legacy_import"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">เงินเบิกล่วงหน้า</field>
+            <field name="code">ADVANCE</field>
+            <field name="sequence">150</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_advance"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['ADVANCE'].amount</field>
+        </record>
+        <record id="rule_legacy_loan" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_legacy_import"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">เงินกู้สวัสดิการ</field>
+            <field name="code">LOAN</field>
+            <field name="sequence">160</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_loan"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['LOAN'].amount</field>
+        </record>
+        <record id="rule_legacy_ded_other" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_legacy_import"/>
+            <field name="category_id" ref="hr_payroll.DED"/>
+            <field name="name">รายการหักอื่น ๆ</field>
+            <field name="code">DED_OTHER</field>
+            <field name="sequence">170</field>
+            <field name="condition_select">input</field>
+            <field name="condition_other_input_id" ref="input_type_ded_other"/>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = -inputs['DED_OTHER'].amount</field>
+        </record>
+
+        <!-- ===== เงินได้สุทธิ ===== -->
+        <record id="rule_legacy_net" model="hr.salary.rule">
+            <field name="struct_id" ref="structure_legacy_import"/>
+            <field name="category_id" ref="hr_payroll.NET"/>
+            <field name="name">เงินได้สุทธิ</field>
+            <field name="code">NET</field>
+            <field name="sequence">200</field>
+            <field name="appears_on_employee_cost_dashboard">True</field>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = categories['BASIC'] + categories['ALW'] + categories['DED']</field>
+        </record>
+
+        <!-- ผูก default structure ให้ type (ต้องมาหลัง structure เพราะอ้างถึงกัน) -->
+        <record id="structure_type_legacy" model="hr.payroll.structure.type">
+            <field name="default_struct_id" ref="structure_legacy_import"/>
+        </record>
+
+    </data>
+</odoo>

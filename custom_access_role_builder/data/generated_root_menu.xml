@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- แอปราก "งานของฉัน" สำหรับเมนูที่ Role Builder สร้าง
+         ไม่มี groups → Odoo จะซ่อนอัตโนมัติถ้า user ไม่มีเมนูลูกที่มองเห็น
+         (เมนู branch ของแต่ละ role ถูก gate ด้วย role group) -->
+    <menuitem id="menu_arb_generated_root"
+              name="My Work"
+              web_icon="account,static/description/icon.png"
+              sequence="1"/>
+
+</odoo>

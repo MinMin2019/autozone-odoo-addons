@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="purchase_order_form_bill_per_receipt" model="ir.ui.view">
+        <field name="name">purchase.order.form.bill.per.receipt</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='action_create_invoice']" position="after">
+                <button name="action_open_bill_per_receipt"
+                    string="สร้างบิลตามใบรับ"
+                    type="object"
+                    class="oe_highlight"
+                    invisible="state not in ('purchase', 'done') or billable_picking_count == 0"
+                    groups="account.group_account_invoice"/>
+            </xpath>
+            <xpath expr="//field[@name='invoice_status']" position="after">
+                <field name="billable_picking_count" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

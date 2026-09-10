@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_blanket_order_form_opportunity" model="ir.ui.view">
+        <field name="name">sale.blanket.order.form.opportunity</field>
+        <field name="model">sale.blanket.order</field>
+        <field name="inherit_id" ref="sale_blanket_order.view_blanket_order_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='client_order_ref']" position="after">
+                <field name="opportunity_id" />
+                <field name="source_quotation_id" />
+            </xpath>
+        </field>
+    </record>
+</odoo>

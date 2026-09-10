@@ -1,0 +1,33 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ---- Odoo / runtime ----
+*.log
+*.pot~
+
+# ---- ไฟล์บีบอัด / ดัมป์ฐานข้อมูล (ห้ามเข้า repo) ----
+*.zip
+*.tar
+*.tar.gz
+*.7z
+*.sql
+*.dump
+*.bak
+
+# ---- ความลับ: ห้าม commit ไฟล์ตั้งค่าที่มีรหัสผ่าน ----
+*.ini
+!*.example.ini
+.env
+*.secret
+credentials*.json
+
+# ---- Editor / OS ----
+.vscode/
+.idea/
+*.swp
+*~
+Thumbs.db
+desktop.ini
+.DS_Store

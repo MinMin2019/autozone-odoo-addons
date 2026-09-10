@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ฟอร์มสินค้ามี header อยู่แล้ว — เติมปุ่ม + statusbar เข้าไป -->
+    <record id="product_template_form_view_mda" model="ir.ui.view">
+        <field name="name">product.template.form.mda</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <field name="mda_is_approver" invisible="1"/>
+                <button name="action_mda_submit" type="object" string="ส่งอนุมัติ"
+                        class="btn-primary"
+                        invisible="approval_state != 'draft' or mda_is_approver"/>
+                <button name="action_mda_approve" type="object" string="อนุมัติ"
+                        class="btn-primary"
+                        invisible="approval_state == 'approved' or not mda_is_approver"/>
+                <button name="action_mda_open_reject_wizard" type="object" string="ตีกลับ"
+                        invisible="approval_state != 'to_approve' or not mda_is_approver"/>
+                <field name="approval_state" widget="statusbar"
+                       statusbar_visible="draft,to_approve,approved"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_template_search_view_mda" model="ir.ui.view">
+        <field name="name">product.template.search.mda</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_search_view"/>
+        <field name="arch" type="xml">
+            <filter name="inactive" position="before">
+                <separator/>
+                <filter string="รออนุมัติ" name="mda_to_approve"
+                        domain="[('approval_state', '=', 'to_approve')]"/>
+                <filter string="ร่าง (ยังไม่ส่งอนุมัติ)" name="mda_draft"
+                        domain="[('approval_state', '=', 'draft')]"/>
+                <separator/>
+            </filter>
+        </field>
+    </record>
+</odoo>

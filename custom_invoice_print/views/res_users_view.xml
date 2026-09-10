@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- เพิ่มช่องอัปโหลดลายเซ็นในหน้าฟอร์มผู้ใช้ (Admin) -->
+    <record id="view_users_form_sign_image" model="ir.ui.view">
+        <field name="name">res.users.form.sign.image</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='signature']" position="after">
+                <field name="x_sign_image" widget="image"
+                       options="{'size': [180, 90]}" />
+            </xpath>
+        </field>
+    </record>
+
+    <!-- เพิ่มช่องอัปโหลดลายเซ็นในหน้า Preferences (ผู้ใช้แก้ของตัวเองได้) -->
+    <record id="view_users_form_simple_sign_image" model="ir.ui.view">
+        <field name="name">res.users.preferences.form.sign.image</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form_simple_modif" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='signature']" position="after">
+                <field name="x_sign_image" widget="image"
+                       options="{'size': [180, 90]}" />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

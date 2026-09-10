@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Action เรียก Report (ต้องโหลดทีหลังสุด) -->
+        <record id="account.account_invoices" model="ir.actions.report">
+            <field name="name">Invoices (5 Copies)</field>
+            <field name="model">account.move</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">custom_invoice_print.report_invoice_5_copies_custom</field>
+            <field name="report_file">custom_invoice_print.report_invoice_5_copies_custom</field>
+            <field name="print_report_name">(object._get_report_base_filename())</field>
+            <field name="binding_model_id" ref="account.model_account_move"/>
+            <field name="binding_type">report</field>
+        </record>
+    </data>
+</odoo>

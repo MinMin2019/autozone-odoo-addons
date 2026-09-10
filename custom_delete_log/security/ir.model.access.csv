@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_record_delete_log_system,record.delete.log system,model_record_delete_log,base.group_system,1,0,0,0
+access_record_delete_rule_system,record.delete.rule system,model_record_delete_rule,base.group_system,1,1,1,1
+access_auth_log_system,auth.log system,model_auth_log,base.group_system,1,0,0,0
+access_module_change_log_system,module.change.log system,model_module_change_log,base.group_system,1,0,0,0
+access_menu_usage_log_system,menu.usage.log system,model_menu_usage_log,base.group_system,1,0,0,0

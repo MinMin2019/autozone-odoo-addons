@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_employee_form_inherit_title_th" model="ir.ui.view">
+        <field name="name">hr.employee.form.inherit.title.th</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//h1/field[@name='name']" position="before">
+                <field name="title_th" placeholder="คำนำหน้า" class="me-2"
+                       style="max-width: 9rem; font-size: min(3vw, 1.8rem);"/>
+            </xpath>
+            <xpath expr="//field[@name='employee_type']" position="after">
+                <field name="job_level"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

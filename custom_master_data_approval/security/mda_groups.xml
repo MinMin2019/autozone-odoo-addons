@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="module_category_mda" model="ir.module.category">
+        <field name="name">Autozone Master Data Approval</field>
+        <field name="sequence">61</field>
+    </record>
+
+    <record id="group_mda_approver_partner" model="res.groups">
+        <field name="name">ผู้อนุมัติ Vendor/Customer Master</field>
+        <field name="category_id" ref="module_category_mda"/>
+        <field name="comment">อนุมัติ/ตีกลับ และแก้ไขข้อมูลลูกค้า-ผู้ขายได้ทุกสถานะ
+(ปกติได้รับอัตโนมัติจาก role "หัวหน้าบัญชี" ของ role builder)</field>
+    </record>
+
+    <record id="group_mda_approver_product" model="res.groups">
+        <field name="name">ผู้อนุมัติ Item Code</field>
+        <field name="category_id" ref="module_category_mda"/>
+        <field name="comment">อนุมัติ/ตีกลับ และแก้ไขข้อมูลสินค้าได้ทุกสถานะ
+(ปกติได้รับอัตโนมัติจาก role "ผู้จัดการบัญชี" ของ role builder)</field>
+    </record>
+</odoo>

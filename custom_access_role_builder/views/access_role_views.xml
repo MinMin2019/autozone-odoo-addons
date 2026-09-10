@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_access_role_list" model="ir.ui.view">
+        <field name="name">access.role.list</field>
+        <field name="model">access.role</field>
+        <field name="arch" type="xml">
+            <list string="Roles" decoration-muted="state == 'draft'">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'applied'"/>
+                <field name="last_apply"/>
+                <button name="action_apply" type="object" string="Apply"
+                        icon="fa-check" class="btn-link"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_access_role_form" model="ir.ui.view">
+        <field name="name">access.role.form</field>
+        <field name="model">access.role</field>
+        <field name="arch" type="xml">
+            <form string="Role">
+                <header>
+                    <button name="action_apply" type="object" string="Apply — Build Access"
+                            class="btn-primary" confirm="Create/update access from this role?"/>
+                    <button name="action_unlink_generated" type="object"
+                            string="Revoke Generated Access" confirm="Delete the generated role group?"
+                            class="btn-secondary" invisible="state != 'applied'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,applied"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. AP Tax Accountant"/></h1>
+                    </div>
+
+                    <div class="alert alert-warning" role="alert"
+                         invisible="not conflict_warning">
+                        <field name="conflict_warning" readonly="1" nolabel="1"/>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="code" placeholder="ap_accountant (set once)"/>
+                            <field name="include_foundation"/>
+                            <field name="exclusive_membership"/>
+                        </group>
+                        <group>
+                            <field name="last_apply" readonly="1"/>
+                            <field name="group_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <field name="description" placeholder="Role description..."/>
+
+                    <notebook>
+                        <page string="Access Lines" name="lines">
+                            <button name="action_open_add_lines" type="object"
+                                    string="Add Multiple..." icon="fa-plus"
+                                    class="btn-secondary mb-2"/>
+                            <field name="line_ids">
+                                <list editable="bottom">
+                                    <field name="catalog_id"/>
+                                    <field name="app" optional="show"/>
+                                    <field name="model_id" optional="show"/>
+                                    <field name="level"/>
+                                    <field name="needs_rule" optional="show"/>
+                                    <field name="domain" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Users with this Role" name="users">
+                            <field name="user_ids">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="login"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Last Apply Summary" name="summary"
+                              invisible="not apply_summary">
+                            <field name="apply_summary" readonly="1" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Wizard: add multiple catalog entries to a role -->
+    <record id="view_access_role_line_add_form" model="ir.ui.view">
+        <field name="name">access.role.line.add.form</field>
+        <field name="model">access.role.line.add</field>
+        <field name="arch" type="xml">
+            <form string="Add Multiple Lines">
+                <group>
+                    <field name="role_id" invisible="1"/>
+                    <field name="existing_catalog_ids" invisible="1"/>
+                    <field name="use_default_level"/>
+                    <field name="level" invisible="use_default_level"/>
+                </group>
+                <field name="catalog_ids"
+                       domain="[('needs_review', '=', False), ('id', 'not in', existing_catalog_ids)]">
+                    <list>
+                        <field name="app"/>
+                        <field name="section"/>
+                        <field name="name"/>
+                        <field name="model_name"/>
+                        <field name="default_level"/>
+                    </list>
+                </field>
+                <footer>
+                    <button name="action_add" type="object" string="Add Selected"
+                            class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_access_role" model="ir.actions.act_window">
+        <field name="name">Roles</field>
+        <field name="res_model">access.role</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

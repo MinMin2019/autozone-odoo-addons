@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="custom_withholding_layout_report_fix"
+              inherit_id="l10n_th_account_wht_cert_form.withholding_layout_report">
+
+        <!-- ตัด เลขที่ PV ออก -->
+        <xpath expr="//h4[@class='number_payment']" position="replace"/>
+
+        <!-- ย้ายเลขที่ WHT ขึ้นไปเหนือเส้นกรอบบน ชิดมุมขวา -->
+        <xpath expr="//h4[@class='number_wht']" position="replace">
+            <h4 style="position: fixed; top: 45px; right: 60px; margin: 0; font-size: 28px; font-weight: bold;">
+                <span t-out="o.number"/>
+            </h4>
+        </xpath>
+        <!-- Company address: รูปแบบไทยกลางจาก autozone_base_address -->
+        <xpath expr="//div[@class='company_address']" position="replace">
+            <div class="company_address">
+                <span t-out="o.company_partner_id.get_thai_address()"/>
+            </div>
+        </xpath>
+
+        <!-- Supplier address: รูปแบบไทยกลางจาก autozone_base_address -->
+        <xpath expr="//div[@class='supplier_address']" position="replace">
+            <div class="supplier_address">
+                <span t-out="o.partner_id.get_thai_address()"/>
+            </div>
+        </xpath>
+
+        <!-- ตัดชื่อผู้ลงนามที่มาจาก o.verify_by -->
+        <xpath expr="//p[@class='sign_wht']" position="replace">
+            <p class="sign_wht">
+                <span></span>
+            </p>
+        </xpath>
+
+    </template>
+
+</odoo>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_hr_employee_loan_push_wizard_form" model="ir.ui.view">
+        <field name="name">hr.employee.loan.push.wizard.form</field>
+        <field name="model">hr.employee.loan.push.wizard</field>
+        <field name="arch" type="xml">
+            <form string="หักเงินกู้พนักงาน">
+                <group>
+                    <group>
+                        <field name="payslip_run_id" readonly="1"/>
+                        <field name="employee_count" string="จำนวนพนักงาน"/>
+                    </group>
+                    <group>
+                        <field name="line_count" string="จำนวนงวด"/>
+                        <field name="total_principal" string="รวมเงินต้น"/>
+                        <field name="total_interest" string="รวมดอกเบี้ย"/>
+                        <field name="total_amount" string="รวมยอดหัก" class="fw-bold"/>
+                        <field name="currency_id" invisible="1"/>
+                    </group>
+                </group>
+                <div class="alert alert-warning" role="alert" invisible="not skipped_note">
+                    <b>รายการที่ข้าม (ไม่ถูกหักในรอบนี้):</b>
+                    <field name="skipped_note" nolabel="1" readonly="1"/>
+                </div>
+                <field name="line_ids">
+                    <list editable="bottom" create="0">
+                        <field name="registration_number"/>
+                        <field name="employee_id" readonly="1"/>
+                        <field name="loan_id" readonly="1"/>
+                        <field name="number" readonly="1"/>
+                        <field name="date_due" readonly="1"/>
+                        <field name="amount_remaining" readonly="1"/>
+                        <field name="amount"/>
+                        <field name="amount_interest"/>
+                        <field name="amount_total" readonly="1"/>
+                        <field name="payslip_id" column_invisible="1"/>
+                        <field name="loan_line_id" column_invisible="1"/>
+                        <field name="currency_id" column_invisible="1"/>
+                    </list>
+                </field>
+                <div class="text-muted">
+                    ลบแถว = ยกงวดนั้นไว้รอบหน้า | แก้ยอด = หักไม่เต็มงวด (ยอดใหม่ถูกบันทึกกลับเข้าทะเบียน)
+                    <br/>กดยืนยันซ้ำได้ — ระบบล้างเฉพาะรายการที่ทะเบียนเงินกู้เคยดันเข้า Batch นี้แล้วลงใหม่ทั้งชุด
+                </div>
+                <footer>
+                    <button name="action_confirm" string="ยืนยันหักเงินกู้" type="object"
+                            class="btn-primary" data-hotkey="q"/>
+                    <button string="ยกเลิก" class="btn-secondary" special="cancel" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_hr_employee_loan_push_wizard" model="ir.actions.act_window">
+        <field name="name">หักเงินกู้พนักงาน</field>
+        <field name="res_model">hr.employee.loan.push.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" eval="False"/>
+    </record>
+
+</odoo>

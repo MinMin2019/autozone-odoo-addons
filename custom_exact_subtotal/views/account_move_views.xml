@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_move_form_exact_subtotal" model="ir.ui.view">
+        <field name="name">account.move.form.exact.subtotal</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='invoice_line_ids']/list/field[@name='price_subtotal']" position="after">
+                <field name="exact_subtotal"
+                       string="ยอดรวมกำหนดเอง"
+                       optional="hide"/>
+                <field name="exact_price_unit"
+                       string="ราคา/หน่วย (ละเอียด)"
+                       optional="hide"
+                       readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

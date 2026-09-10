@@ -1,0 +1,684 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ========================================== -->
+        <!-- 0. PAPERFORMAT เฉพาะของใบสำคัญ (ตรึงค่า กันโดนแก้จากที่อื่น) -->
+        <!-- ========================================== -->
+        <record id="paperformat_thai_voucher" model="report.paperformat">
+            <field name="name">Thai Voucher A4</field>
+            <field name="format">A4</field>
+            <field name="orientation">Portrait</field>
+            <field name="margin_top">10</field>
+            <field name="margin_bottom">10</field>
+            <field name="margin_left">5</field>
+            <field name="margin_right">5</field>
+            <field name="header_spacing">0</field>
+            <field name="dpi">90</field>
+            <field name="disable_shrinking" eval="False" />
+        </record>
+
+        <!-- ========================================== -->
+        <!-- 1. REPORT ACTION (สำหรับปุ่ม Print)         -->
+        <!-- ========================================== -->
+        <record id="action_report_pv" model="ir.actions.report">
+            <field name="name">ใบสำคัญ (Voucher)</field>
+            <field name="model">account.move</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">thai_accounting_vouchers.report_pv_structure</field>
+            <field name="paperformat_id" ref="paperformat_thai_voucher" />
+            <field name="binding_model_id" ref="account.model_account_move" />
+            <field name="binding_type">report</field>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- 2. MAIN REPORT TEMPLATE (ตัวหลัก)          -->
+        <!-- ========================================== -->
+        <template id="report_pv_structure">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="o">
+                    <t t-call="thai_accounting_vouchers.report_pv_document" />
+                </t>
+            </t>
+        </template>
+
+        <!-- ========================================== -->
+        <!-- 3. DOCUMENT LAYOUT (โครงสร้างหน้ากระดาษ)   -->
+        <!-- ========================================== -->
+        <template id="report_pv_document">
+            <t t-call="web.basic_layout">
+
+                <!-- ประเภทเอกสาร: bill (ตั้งหนี้) / rv (รับ) / pv (จ่าย) / jv (ทั่วไป) -->
+                <t t-set="doc_type"
+                    t-value="'bill' if o.move_type in ('in_invoice', 'in_refund') else ('rv' if o.journal_id.code and o.journal_id.code.startswith('RV') else ('pv' if o.journal_id.code and o.journal_id.code.startswith('PV') else 'jv'))" />
+
+                <!-- CSS -->
+                <style>
+                    /* บังคับ box model เองไม่พึ่ง bootstrap asset (ซึ่ง wkhtmltopdf
+                       โหลดสำเร็จบ้างไม่สำเร็จบ้าง ทำให้ความสูงหน้าแกว่ง) */
+                    * { box-sizing: border-box !important; }
+
+                    /* ล้าง margin/padding ของโครง report มาตรฐาน odoo (body.container,
+                       #wrapwrap, main, .article) ไม่ให้กินความสูง/ความกว้างของแผ่น */
+                    html, body, #wrapwrap, main, .article {
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    min-height: 0 !important;
+                    max-width: none !important;
+                    border: 0 !important;
+                    }
+
+                    .page {
+                    font-family: Sarabun, sans-serif;
+                    font-size: 18px; /* พิมพ์จริง ~7.2pt ที่ความกว้าง 1400px */
+                    color: #000;
+                    /* ตรึงความกว้างเนื้อหาให้กว้างกว่า viewport/เนื้อหาใดๆ ของ wkhtmltopdf
+                       -> .page เป็นตัวกำหนดอัตรา smart shrinking แต่ผู้เดียว
+                       -> ความสูงแผ่นในหน่วย css คงที่ทุกเครื่อง/ทุกฟอนต์ */
+                    width: 1400px;
+                    /* Sticky Footer: เผื่อที่ด้านล่างไว้สำหรับ แถวยอดรวม + ช่องลายเซ็น */
+                    position: relative;
+                    min-height: 1920px; /* border-box (บังคับเองด้านบน — รวม padding แล้ว)
+                    แผ่นจริง = (297-20)mm ที่ scale 200mm/1400px = ~1941px, เผื่อ slack ~20px */
+                    padding-bottom: 250px;
+                    }
+                    /* Layout Table Helper - No Borders (บังคับเส้นขาว กัน odoo/wkhtmltopdf วาดเส้นเอง) */
+                    table.layout-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    border: 1px solid #ffffff !important;
+                    background-color: transparent;
+                    }
+                    table.layout-table td, table.layout-table th, table.layout-table tr {
+                    vertical-align: top;
+                    padding: 0;
+                    border: 1px solid #ffffff !important;
+                    background-color: transparent;
+                    }
+
+                    /* ส่วนหัว: ล็อกความสูงคงที่ เพื่อให้ตาราง body เริ่มตำแหน่งเดิมเสมอ */
+                    .header-region {
+                    height: 490px;
+                    }
+
+                    /* พื้นที่ตาราง body: ยืดจากใต้ส่วนหัว ลงไปชนแถวยอดรวมพอดี
+                       เพื่อให้เส้นแนวตั้งของตารางลากยาวถึงยอดรวม */
+                    .body-region {
+                    position: absolute;
+                    top: 490px;
+                    bottom: 265px;
+                    left: 0;
+                    right: 0;
+                    }
+                    /* หน้าที่ยังไม่จบ (ไม่มีแถวยอดรวม/ลายเซ็น): ตารางยาวเกือบถึงท้ายกระดาษ */
+                    .body-region-cont {
+                    bottom: 40px;
+                    }
+
+                    /* กรอบและเส้นคอลัมน์ของพื้นที่ตาราง: วาดที่ตัว region (ตำแหน่งตายตัว)
+                       ไม่ผูกกับตาราง เพื่อให้เส้นเต็มความสูงเสมอโดยไม่ต้องยืดตาราง
+                       (การยืดตารางด้วย height:100% ทำให้ WebKit เกลี่ยความสูงแถวไม่คงที่) */
+                    .body-region {
+                    border-left: 1px solid #000;
+                    border-right: 1px solid #000;
+                    }
+                    .body-region-cont {
+                    border-bottom: 1px solid #000;
+                    }
+                    .body-region .colline {
+                    position: absolute;
+                    top: 0;
+                    bottom: 0;
+                    width: 0;
+                    border-left: 1px solid #000;
+                    }
+
+                    /* ล้างเส้นทุกเส้นที่ CSS ของ odoo แอบใส่มา แล้วค่อยวาดเฉพาะเส้นที่ต้องการ */
+                    .body-region table, .body-region tr, .body-region td, .body-region th {
+                    border: 0 solid #ffffff !important;
+                    }
+                    /* ตรึงความสูงบรรทัดในตาราง: ให้ความสูงแถวคงที่ทุกเครื่อง/ทุกฟอนต์
+                       (จำเป็นต่อการคำนวณจำนวนแถวต่อหน้าใน _get_voucher_line_pages) */
+                    .body-region td, .body-region th {
+                    line-height: 25px !important;
+                    }
+                    .body-region thead tr {
+                    border-top: 1px solid #000 !important;
+                    border-bottom: 1px solid #000 !important;
+                    }
+
+                    /* แถวยอดรวม: ชิดล่างของหน้าเสมอ (เหนือช่องลายเซ็น) */
+                    .totals-footer {
+                    position: absolute;
+                    bottom: 215px;
+                    left: 0;
+                    width: 100%;
+                    }
+
+                    /* Style สำหรับกล่องลายเซ็น */
+                    .signature-footer {
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 180px;
+                    }
+                </style>
+
+                <!-- แบ่งรายการเป็นหน้าๆ: ทุกหน้ามีหัวกระดาษ+หัวตาราง,
+                     ยอดรวม+ลายเซ็น เฉพาะหน้าสุดท้าย -->
+                <t t-set="line_pages" t-value="o._get_voucher_line_pages()" />
+
+                <t t-foreach="line_pages" t-as="page_lines">
+                    <t t-set="is_last_page"
+                        t-value="page_lines_index == len(line_pages) - 1" />
+
+                    <div class="page"
+                        t-att-style="None if is_last_page else 'page-break-after: always;'">
+                        <!-- ส่วนหัว (ความสูงคงที่) -->
+                        <div class="header-region">
+                            <!-- Header ส่วน 1: Logo + ชื่อบริษัท + ชื่อเอกสาร -->
+                            <t t-call="thai_accounting_vouchers.report_pv_header_content" />
+
+                            <!-- Header ส่วน 2: ข้อมูล Partner + ข้อมูลเอกสาร -->
+                            <t t-call="thai_accounting_vouchers.report_pv_header_info" />
+                        </div>
+
+                        <!-- Body Table (เฉพาะบรรทัดของหน้านี้) -->
+                        <t t-call="thai_accounting_vouchers.report_pv_body_content" />
+
+                        <t t-if="is_last_page">
+                            <!-- แถวยอดรวม (ชิดล่างของหน้า) -->
+                            <t t-call="thai_accounting_vouchers.report_pv_totals_content" />
+
+                            <!-- Footer ลายเซ็น -->
+                            <t t-call="thai_accounting_vouchers.report_pv_footer_content" />
+                        </t>
+                        <t t-else="">
+                            <!-- หน้าที่ยังไม่จบ: หมายเหตุมีต่อ -->
+                            <div
+                                style="position: absolute; bottom: 8px; right: 5px; font-size: 15px; font-style: italic;">
+                                มีต่อหน้าถัดไป / Continued ...
+                            </div>
+                        </t>
+                    </div>
+                </t>
+
+            </t>
+        </template>
+
+        <!-- ========================================== -->
+        <!-- 4. HEADER CONTENT (ชื่อบริษัท)             -->
+        <!-- ========================================== -->
+
+        <template id="report_pv_header_content">
+            <!-- ส่วนที่ 1: Logo + ชื่อบริษัท (ใช้ layout-table = เส้นขาวทั้งหมด) -->
+            <table class="layout-table" style="margin-bottom: 15px;">
+                <tr>
+                    <!-- Col 1: Logo -->
+                    <td
+                        style="width: 1%; white-space: nowrap; padding-right: 15px; vertical-align: middle;">
+                        <img t-if="o.company_id.logo" t-att-src="image_data_uri(o.company_id.logo)"
+                            style="max-height: 55px; width: auto;" alt="Logo" />
+                    </td>
+
+                    <!-- Col 2: Company Info (ข้อมูลบริษัท) -->
+                    <td style="vertical-align: middle;">
+                        <!-- ชื่อบริษัท -->
+                        <div class="text-bold"
+                            style="font-size: 25px; line-height: 1.2; margin-bottom: 5px;">
+                            <span t-esc="o.company_id.name" />
+                        </div>
+
+                        <!-- ที่อยู่ -->
+                        <div style="font-size: 16px; color: #333; line-height: 1.3;">
+                            <span t-esc="o.company_id.partner_id.get_thai_address()" />
+                            <br />
+                            <span t-if="o.company_id.phone"> โทร: <span t-esc="o.company_id.phone" />
+                            </span>
+                            <span t-if="o.company_id.vat" style="margin-left: 10px;">
+                                เลขประจำตัวผู้เสียภาษี: <span t-esc="o.company_id.vat" />
+                            </span>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- ส่วนที่ 2: ชื่อเอกสาร (ตรงกลาง) -->
+            <div style="text-align: center; margin-top: 65px; margin-bottom: 10px;">
+                <div class="text-bold" style="font-size: 28px; letter-spacing: 1px;">
+                    <t t-if="doc_type == 'bill'"> ใบสำคัญการตั้งหนี้ <span class="text-bold"
+                            style="font-size: 22px;">/ ACCOUNT PAYABLE VOUCHER</span>
+                    </t>
+                    <t t-elif="doc_type == 'rv'"> ใบสำคัญรับ <span class="text-bold"
+                            style="font-size: 22px;">/ RECEIPT VOUCHER</span>
+                    </t>
+                    <t t-elif="doc_type == 'pv'"> ใบสำคัญจ่าย <span class="text-bold"
+                            style="font-size: 22px;">/ PAYMENT VOUCHER</span>
+                    </t>
+                    <t t-else=""> ใบสำคัญทั่วไป <span class="text-bold" style="font-size: 22px;">/
+                        JOURNAL VOUCHER</span>
+                    </t>
+                </div>
+            </div>
+        </template>
+
+        <!-- ========================================== -->
+        <!-- 5. HEADER CONTENT PART 2 (แบ่ง 2 ฝั่ง)      -->
+        <!-- ========================================== -->
+        <template id="report_pv_header_info">
+            <div style="margin-top: 50px; margin-bottom: 0px;">
+                <table class="layout-table">
+                    <tr>
+                        <!-- ฝั่งซ้าย -->
+                        <td style="width: 62%; padding-right: 20px; vertical-align: top;">
+
+                            <!-- Partner: ตั้งหนี้ (Vendor) / จ่ายให้ / รับจาก -->
+                            <t t-if="doc_type in ('bill', 'rv', 'pv')">
+                                <div style="margin-bottom: 15px;">
+                                    <!-- แสดง label เฉพาะ RV (bill/pv ไม่ต้องมีคำนำหน้า) -->
+                                    <span t-if="doc_type == 'rv'" class="text-bold"
+                                        style="font-size: 18px;">รับจาก:</span>
+
+                                    <div style="margin-top: 5px; margin-left: 10px;">
+                                        <t t-set="final_partner"
+                                            t-value="o.partner_id or (o.line_ids.filtered(lambda l: l.partner_id) and o.line_ids.filtered(lambda l: l.partner_id)[0].partner_id) or False" />
+
+                                        <t t-if="final_partner">
+                                            <div class="text-bold" style="font-size: 19px;">
+                                                <span t-esc="final_partner.name" />
+                                            </div>
+
+                                            <div
+                                                style="font-size: 16px; color: #333; line-height: 1.4;">
+                                                <t t-set="fp_addr" t-value="final_partner.get_thai_address_lines()" />
+                                                <span t-esc="fp_addr[0]" />
+                                                <t t-if="fp_addr[1]">
+                                                    <br />
+                                                    <span t-esc="fp_addr[1]" />
+                                                </t>
+
+                                                <t t-if="final_partner.vat">
+                                                    <br />
+                                                    <span>เลขผู้เสียภาษี: <span
+                                                            t-esc="final_partner.vat" />
+                                                    </span>
+                                                </t>
+                                            </div>
+                                        </t>
+
+                                        <t t-else="">
+                                            <div
+                                                style="color: #999; font-style: italic; font-size: 16px;">
+                                                (ไม่ระบุชื่อ)
+                                            </div>
+                                        </t>
+                                    </div>
+                                </div>
+                            </t>
+
+                            <!-- Bill: เลขที่ใบสั่งซื้อ ใต้ที่อยู่ vendor
+                                 (ฝั่งซ้ายกว้าง รองรับหลาย PO ต่อบรรทัดเดียว) -->
+                            <t t-if="doc_type == 'bill'">
+                                <div style="margin-top: 12px;">
+                                    <span class="text-bold">ใบสั่งซื้อ / PO. :</span>
+                                    <span t-esc="o.x_po_number or ''" />
+                                </div>
+                                <!-- ธนาคารผู้รับเงิน (Recipient Bank) จากฟิลด์ partner_bank_id -->
+                                <div style="margin-top: 5px;">
+                                    <span class="text-bold">วิธีการชำระเงิน :</span>
+                                    <t t-if="o.partner_bank_id">
+                                        <t t-esc="o.partner_bank_id.bank_id.name or 'ไม่ระบุธนาคาร'" />
+                                        #<t t-esc="o.partner_bank_id.acc_number" />
+                                    </t>
+                                </div>
+                            </t>
+
+                            <!-- JV: รายละเอียดรายการ จากช่อง Description (x_description) -->
+                            <t t-if="doc_type == 'jv'">
+                                <div style="margin-bottom: 15px;">
+                                    <span class="text-bold" style="font-size: 18px;">
+                                        รายละเอียดรายการ / Transaction Description :</span>
+                                    <div style="margin-top: 5px; margin-left: 10px; font-size: 18px;">
+                                        <span t-esc="o.x_description or ''" />
+                                    </div>
+                                </div>
+                            </t>
+
+                            <!-- วิธีชำระเงิน (เฉพาะใบสำคัญจ่าย) -->
+                            <t t-if="doc_type == 'pv'">
+                                <div class="text-bold" style="margin-bottom: 15px;">
+                                    วิธีการชำระเงิน: <t t-if="o.journal_id.type.lower() == 'cash'">
+                                        เงินสด </t>
+                                    <t t-else="">
+                                        <t t-if="o.partner_bank_id and o.partner_bank_id.acc_number">
+                                            <t
+                                                t-esc="o.partner_bank_id.bank_id.name or 'ไม่ระบุธนาคาร'" />
+                                            #<t t-esc="o.partner_bank_id.acc_number" />
+                                        </t>
+                                        <t t-else="">
+                                            ไม่พบเลขบัญชี
+                                        </t>
+                                    </t>
+                                </div>
+                            </t>
+                        </td>
+
+                        <!-- ฝั่งขวา: ข้อมูลเอกสาร -->
+                        <td style="width: 38%; padding-left: 20px; vertical-align: top;">
+                            <table class="layout-table">
+
+                                <!-- ============ BILL: ใบสำคัญการตั้งหนี้ ============ -->
+                                <t t-if="doc_type == 'bill'">
+                                    <tr>
+                                        <td style="width: 48%; padding-bottom: 5px; white-space: nowrap;">
+                                            เลขที่เอกสาร / Invoice No. :</td>
+                                        <td style="width: 52%; padding-bottom: 5px;">
+                                            <div class="text-bold" style="font-size: 19px;">
+                                                <span t-field="o.name" />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding-bottom: 5px; white-space: nowrap;">วันที่บิล / Bill Date :</td>
+                                        <td style="padding-bottom: 5px;">
+                                            <span
+                                                t-esc="o.invoice_date and o.invoice_date.strftime('%d/%m/%Y') or ''" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding-bottom: 5px; white-space: nowrap;">วันที่ลงบัญชี / Acc Date :</td>
+                                        <td style="padding-bottom: 5px;">
+                                            <span
+                                                t-esc="o.date and o.date.strftime('%d/%m/%Y') or ''" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding-bottom: 5px; white-space: nowrap;">วันที่ครบกำหนด / Due Date :</td>
+                                        <td style="padding-bottom: 5px;">
+                                            <span
+                                                t-esc="o.invoice_date_due and o.invoice_date_due.strftime('%d/%m/%Y') or ''" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding-bottom: 5px;">อ้างถึง / Ref. :</td>
+                                        <td style="padding-bottom: 5px;">
+                                            <span t-esc="o.ref or ''" />
+                                        </td>
+                                    </tr>
+                                </t>
+
+                                <!-- ============ PV: ใบสำคัญจ่าย ============ -->
+                                <t t-if="doc_type == 'pv'">
+                                    <tr>
+                                        <td style="width: 48%; padding-bottom: 5px; white-space: nowrap;">
+                                            เลขที่เอกสาร / Voucher No. :</td>
+                                        <td style="width: 52%; padding-bottom: 5px;">
+                                            <div class="text-bold" style="font-size: 19px;">
+                                                <span t-field="o.name" />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <!-- วันที่ลงบัญชี = วัน JE (งวดบัญชีจริง) ปกติตรงกับวันชำระเงิน (บัญชีขอ 2026-08)
+                                         ต่างกันเฉพาะเคสกรอก x_payment_date เหลื่อมงวด -->
+                                    <t t-set="pay_date" t-value="o.x_payment_date or o.date" />
+                                    <tr>
+                                        <td style="padding-bottom: 5px; white-space: nowrap;">วันที่ลงบัญชี / Acc Date :</td>
+                                        <td style="padding-bottom: 5px;">
+                                            <span
+                                                t-esc="o.date and o.date.strftime('%d/%m/%Y') or ''" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding-bottom: 5px; white-space: nowrap;">วันที่ชำระเงิน / Payment Date :</td>
+                                        <td style="padding-bottom: 5px;">
+                                            <span
+                                                t-esc="pay_date and pay_date.strftime('%d/%m/%Y') or ''" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding-bottom: 5px;">อ้างถึง / Ref. :</td>
+                                        <td style="padding-bottom: 5px;">
+                                            <span t-esc="o.ref or ''" />
+                                        </td>
+                                    </tr>
+                                </t>
+
+                                <!-- ============ RV: ใบสำคัญรับ ============ -->
+                                <t t-if="doc_type == 'rv'">
+                                    <tr>
+                                        <td style="width: 48%; padding-bottom: 5px; white-space: nowrap;">
+                                            เลขที่เอกสาร / Voucher No. :</td>
+                                        <td style="width: 52%; padding-bottom: 5px;">
+                                            <div class="text-bold" style="font-size: 19px;">
+                                                <span t-field="o.name" />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding-bottom: 5px; white-space: nowrap;">วันที่ลงบัญชี / Acc Date :</td>
+                                        <td style="padding-bottom: 5px;">
+                                            <span
+                                                t-esc="o.date and o.date.strftime('%d/%m/%Y') or ''" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding-bottom: 5px; white-space: nowrap;">วันที่รับเงิน / Receipt Date :</td>
+                                        <td style="padding-bottom: 5px;">
+                                            <t t-set="rcv_date" t-value="o.x_receipt_date or o.date" />
+                                            <span
+                                                t-esc="rcv_date and rcv_date.strftime('%d/%m/%Y') or ''" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding-bottom: 5px;">อ้างถึง / Ref. :</td>
+                                        <td style="padding-bottom: 5px;">
+                                            <span t-esc="o.ref or ''" />
+                                        </td>
+                                    </tr>
+                                </t>
+
+                                <!-- ============ JV: ใบสำคัญทั่วไป ============ -->
+                                <t t-if="doc_type == 'jv'">
+                                    <tr>
+                                        <td style="width: 48%; padding-bottom: 5px; white-space: nowrap;">
+                                            เลขที่รายการ / JV No. :</td>
+                                        <td style="width: 52%; padding-bottom: 5px;">
+                                            <div class="text-bold" style="font-size: 19px;">
+                                                <span t-field="o.name" />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding-bottom: 5px; white-space: nowrap;">วันที่ลงบัญชี / Acc Date :</td>
+                                        <td style="padding-bottom: 5px;">
+                                            <span
+                                                t-esc="o.date and o.date.strftime('%d/%m/%Y') or ''" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding-bottom: 5px;">อ้างถึง / Ref. :</td>
+                                        <td style="padding-bottom: 5px;">
+                                            <span t-esc="o.ref or ''" />
+                                        </td>
+                                    </tr>
+                                </t>
+
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </template>
+
+        <!-- ========================================== -->
+        <!-- 6. BODY TABLE (รายการบัญชี)                -->
+        <!-- ========================================== -->
+        <template id="report_pv_body_content">
+            <!-- พื้นที่ตาราง: ยืดเต็มพื้นที่จนถึงแถวยอดรวม เพื่อให้เส้นคอลัมน์ลากยาวลงไปชน -->
+            <div
+                t-att-class="'body-region' if is_last_page else 'body-region body-region-cont'">
+
+                <table class="table-clean"
+                    style="width: 100%; table-layout: fixed; border-collapse: collapse;">
+                    <!-- หัวตาราง -->
+                    <thead>
+                        <tr style="height: 42px; background-color: #eee;">
+                            <th style="width: 18%; text-align: center; vertical-align: middle;">
+                                ต้นทุน <br /> (Class)</th>
+                            <th style="width: 8%; text-align: center; vertical-align: middle;">
+                                รหัสบัญชี <br /> (Account)</th>
+                            <th style="width: 44%; text-align: center; vertical-align: middle;">
+                                รายการ <br /> (Description)</th>
+                            <th style="width: 15%; text-align: center; vertical-align: middle;">
+                                เดบิต <br /> (Debit)</th>
+                            <th style="width: 15%; text-align: center; vertical-align: middle;">
+                                เครดิต <br /> (Credit)</th>
+                        </tr>
+                    </thead>
+
+                    <!-- ตัวรายการ: แถวสูงคงที่ 58px (padding 5+3 + เนื้อหา 50px = 2 บรรทัด)
+                         เนื้อหาที่เกินถูกตัด -> จำนวนแถวต่อหน้าเป็นเลขตายตัว ไม่มีวันล้น -->
+                    <tbody>
+                        <t t-foreach="page_lines" t-as="line">
+                            <t t-set="line_desc"
+                                t-value="line.name if (line.name and line.name != '/' and line.name != line.account_id.name) else ''" />
+                            <tr>
+                                <!-- Class: จาก Analytic Distribution เช่น [ATZ] อู่ ออโต้โซน -->
+                                <td
+                                    style="text-align: left; vertical-align: top; padding: 5px 0 3px 5px; font-size: 15px;">
+                                    <t t-set="ana_ids"
+                                        t-value="[int(x) for k in (line.analytic_distribution or {}).keys() for x in str(k).split(',')]" />
+                                    <div style="height: 50px; overflow: hidden;">
+                                        <span t-if="ana_ids"
+                                            t-esc="', '.join(o.env['account.analytic.account'].browse(ana_ids).exists().mapped('display_name'))" />
+                                    </div>
+                                </td>
+                                <td
+                                    style="text-align: left; vertical-align: top; padding: 5px 0 3px 5px;">
+                                    <div style="height: 50px; overflow: hidden;">
+                                        <span t-field="line.account_id.code" />
+                                    </div>
+                                </td>
+                                <!-- ตัวหนาไทยในช่องนี้ต้องวางบน td ตรงๆ ห้ามครอบด้วย div ที่มี
+                                     height/overflow/nowrap ซ้อนกัน: ใน wkhtmltopdf ชุด div+td+width1400
+                                     ทำให้สระ/วรรณยุกต์ซ้อน (สิ้น/ซื้อ/หนี้) วาดทับกัน (ellipsis ยิ่งพัง)
+                                     การตัดข้อความเกินคอลัมน์ใช้ nowrap+overflow บน td ร่วมกับ table-layout:fixed -->
+                                <td
+                                    style="text-align: left; vertical-align: top; padding: 5px 5px 3px 5px; height: 58px; overflow: hidden; white-space: nowrap;">
+                                    <strong t-field="line.account_id.name" />
+                                    <t t-if="line_desc">
+                                        <br />
+                                        <span style="color: #555; font-size: 15px;"
+                                            t-esc="line_desc" />
+                                    </t>
+                                </td>
+                                <td
+                                    style="text-align: right; vertical-align: top; padding: 5px 5px 3px 0;">
+                                    <div style="height: 50px; overflow: hidden;">
+                                        <t t-if="line.debit > 0">
+                                            <span t-esc="'{:,.2f}'.format(line.debit)" />
+                                        </t>
+                                    </div>
+                                </td>
+                                <td
+                                    style="text-align: right; vertical-align: top; padding: 5px 5px 3px 0;">
+                                    <div style="height: 50px; overflow: hidden;">
+                                        <t t-if="line.credit > 0">
+                                            <span t-esc="'{:,.2f}'.format(line.credit)" />
+                                        </t>
+                                    </div>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+
+                <!-- เส้นคอลัมน์แนวตั้ง: ตำแหน่งตายตัวตามความกว้างคอลัมน์ 18/8/44/15/15
+                     ลากเต็มความสูง region เสมอ ไม่ขึ้นกับจำนวนแถว -->
+                <div class="colline" style="left: 18%;"></div>
+                <div class="colline" style="left: 26%;"></div>
+                <div class="colline" style="left: 70%;"></div>
+                <div class="colline" style="left: 85%;"></div>
+            </div>
+        </template>
+
+        <!-- ========================================== -->
+        <!-- 6.1 TOTALS ROW (ชิดล่างของหน้าเสมอ)         -->
+        <!-- ========================================== -->
+        <template id="report_pv_totals_content">
+            <div class="totals-footer">
+                <t t-set="total_debit" t-value="sum(o.line_ids.mapped('debit'))" />
+                <t t-set="total_credit" t-value="sum(o.line_ids.mapped('credit'))" />
+
+                <table
+                    style="width: 100%; border-collapse: collapse; border: 1px solid #000;">
+                    <tr style="height: 48px; background-color: #f9f9f9;">
+
+                        <!-- ช่องตัวหนังสือบาทไทย (กว้างเท่า Class+Account+Description = 70%) -->
+                        <td
+                            style="width: 70%; text-align: left; vertical-align: middle; padding-left: 10px; font-weight: bold; font-style: italic; border-right: 1px solid #000;">
+                            <span
+                                t-esc="o.currency_id.with_context(lang='th_TH').amount_to_text(total_debit)" />
+                        </td>
+
+                        <!-- ยอดรวมเดบิต -->
+                        <td
+                            style="width: 15%; text-align: right; vertical-align: middle; font-weight: bold; padding-right: 5px; border-right: 1px solid #000;">
+                            <span t-esc="'{:,.2f}'.format(total_debit)" />
+                        </td>
+
+                        <!-- ยอดรวมเครดิต -->
+                        <td
+                            style="width: 15%; text-align: right; vertical-align: middle; font-weight: bold; padding-right: 5px;">
+                            <span t-esc="'{:,.2f}'.format(total_credit)" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </template>
+
+        <!-- ========================================== -->
+        <!-- 7. FOOTER CONTENT (ลายเซ็น)                -->
+        <!-- ========================================== -->
+        <template id="report_pv_footer_content">
+
+            <div class="signature-footer">
+
+                <!-- กำหนดชุดช่องลายเซ็นตามประเภทเอกสาร
+                     bill: ผู้จัดทำ + ผู้ตรวจสอบ
+                     jv:   ผู้จัดทำ + ผู้ตรวจสอบ + ผู้อนุมัติ
+                     pv/rv: ผู้จัดทำ + ผู้ตรวจสอบ + ผู้อนุมัติ + ผู้รับเงิน -->
+                <t t-set="sign_boxes"
+                    t-value="[('ผู้จัดทำ', 'Prepared By'), ('ผู้ตรวจสอบ', 'Inspector')] if doc_type == 'bill' else ([('ผู้จัดทำ', 'Prepared By'), ('ผู้ตรวจสอบ', 'Inspector'), ('ผู้อนุมัติ', 'Approved By')] if doc_type == 'jv' else [('ผู้จัดทำ', 'Prepared By'), ('ผู้ตรวจสอบ', 'Inspector'), ('ผู้อนุมัติ', 'Approved By'), ('ผู้รับเงิน', 'Received By')])" />
+
+                <table style="width: 100%; border-collapse: collapse; border: 1px solid #000;">
+                    <tr>
+                        <t t-foreach="sign_boxes" t-as="box">
+                            <td
+                                t-attf-style="width: {{ '%.0f' % (100.0 / len(sign_boxes)) }}%; vertical-align: top; padding: 8px; height: 155px; {{ 'border-right: 1px solid #000;' if box_index &lt; len(sign_boxes) - 1 else '' }}">
+                                <div
+                                    style="text-align: center; font-weight: bold; font-size: 15px; margin-bottom: 70px;">
+                                    <span t-esc="box[0]" /> <br />
+                                    <span style="font-size: 12px; font-weight: normal;">(<span
+                                            t-esc="box[1]" />)</span>
+                                </div>
+                                <!-- เส้นเซ็น -->
+                                <div
+                                    style="border-bottom: 1px dotted #000; width: 80%; margin: 0 auto;"></div>
+                                <!-- วันที่ (ขยายให้ใหญ่ขึ้น) -->
+                                <div
+                                    style="text-align: center; font-size: 18px; margin-top: 12px;">
+                                    วันที่ ........./........./..............
+                                </div>
+                            </td>
+                        </t>
+                    </tr>
+                </table>
+
+            </div>
+        </template>
+
+
+    </data>
+</odoo>

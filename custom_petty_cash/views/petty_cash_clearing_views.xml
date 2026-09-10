@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- list view สำหรับหน้าต่าง "เพิ่ม: บิลตั้งหนี้ที่จ่ายด้วยเงินสดย่อย"
+         (view กลางของ account.move ไม่มีคอลัมน์ Partner — บัญชีขอเพิ่ม)
+         priority สูงกันไม่ให้กลายเป็น view หลักของ vendor bill ที่อื่น -->
+    <record id="view_move_list_petty_bill_pick" model="ir.ui.view">
+        <field name="name">account.move.list.petty.bill.pick</field>
+        <field name="model">account.move</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <list default_order="invoice_date desc, name desc">
+                <field name="name" />
+                <field name="move_type" string="ประเภท" />
+                <field name="partner_id" />
+                <field name="invoice_date" />
+                <field name="invoice_date_due" optional="hide" />
+                <field name="ref" optional="show" />
+                <field name="invoice_origin" optional="show" string="ที่มา (PO)" />
+                <field name="amount_total" sum="รวม" />
+                <field name="amount_residual" string="ค้างชำระ" sum="รวม" />
+                <field name="petty_wht_amount" sum="รวม" optional="show" />
+                <field name="payment_state" />
+                <field name="currency_id" column_invisible="1" />
+            </list>
+        </field>
+    </record>
+
+    <record id="view_petty_cash_clearing_list" model="ir.ui.view">
+        <field name="name">petty.cash.clearing.list</field>
+        <field name="model">petty.cash.clearing</field>
+        <field name="arch" type="xml">
+            <list default_order="date desc, name desc">
+                <field name="name" />
+                <field name="date" />
+                <field name="fund_id" />
+                <field name="amount_advance" optional="show" />
+                <field name="amount_spent" sum="รวม" />
+                <field name="amount_return" optional="show" />
+                <field name="replenish_id" optional="hide" />
+                <field name="state" widget="badge"
+                    decoration-info="state == 'billed'"
+                    decoration-success="state == 'replenished'"
+                    decoration-muted="state == 'cancel'" />
+                <field name="currency_id" column_invisible="1" />
+            </list>
+        </field>
+    </record>
+
+    <record id="view_petty_cash_clearing_form" model="ir.ui.view">
+        <field name="name">petty.cash.clearing.form</field>
+        <field name="model">petty.cash.clearing</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_post_and_pay" string="Post + จ่ายทั้งชุด" type="object"
+                        class="btn-primary" invisible="state not in ('draft', 'billed')"
+                        confirm="ระบบจะสร้าง+post vendor bill ทุกใบ แล้วจ่ายจาก journal เงินสดย่อยของสาขา (หัก ณ ที่จ่ายตามที่ระบุ) — ดำเนินการต่อ?" />
+                    <button name="action_create_bills" string="สร้าง Vendor Bills (draft)" type="object"
+                        invisible="state not in ('draft', 'billed')" />
+                    <button name="action_cancel" string="ยกเลิก" type="object"
+                        invisible="state in ('replenished', 'cancel')" />
+                    <button name="action_back_to_draft" string="กลับเป็นร่าง" type="object"
+                        invisible="state != 'billed'"
+                        confirm="ระบบจะลบ vendor bill ที่ยังเป็น draft ของใบเคลียร์นี้ทิ้ง แล้วกลับไปแก้ได้ (บิลตั้งหนี้ที่ดึงมายังอยู่ครบ) — ดำเนินการต่อ?" />
+                    <button name="action_reset_draft" string="กลับเป็นร่าง" type="object"
+                        invisible="state != 'cancel'" />
+                    <field name="state" widget="statusbar"
+                        statusbar_visible="draft,billed,replenished" />
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_bills" type="object" class="oe_stat_button"
+                            icon="fa-pencil-square-o" invisible="bill_count == 0">
+                            <field name="bill_count" widget="statinfo" string="Vendor Bills" />
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <field name="name_editable" invisible="1" />
+                        <h1><field name="name" readonly="not name_editable"
+                            placeholder="ระบบออกเลขให้เมื่อบันทึก" /></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="fund_id" readonly="state != 'draft'" />
+                            <field name="date" readonly="state != 'draft'" />
+                            <field name="replenish_id" />
+                            <field name="reimburse_ok"
+                                readonly="state not in ('draft', 'billed')"
+                                invisible="amount_return &gt;= 0 and request_ids" />
+                        </group>
+                        <group>
+                            <field name="amount_advance" />
+                            <field name="amount_existing"
+                                invisible="amount_existing == 0" />
+                            <field name="amount_spent" />
+                            <field name="amount_wht_total"
+                                invisible="amount_wht_total == 0" />
+                            <field name="amount_net_cash"
+                                invisible="amount_wht_total == 0" />
+                            <field name="amount_return" />
+                            <field name="currency_id" invisible="1" />
+                            <field name="company_id" invisible="1" />
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="ใบเสร็จ" name="lines">
+                            <field name="line_ids" readonly="state not in ('draft', 'billed')"
+                                open_form_view="1">
+                                <list editable="bottom">
+                                    <field name="receipt_date" />
+                                    <field name="partner_id" />
+                                    <field name="receipt_ref" optional="show" />
+                                    <field name="description" />
+                                    <field name="expense_account_id" />
+                                    <field name="amount_entry" sum="รวม" />
+                                    <field name="tax_id" optional="show" />
+                                    <field name="tax_included" optional="show" />
+                                    <field name="wht_tax_id" optional="show" />
+                                    <field name="amount_wht" sum="รวม" optional="show" />
+                                    <field name="analytic_account_id" optional="show"
+                                        placeholder="ตามกอง" />
+                                    <field name="amount_untaxed" sum="รวม" optional="hide" />
+                                    <field name="amount_tax" sum="รวม" />
+                                    <field name="amount_total" sum="รวม" />
+                                    <field name="receipt_image" widget="image"
+                                        options="{'size': [0, 40]}" optional="show" />
+                                    <field name="move_id" optional="show" />
+                                    <field name="move_state" optional="show" />
+                                    <field name="currency_id" column_invisible="1" />
+                                </list>
+                                <form>
+                                    <group>
+                                        <group>
+                                            <field name="receipt_date" />
+                                            <field name="partner_id" />
+                                            <field name="receipt_ref" />
+                                            <field name="description" />
+                                            <field name="expense_account_id" />
+                                        </group>
+                                        <group>
+                                            <field name="amount_entry" />
+                                            <field name="tax_id" />
+                                            <field name="tax_included" />
+                                            <field name="wht_tax_id" />
+                                            <field name="amount_wht" />
+                                            <field name="analytic_account_id"
+                                                placeholder="ตามกอง" />
+                                            <field name="amount_untaxed" />
+                                            <field name="amount_tax" />
+                                            <field name="amount_total" />
+                                            <field name="move_id" />
+                                            <field name="move_state" />
+                                            <field name="currency_id" invisible="1" />
+                                        </group>
+                                    </group>
+                                    <group string="รูปใบเสร็จ">
+                                        <field name="receipt_image" widget="image" nolabel="1"
+                                            options="{'zoom': true, 'size': [0, 400]}" />
+                                    </group>
+                                </form>
+                            </field>
+                        </page>
+                        <page string="จ่ายบิลตั้งหนี้" name="existing_bills">
+                            <div class="text-muted mb-2">
+                                ดึงบิลที่ตั้งหนี้ไว้แล้วในระบบ (รวมบิลจาก PO) ซึ่งสาขาจ่ายด้วยเงินสดย่อย —
+                                กด "Post + จ่ายทั้งชุด" ระบบจะจ่ายบิลเหล่านี้จาก journal สาขาให้ด้วย
+                                และยอดถูกนับเข้าทะเบียนกอง/ใบสรุปขอเติมเงิน<br/>
+                                ใบลดหนี้ของผู้ขายรายเดียวกันดึงมาพร้อมบิลได้ ยอดจะถูกหักออก
+                                และจ่ายเป็นยอดสุทธิก้อนเดียว (คอลัมน์ "ยอดที่กองจ่าย" จะติดลบ)<br/>
+                                บิลของผู้ขายรายเดียวกันจะถูกจ่ายรวมเป็นครั้งเดียว เพื่อให้ออก
+                                หนังสือรับรองหัก ณ ที่จ่ายได้ใบเดียวยอดรวม
+                                (ถ้าบิลใช้อัตราหักต่างกัน ระบบแยกจ่ายตามอัตราให้เอง)
+                            </div>
+                            <field name="existing_bill_ids" readonly="state not in ('draft', 'billed')"
+                                options="{'no_create': True}"
+                                context="{'list_view_ref': 'custom_petty_cash.view_move_list_petty_bill_pick'}">
+                                <list>
+                                    <field name="name" />
+                                    <field name="move_type" string="ประเภท" />
+                                    <field name="partner_id" />
+                                    <field name="invoice_date" />
+                                    <field name="ref" optional="show" />
+                                    <field name="invoice_origin" optional="show" string="ที่มา (PO)" />
+                                    <field name="amount_total" sum="รวม" />
+                                    <field name="amount_residual" sum="รวม" />
+                                    <field name="petty_wht_amount" sum="รวม" optional="show" />
+                                    <field name="payment_state" />
+                                </list>
+                            </field>
+                        </page>
+                        <page string="ใบเบิกที่เคลียร์" name="requests">
+                            <field name="request_ids" readonly="state != 'draft'">
+                                <list>
+                                    <field name="name" />
+                                    <field name="date" />
+                                    <field name="requester_name" />
+                                    <field name="purpose" />
+                                    <field name="amount" sum="รวม" />
+                                    <field name="state" />
+                                    <field name="currency_id" column_invisible="1" />
+                                </list>
+                            </field>
+                        </page>
+                        <page string="หมายเหตุ" name="note">
+                            <field name="note" />
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter />
+            </form>
+        </field>
+    </record>
+
+    <record id="view_petty_cash_clearing_search" model="ir.ui.view">
+        <field name="name">petty.cash.clearing.search</field>
+        <field name="model">petty.cash.clearing</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" />
+                <field name="fund_id" />
+                <filter name="filter_unreplenished" string="รอเติมเงิน"
+                    domain="[('state', '=', 'billed')]" />
+                <group expand="0" string="Group By">
+                    <filter name="group_fund" string="กองเงินสดย่อย"
+                        context="{'group_by': 'fund_id'}" />
+                    <filter name="group_state" string="สถานะ" context="{'group_by': 'state'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_petty_cash_clearing" model="ir.actions.act_window">
+        <field name="name">ใบเคลียร์เงินสดย่อย</field>
+        <field name="res_model">petty.cash.clearing</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

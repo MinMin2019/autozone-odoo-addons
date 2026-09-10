@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Warehouse scope: global record rules (AND for everyone).
+         bypass = user.warehouse_unrestricted OR user has no allowed warehouses (rollout-safe).
+         Master records (stock.warehouse / stock.location) are intentionally NOT restricted
+         so users can still select other warehouses (e.g. central) when transacting. -->
+
+    <!-- On-hand stock: hide other warehouses' internal quants (keep virtual locations visible) -->
+    <record id="rule_stock_quant_wh_scope" model="ir.rule">
+        <field name="name">Warehouse scope: stock.quant</field>
+        <field name="model_id" ref="stock.model_stock_quant"/>
+        <field name="domain_force">[(1, '=', 1)] if (user.warehouse_unrestricted or not user.allowed_warehouse_ids) else ['|', ('location_id', 'child_of', user.allowed_warehouse_ids.view_location_id.ids), ('location_id.usage', '!=', 'internal')]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Operation types (Inventory Overview dashboard): only own warehouse's types.
+         warehouse_id = False (generic types) stays visible. -->
+    <record id="rule_stock_picking_type_wh_scope" model="ir.rule">
+        <field name="name">Warehouse scope: stock.picking.type</field>
+        <field name="model_id" ref="stock.model_stock_picking_type"/>
+        <field name="domain_force">[(1, '=', 1)] if (user.warehouse_unrestricted or not user.allowed_warehouse_ids) else ['|', ('warehouse_id', 'in', user.allowed_warehouse_ids.ids), ('warehouse_id', '=', False)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Transfers: see/process operations of own warehouse OR touching own locations
+         (covers branch-initiated transfers to/from central) -->
+    <record id="rule_stock_picking_wh_scope" model="ir.rule">
+        <field name="name">Warehouse scope: stock.picking</field>
+        <field name="model_id" ref="stock.model_stock_picking"/>
+        <field name="domain_force">[(1, '=', 1)] if (user.warehouse_unrestricted or not user.allowed_warehouse_ids) else ['|', '|', ('picking_type_id.warehouse_id', 'in', user.allowed_warehouse_ids.ids), ('location_id', 'child_of', user.allowed_warehouse_ids.view_location_id.ids), ('location_dest_id', 'child_of', user.allowed_warehouse_ids.view_location_id.ids)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="rule_stock_move_wh_scope" model="ir.rule">
+        <field name="name">Warehouse scope: stock.move</field>
+        <field name="model_id" ref="stock.model_stock_move"/>
+        <field name="domain_force">[(1, '=', 1)] if (user.warehouse_unrestricted or not user.allowed_warehouse_ids) else ['|', ('location_id', 'child_of', user.allowed_warehouse_ids.view_location_id.ids), ('location_dest_id', 'child_of', user.allowed_warehouse_ids.view_location_id.ids)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="rule_stock_move_line_wh_scope" model="ir.rule">
+        <field name="name">Warehouse scope: stock.move.line</field>
+        <field name="model_id" ref="stock.model_stock_move_line"/>
+        <field name="domain_force">[(1, '=', 1)] if (user.warehouse_unrestricted or not user.allowed_warehouse_ids) else ['|', ('location_id', 'child_of', user.allowed_warehouse_ids.view_location_id.ids), ('location_dest_id', 'child_of', user.allowed_warehouse_ids.view_location_id.ids)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+</odoo>

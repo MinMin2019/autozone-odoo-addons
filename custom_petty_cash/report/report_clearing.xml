@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_clearing_structure">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <t t-call="custom_petty_cash.pc_style" />
+                    <t t-set="company" t-value="o.company_id" />
+
+                    <!-- ==========================================================
+                         การแบ่งหน้า (หน่วย px บนผืน .page กว้าง 1400) — จูนได้ที่นี่
+                         PAGE_H    = ความสูง 1 หน้า (ตาม .page ของ pc_style)
+                         TOP_H     = หัวกระดาษ + ชื่อฟอร์ม + บล็อกข้อมูลกอง + หัวตาราง
+                         ROW_H     = ความสูงรายการ 1 แถว (nowrap ทุกช่องให้สูงคงที่)
+                         SIGN_H    = บล็อกลายเซ็น
+                         RESERVE   = พื้นที่กันไว้ท้ายหน้าสุดท้าย: แถวรวม + ตารางบิลตั้งหนี้
+                                     + ตารางสรุปยอด + ลายเซ็น
+                         RPP_FULL  = แถวต่อหน้า (หน้าที่ไม่ใช่หน้าสุดท้าย)
+                         ROWS_LAST = แถวมากสุดที่หน้าสุดท้ายรับได้ — เกินแล้วระบบเพิ่ม
+                                     หน้าท้าย (ตารางสรุป+ลายเซ็น) ให้อัตโนมัติ กันแถวโดด
+                         ========================================================== -->
+                    <t t-set="PAGE_H" t-value="1920" />
+                    <t t-set="TOP_H" t-value="450" />
+                    <t t-set="ROW_H" t-value="36" />
+                    <t t-set="SIGN_H" t-value="200" />
+                    <t t-set="wht_total" t-value="o.amount_wht_total" />
+                    <t t-set="bills_wht" t-value="sum([o._bill_sign(b) * b.petty_wht_amount for b in o.existing_bill_ids])" />
+                    <t t-set="BILLS_H"
+                        t-value="((len(o.existing_bill_ids) + 2) * ROW_H + 60) if o.existing_bill_ids else 0" />
+                    <t t-set="sum_rows"
+                        t-value="3 + (1 if o.amount_existing else 0) + (2 if wht_total else 0)" />
+                    <t t-set="RESERVE"
+                        t-value="45 + BILLS_H + (sum_rows * 38 + 30) + SIGN_H + 30" />
+                    <t t-set="RPP_FULL" t-value="max(1, int((PAGE_H - TOP_H - 40) / ROW_H))" />
+                    <t t-set="ROWS_LAST" t-value="max(0, int((PAGE_H - TOP_H - RESERVE) / ROW_H))" />
+
+                    <t t-set="all_lines" t-value="list(o.line_ids)" />
+                    <t t-set="page_chunks"
+                        t-value="[all_lines[i:i + RPP_FULL] for i in range(0, len(all_lines), RPP_FULL)] or [[]]" />
+                    <t t-set="page_chunks"
+                        t-value="page_chunks + [[]] if len(page_chunks[-1]) &gt; ROWS_LAST else page_chunks" />
+                    <t t-set="has_wht" t-value="any(o.line_ids.mapped('amount_wht'))" />
+                    <t t-set="lines_total" t-value="sum(o.line_ids.mapped('amount_total'))" />
+
+                    <t t-foreach="page_chunks" t-as="chunk">
+                        <t t-set="is_last_page" t-value="chunk_index == len(page_chunks) - 1" />
+                        <!-- ใบที่ไม่มีบรรทัดใบเสร็จ (ใช้แท็บบิลตั้งหนี้ล้วน) ไม่ต้องดันบล็อกท้ายลงล่าง
+                             ไม่งั้นจะเหลือช่องว่างใหญ่กลางหน้า -->
+                        <t t-set="filler_h"
+                            t-value="max(0, PAGE_H - TOP_H - len(chunk) * ROW_H - (RESERVE if is_last_page else 20)) if o.line_ids else 20" />
+
+                        <div class="page"
+                            t-attf-style="height: {{PAGE_H}}px; {{'page-break-before: always;' if chunk_index else ''}}">
+
+                            <t t-call="custom_petty_cash.pc_company_header" />
+
+                            <div style="text-align: center; margin-top: 55px; margin-bottom: 10px;">
+                                <div class="text-bold" style="font-size: 28px; letter-spacing: 1px;">
+                                    ใบสำคัญจ่ายเงินสดย่อย <span class="text-bold" style="font-size: 22px;">/ PETTY CASH VOUCHER</span>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 40px;">
+                                <table class="layout-table">
+                                    <tr>
+                                        <td style="width: 62%; padding-right: 20px;">
+                                            <div style="margin-bottom: 10px;">
+                                                <span class="text-bold">กองเงินสดย่อย / สาขา :</span>
+                                                <span t-esc="o.fund_id.display_name" />
+                                            </div>
+                                            <div style="margin-bottom: 10px;">
+                                                <span class="text-bold">ผู้ถือเงิน :</span>
+                                                <span t-esc="o.fund_id.custodian_name or ''" />
+                                            </div>
+                                            <div style="margin-bottom: 10px;" t-if="o.request_ids">
+                                                <span class="text-bold">อ้างถึงใบเบิก :</span>
+                                                <span t-esc="', '.join(o.request_ids.mapped('name'))" />
+                                            </div>
+                                        </td>
+                                        <td style="width: 38%; padding-left: 20px;">
+                                            <table class="layout-table">
+                                                <tr>
+                                                    <td style="width: 45%; padding-bottom: 5px; white-space: nowrap;">เลขที่เอกสาร / No. :</td>
+                                                    <td style="width: 55%; padding-bottom: 5px;">
+                                                        <div class="text-bold" style="font-size: 19px;">
+                                                            <span t-esc="o.name" />
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding-bottom: 5px; white-space: nowrap;">วันที่เคลียร์ / Date :</td>
+                                                    <td style="padding-bottom: 5px;">
+                                                        <span t-esc="o.date and o.date.strftime('%d/%m/%Y') or ''" />
+                                                    </td>
+                                                </tr>
+                                                <tr t-if="len(page_chunks) &gt; 1">
+                                                    <td style="padding-bottom: 5px; white-space: nowrap;">หน้า / Page :</td>
+                                                    <td style="padding-bottom: 5px;">
+                                                        <span t-esc="chunk_index + 1" /> / <span t-esc="len(page_chunks)" />
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <div style="margin-top: 25px;" t-if="o.line_ids">
+                                <table class="data-table" style="table-layout: fixed;">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 8%;">วันที่</th>
+                                            <th t-att-style="'width: %s;' % ('15%' if has_wht else '17%')">ร้านค้า</th>
+                                            <th t-att-style="'width: %s;' % ('22%' if has_wht else '25%')">รายการ</th>
+                                            <th t-att-style="'width: %s;' % ('18%' if has_wht else '20%')">หมวดบัญชี</th>
+                                            <th style="width: 10%;">ก่อน VAT</th>
+                                            <th t-att-style="'width: %s;' % ('9%' if has_wht else '10%')">VAT</th>
+                                            <th t-if="has_wht" style="width: 9%;">หัก ณ ที่จ่าย</th>
+                                            <th t-att-style="'width: %s;' % ('9%' if has_wht else '10%')">รวม</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="chunk" t-as="line">
+                                            <td style="text-align: center; font-size: 15px; white-space: nowrap;">
+                                                <span t-esc="line.receipt_date and line.receipt_date.strftime('%d/%m/%y') or ''" />
+                                            </td>
+                                            <td style="font-size: 15px; overflow: hidden; white-space: nowrap;">
+                                                <span t-esc="line.partner_id.name" />
+                                            </td>
+                                            <td style="font-size: 15px; overflow: hidden; white-space: nowrap;">
+                                                <span t-esc="line.description" />
+                                                <span t-if="line.receipt_ref" style="color: #555;"
+                                                    t-esc="' (%s)' % line.receipt_ref" />
+                                            </td>
+                                            <td style="font-size: 15px; overflow: hidden; white-space: nowrap;">
+                                                <span t-esc="line.expense_account_id.code" />
+                                                <span t-esc="line.expense_account_id.name" />
+                                            </td>
+                                            <td class="num">
+                                                <span t-esc="'{:,.2f}'.format(line.amount_untaxed)" />
+                                            </td>
+                                            <td class="num">
+                                                <span t-if="line.amount_tax" t-esc="'{:,.2f}'.format(line.amount_tax)" />
+                                            </td>
+                                            <td t-if="has_wht" class="num">
+                                                <span t-if="line.amount_wht" t-esc="'{:,.2f}'.format(line.amount_wht)" />
+                                            </td>
+                                            <td class="num">
+                                                <span t-esc="'{:,.2f}'.format(line.amount_total)" />
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                    <tfoot t-if="is_last_page">
+                                        <tr style="background-color: #f9f9f9; font-weight: bold;">
+                                            <td colspan="4" style="padding-left: 10px; font-style: italic;">
+                                                <span t-esc="o.currency_id.with_context(lang='th_TH').amount_to_text(lines_total)" />
+                                            </td>
+                                            <td class="num">
+                                                <span t-esc="'{:,.2f}'.format(sum(o.line_ids.mapped('amount_untaxed')))" />
+                                            </td>
+                                            <td class="num">
+                                                <span t-esc="'{:,.2f}'.format(sum(o.line_ids.mapped('amount_tax')))" />
+                                            </td>
+                                            <td t-if="has_wht" class="num">
+                                                <span t-esc="'{:,.2f}'.format(sum(o.line_ids.mapped('amount_wht')))" />
+                                            </td>
+                                            <td class="num">
+                                                <span t-esc="'{:,.2f}'.format(lines_total)" />
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+
+                            <!-- ดันบล็อกท้ายลงชิดล่างของหน้า -->
+                            <div t-attf-style="height: {{filler_h}}px;" />
+
+                            <t t-if="is_last_page">
+                                <div t-if="o.existing_bill_ids" style="margin-top: 20px;">
+                                    <div class="text-bold" style="margin-bottom: 8px;">
+                                        บิลตั้งหนี้ที่จ่ายด้วยเงินสดย่อย</div>
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 20%;">เลขที่บิล</th>
+                                                <th t-att-style="'width: %s;' % ('29%' if bills_wht else '35%')">ร้านค้า</th>
+                                                <th t-att-style="'width: %s;' % ('21%' if bills_wht else '25%')">อ้างอิง/PO</th>
+                                                <th t-if="bills_wht" style="width: 15%;">หัก ณ ที่จ่าย</th>
+                                                <th t-att-style="'width: %s;' % ('15%' if bills_wht else '20%')">ยอดบิล</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr t-foreach="o.existing_bill_ids" t-as="bill">
+                                                <td><span t-esc="bill.name" /></td>
+                                                <td style="font-size: 15px;"><span t-esc="bill.partner_id.name" /></td>
+                                                <td style="font-size: 15px;">
+                                                    <span t-esc="bill.invoice_origin or bill.ref or ''" />
+                                                </td>
+                                                <td t-if="bills_wht" class="num">
+                                                    <span t-if="bill.petty_wht_amount"
+                                                        t-esc="'{:,.2f}'.format(bill.petty_wht_amount)" />
+                                                </td>
+                                                <td class="num">
+                                                    <span t-esc="'{:,.2f}'.format(o._bill_paid_by_fund(bill))" />
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                        <tfoot>
+                                            <tr style="background-color: #f9f9f9; font-weight: bold;">
+                                                <td colspan="3" style="padding-left: 10px;">รวมบิลตั้งหนี้</td>
+                                                <td t-if="bills_wht" class="num">
+                                                    <span t-esc="'{:,.2f}'.format(bills_wht)" />
+                                                </td>
+                                                <td class="num">
+                                                    <span t-esc="'{:,.2f}'.format(o.amount_existing)" />
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+
+                                <div style="margin-top: 20px; width: 50%; margin-left: 50%;">
+                                    <table class="data-table">
+                                        <tr>
+                                            <td style="width: 60%;">ยอดเบิก / Advance</td>
+                                            <td class="num" style="width: 40%;">
+                                                <span t-esc="'{:,.2f}'.format(o.amount_advance)" />
+                                            </td>
+                                        </tr>
+                                        <tr t-if="o.amount_existing">
+                                            <td>จ่ายบิลตั้งหนี้ / AP Paid</td>
+                                            <td class="num">
+                                                <span t-esc="'{:,.2f}'.format(o.amount_existing)" />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>ยอดใช้จ่ายจริง / Spent</td>
+                                            <td class="num">
+                                                <span t-esc="'{:,.2f}'.format(o.amount_spent)" />
+                                            </td>
+                                        </tr>
+                                        <tr t-if="wht_total">
+                                            <td>หัก ณ ที่จ่าย / WHT</td>
+                                            <td class="num">
+                                                <span t-esc="'{:,.2f}'.format(wht_total)" />
+                                            </td>
+                                        </tr>
+                                        <tr t-if="wht_total">
+                                            <td>เงินสดจ่ายสุทธิ / Net Cash Paid</td>
+                                            <td class="num">
+                                                <span t-esc="'{:,.2f}'.format(o.amount_net_cash)" />
+                                            </td>
+                                        </tr>
+                                        <tr style="font-weight: bold;">
+                                            <td>
+                                                <t t-if="o.amount_return &gt;= 0">เงินทอนคืนกอง / Return</t>
+                                                <t t-else="">จ่ายคืนผู้สำรองจ่าย / Reimburse</t>
+                                            </td>
+                                            <td class="num">
+                                                <span t-esc="'{:,.2f}'.format(abs(o.amount_return))" />
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+
+                                <t t-set="sign_boxes"
+                                    t-value="[('ผู้จัดทำ', 'Prepared By', False), ('ผู้ตรวจสอบ', 'Inspector', False), ('ผู้อนุมัติ', 'Approved By', o.fund_id.approver_name), ('ผู้รับเงิน', 'Received By', False)]" />
+                                <t t-call="custom_petty_cash.pc_sign_boxes" />
+                            </t>
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

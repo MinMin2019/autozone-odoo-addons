@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_order_form_contract_source" model="ir.ui.view">
+        <field name="name">sale.order.form.contract.source</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='client_order_ref']" position="after">
+                <field name="is_contract_source" />
+                <field
+                    name="carved_to_bo_qty"
+                    invisible="not is_contract_source"
+                />
+                <field
+                    name="remaining_to_bo_qty"
+                    invisible="not is_contract_source"
+                />
+            </xpath>
+            <xpath expr="//header" position="inside">
+                <button
+                    name="action_create_blanket_order"
+                    type="object"
+                    string="สร้างสัญญาแม่ / Create Blanket Order"
+                    class="btn-primary"
+                    invisible="not is_contract_source or state not in ('draft', 'sent')"
+                />
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button
+                    name="action_view_blanket_orders"
+                    type="object"
+                    class="oe_stat_button"
+                    icon="fa-book"
+                    invisible="blanket_order_count == 0"
+                >
+                    <field
+                        name="blanket_order_count"
+                        widget="statinfo"
+                        string="สัญญาแม่ / Blanket Orders"
+                    />
+                </button>
+            </xpath>
+            <!-- Packaging columns are meaningless on a baseline contract-source
+                 quotation (never delivered) -> hide them there. -->
+            <xpath expr="//field[@name='order_line']/list/field[@name='product_packaging_qty']" position="attributes">
+                <attribute name="column_invisible">parent.is_contract_source</attribute>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/list/field[@name='product_packaging_id']" position="attributes">
+                <attribute name="column_invisible">parent.is_contract_source</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

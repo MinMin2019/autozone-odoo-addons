@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_hr_employee_loan_payroll,hr.employee.loan payroll,model_hr_employee_loan,hr_payroll.group_hr_payroll_user,1,1,1,1
+access_hr_employee_loan_account,hr.employee.loan account,model_hr_employee_loan,account.group_account_invoice,1,1,1,1
+access_hr_employee_loan_line_payroll,hr.employee.loan.line payroll,model_hr_employee_loan_line,hr_payroll.group_hr_payroll_user,1,1,1,1
+access_hr_employee_loan_line_account,hr.employee.loan.line account,model_hr_employee_loan_line,account.group_account_invoice,1,1,1,1
+access_hr_loan_push_wizard_payroll,loan.push.wizard payroll,model_hr_employee_loan_push_wizard,hr_payroll.group_hr_payroll_user,1,1,1,1
+access_hr_loan_push_wizard_account,loan.push.wizard account,model_hr_employee_loan_push_wizard,account.group_account_invoice,1,1,1,1
+access_hr_loan_push_wizard_line_payroll,loan.push.wizard.line payroll,model_hr_employee_loan_push_wizard_line,hr_payroll.group_hr_payroll_user,1,1,1,1
+access_hr_loan_push_wizard_line_account,loan.push.wizard.line account,model_hr_employee_loan_push_wizard_line,account.group_account_invoice,1,1,1,1

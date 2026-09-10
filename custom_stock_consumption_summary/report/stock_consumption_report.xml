@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_scs" model="report.paperformat">
+        <field name="name">A4 Landscape Consumption Summary</field>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">10</field>
+        <field name="margin_bottom">10</field>
+        <field name="margin_left">7</field>
+        <field name="margin_right">7</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_stock_consumption" model="ir.actions.report">
+        <field name="name">สรุปเบิกใช้วัสดุตามสาขา</field>
+        <field name="model">stock.consumption.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">custom_stock_consumption_summary.report_scs_template</field>
+        <field name="report_file">custom_stock_consumption_summary.report_scs_template</field>
+        <field name="print_report_name">'Consumption %s-%s' % (object.date_from, object.date_to)</field>
+        <field name="paperformat_id" ref="paperformat_scs"/>
+    </record>
+
+    <template id="report_scs_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <style>
+                        .header, .footer { display: none !important; }
+                        .page { font-family: Sarabun, sans-serif; font-size: 10px; color: #000; }
+                        h3.cs-title { font-size: 15px; font-weight: bold; margin: 0 0 2px 0; }
+                        h4.cs-sec { font-size: 12px; font-weight: bold; margin: 10px 0 4px 0; border-left: 4px solid #444; padding-left: 6px; }
+                        table.cs { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+                        table.cs th, table.cs td { border: 1px solid #555; padding: 2px 3px; vertical-align: top; }
+                        table.cs th { background: #e6e6e6; text-align: center; font-weight: bold; }
+                        table.cs td.num { text-align: right; white-space: nowrap; }
+                        table.cs tr.tot td { background: #c9dfc0; font-weight: bold; }
+                        table.cs td.rowtot { background: #e4f1dc; font-weight: bold; }
+                        .note { font-size: 9.5px; color: #333; }
+                    </style>
+                    <div class="page">
+                        <t t-set="cols" t-value="o.expense_columns()"/>
+                        <t t-set="ct" t-value="o.column_totals()"/>
+                        <t t-set="st" t-value="o.source_totals()"/>
+                        <h3 class="cs-title"><t t-esc="o.company_id.name"/></h3>
+                        <div><b>สรุปเบิกใช้วัสดุตามสาขา</b> <t t-esc="o.thai_date(o.date_from)"/> - <t t-esc="o.thai_date(o.date_to)"/>
+                            &#160;|&#160; รวม <t t-esc="'{:,.2f}'.format(o.grand_total())"/>
+                            (ใบเบิกใช้ <t t-esc="'{:,.2f}'.format(st['cons'])"/> / ส่งขายราคา 0 <t t-esc="'{:,.2f}'.format(st['legacy'])"/>)
+                        </div>
+
+                        <t t-foreach="[('สาขา × บัญชีค่าใช้จ่าย', 'warehouse_id', 'สาขา'), ('หมวดสินค้า × บัญชีค่าใช้จ่าย', 'categ_id', 'หมวดสินค้า')]" t-as="sec">
+                            <h4 class="cs-sec"><t t-esc="sec[0]"/></h4>
+                            <table class="cs">
+                                <thead>
+                                    <tr>
+                                        <th><t t-esc="sec[2]"/></th>
+                                        <t t-foreach="cols" t-as="c"><th><t t-esc="c[1]"/><br/><span style="font-weight:normal"><t t-esc="c[2]"/></span></th></t>
+                                        <th style="width:9%">รวม</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="o.matrix(sec[1])" t-as="r">
+                                        <td><t t-esc="r['label']"/></td>
+                                        <t t-foreach="cols" t-as="c">
+                                            <t t-set="v" t-value="r['cells'].get(c[0], 0.0)"/>
+                                            <td class="num"><t t-esc="'{:,.2f}'.format(v) if v else ''"/></td>
+                                        </t>
+                                        <td class="num rowtot"><t t-esc="'{:,.2f}'.format(r['total'])"/></td>
+                                    </tr>
+                                    <tr class="tot">
+                                        <td>รวม</td>
+                                        <t t-foreach="cols" t-as="c"><td class="num"><t t-esc="'{:,.2f}'.format(ct.get(c[0], 0.0))"/></td></t>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(o.grand_total())"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </t>
+                        <ul class="note">
+                            <li>มูลค่า = จำนวนที่เบิกใช้สุทธิ (หักเบิกคืน) × ต้นทุน; บัญชีค่าใช้จ่ายตามที่ตั้งไว้ในหมวดสินค้า/สินค้า (ตัวเดียวกับที่ใบเบิกใช้ลงบัญชี)</li>
+                            <li>"ส่งขายราคา 0" = ใบส่งของจาก SO ราคา 0 (วิธีเดิมก่อนมีใบเบิกใช้) นับเป็นเบิกใช้ของสาขาต้นทาง เพื่อให้ตัวเลขต่อเนื่อง — เมื่อเปลี่ยนมาใช้ CONS ครบทุกสาขา ค่านี้จะเป็น 0</li>
+                            <li>รายเดือน / รายสินค้า ดูในหน้าจอ (pivot) หรือไฟล์ Excel</li>
+                        </ul>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

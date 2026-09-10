@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_crm_bo_create_wizard,crm.blanket.order.create.wizard,model_crm_blanket_order_create_wizard,base.group_user,1,1,1,1
+access_crm_bo_create_wizard_line,crm.blanket.order.create.wizard.line,model_crm_blanket_order_create_wizard_line,base.group_user,1,1,1,1
+access_crm_contract_timeline_report,crm.contract.timeline.report,model_crm_contract_timeline_report,sales_team.group_sale_salesman,1,0,0,0

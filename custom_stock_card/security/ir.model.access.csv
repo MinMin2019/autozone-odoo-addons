@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_stock_card_wizard_stock,stock.card.wizard stock user,model_stock_card_wizard,stock.group_stock_user,1,1,1,1
+access_stock_card_line_stock,stock.card.line stock user,model_stock_card_line,stock.group_stock_user,1,1,1,1
+access_stock_card_move_stock,stock.card.move stock user,model_stock_card_move,stock.group_stock_user,1,1,1,1
+access_stock_card_wizard_account,stock.card.wizard account user,model_stock_card_wizard,account.group_account_readonly,1,1,1,1
+access_stock_card_line_account,stock.card.line account user,model_stock_card_line,account.group_account_readonly,1,1,1,1
+access_stock_card_move_account,stock.card.move account user,model_stock_card_move,account.group_account_readonly,1,1,1,1

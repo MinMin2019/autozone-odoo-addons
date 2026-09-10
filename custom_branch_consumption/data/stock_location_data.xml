@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="location_consumption" model="stock.location">
+        <field name="name">เบิกใช้วัสดุ</field>
+        <field name="location_id" ref="stock.stock_location_locations_virtual"/>
+        <field name="usage">production</field>
+        <field name="is_expense_consumption" eval="True"/>
+        <field name="company_id" ref="base.main_company"/>
+    </record>
+</odoo>

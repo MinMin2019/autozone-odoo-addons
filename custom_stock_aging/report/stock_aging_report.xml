@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_stock_aging" model="report.paperformat">
+        <field name="name">A4 Landscape Stock Aging</field>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">10</field>
+        <field name="margin_bottom">10</field>
+        <field name="margin_left">7</field>
+        <field name="margin_right">7</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_stock_aging" model="ir.actions.report">
+        <field name="name">อายุสินค้าคงคลัง (Stock Aging)</field>
+        <field name="model">stock.aging.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">custom_stock_aging.report_stock_aging_template</field>
+        <field name="report_file">custom_stock_aging.report_stock_aging_template</field>
+        <field name="print_report_name">'StockAging %s' % (object.date_to)</field>
+        <field name="paperformat_id" ref="paperformat_stock_aging"/>
+    </record>
+
+    <template id="report_stock_aging_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <style>
+                        .header, .footer { display: none !important; }
+                        .page { font-family: Sarabun, sans-serif; font-size: 10.5px; color: #000; }
+                        h3.sa-title { font-size: 16px; font-weight: bold; margin: 0 0 2px 0; }
+                        .sa-sub { margin-bottom: 8px; }
+                        table.sa { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+                        table.sa th, table.sa td { border: 1px solid #555; padding: 2px 3px; vertical-align: top; }
+                        table.sa th { background: #e6e6e6; text-align: center; font-weight: bold; }
+                        table.sa td.num { text-align: right; white-space: nowrap; }
+                        table.sa tr.grp td { background: #dde8f5; font-weight: bold; }
+                        table.sa tr.sub td { background: #e4f1dc; font-weight: bold; }
+                        table.sa tr.tot td { background: #c9dfc0; font-weight: bold; }
+                        .neg { color: #b00000; }
+                        .warn { background: #fde9c9; }
+                    </style>
+                    <div class="page">
+                        <t t-set="split" t-value="o.split_by_location"/>
+                        <t t-set="labels" t-value="o.bucket_labels()"/>
+                        <h3 class="sa-title"><t t-esc="o.company_id.name"/></h3>
+                        <div class="sa-sub">
+                            <b>อายุสินค้าคงคลัง (Stock Aging) - มูลค่าตามช่วงอายุ</b>
+                            ณ วันที่ <t t-esc="o.thai_date(o.date_to)"/>
+                            &#160;|&#160; <t t-esc="'แยกตำแหน่งในสาขา' if split else 'สรุปต่อสาขา'"/>
+                            &#160;|&#160; <t t-esc="len(o.line_ids)"/> รายการ
+                            <t t-if="o.min_days"> &#160;|&#160; เฉพาะไม่เคลื่อนไหวเกิน <t t-esc="o.min_days"/> วัน</t>
+                        </div>
+                        <table class="sa">
+                            <thead>
+                                <tr>
+                                    <th style="width:9%">รหัส</th>
+                                    <th>สินค้า</th>
+                                    <th t-if="split" style="width:9%">ตำแหน่ง</th>
+                                    <th style="width:5%">หน่วย</th>
+                                    <th style="width:6%">คงเหลือ</th>
+                                    <th style="width:7%">มูลค่า</th>
+                                    <t t-foreach="labels" t-as="b">
+                                        <th style="width:7%"><t t-esc="b"/> วัน</th>
+                                    </t>
+                                    <th style="width:5%">ไม่เคลื่อนไหว (วัน)</th>
+                                    <th style="width:6%">รับล่าสุด</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-set="g_val" t-value="0.0"/>
+                                <t t-set="g_b" t-value="[0.0]*6"/>
+                                <t t-foreach="o.warehouse_groups()" t-as="grp">
+                                    <t t-set="wh" t-value="grp[0]"/>
+                                    <t t-set="rows" t-value="grp[1]"/>
+                                    <tr class="grp">
+                                        <td t-att-colspan="14 if split else 13"><t t-esc="wh.name"/></td>
+                                    </tr>
+                                    <t t-set="s_val" t-value="0.0"/>
+                                    <t t-set="s_b" t-value="[0.0]*6"/>
+                                    <tr t-foreach="rows" t-as="l">
+                                        <td><t t-esc="l.default_code"/></td>
+                                        <td><t t-esc="l.product_name"/></td>
+                                        <td t-if="split"><t t-esc="l.location_id.name"/></td>
+                                        <td><t t-esc="l.uom_id.name"/></td>
+                                        <td t-att-class="'num neg' if l.qty &lt; 0 else 'num'"><t t-esc="'{:,.2f}'.format(l.qty)"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.value)"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.b1_value) if l.b1_value else ''"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.b2_value) if l.b2_value else ''"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.b3_value) if l.b3_value else ''"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.b4_value) if l.b4_value else ''"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.b5_value) if l.b5_value else ''"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.b6_value) if l.b6_value else ''"/></td>
+                                        <td t-att-class="'num warn' if l.days_no_move &gt;= 90 else 'num'"><t t-esc="l.days_no_move"/></td>
+                                        <td class="num"><t t-esc="o.thai_date(l.last_in_date)"/></td>
+                                        <t t-set="s_val" t-value="s_val + l.value"/>
+                                        <t t-set="s_b" t-value="[s_b[0]+l.b1_value, s_b[1]+l.b2_value, s_b[2]+l.b3_value, s_b[3]+l.b4_value, s_b[4]+l.b5_value, s_b[5]+l.b6_value]"/>
+                                    </tr>
+                                    <tr class="sub">
+                                        <td t-att-colspan="5 if split else 4">รวม <t t-esc="wh.name"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(s_val)"/></td>
+                                        <t t-foreach="s_b" t-as="v">
+                                            <td class="num"><t t-esc="'{:,.2f}'.format(v)"/></td>
+                                        </t>
+                                        <td></td><td></td>
+                                    </tr>
+                                    <t t-set="g_val" t-value="g_val + s_val"/>
+                                    <t t-set="g_b" t-value="[g_b[i] + s_b[i] for i in range(6)]"/>
+                                </t>
+                                <tr class="tot">
+                                    <td t-att-colspan="5 if split else 4">รวมทั้งหมด</td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(g_val)"/></td>
+                                    <t t-foreach="g_b" t-as="v">
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(v)"/></td>
+                                    </t>
+                                    <td></td><td></td>
+                                </tr>
+                                <tr class="tot">
+                                    <td t-att-colspan="5 if split else 4">สัดส่วน (%)</td>
+                                    <td class="num">100.00</td>
+                                    <t t-foreach="g_b" t-as="v">
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(v * 100.0 / g_val) if g_val else ''"/></td>
+                                    </t>
+                                    <td></td><td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

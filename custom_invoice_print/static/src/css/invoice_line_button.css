@@ -1,0 +1,19 @@
+/* หัวคอลัมน์ปุ่ม */
+.o_list_view .o_list_table th.o_list_button {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+/* cell ของปุ่ม */
+.o_list_view .o_list_table td.o_list_button {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+/* ตัวปุ่ม */
+.o_list_view .o_list_table .o_long_desc_btn {
+    display: inline-block !important;
+    width: 100% !important;
+    text-align: center !important;
+    margin: 0 auto !important;
+}

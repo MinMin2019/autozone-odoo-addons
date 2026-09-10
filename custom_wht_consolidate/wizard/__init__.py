@@ -1,0 +1,1 @@
+from . import wht_consolidate_wizard

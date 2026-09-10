@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_scs_wizard_form" model="ir.ui.view">
+        <field name="name">stock.consumption.wizard.form</field>
+        <field name="model">stock.consumption.wizard</field>
+        <field name="arch" type="xml">
+            <form string="สรุปเบิกใช้วัสดุตามสาขา">
+                <group>
+                    <group string="ช่วงเวลา">
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                        <field name="include_legacy"/>
+                        <field name="company_id" invisible="1"/>
+                    </group>
+                    <group string="ขอบเขต">
+                        <field name="warehouse_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="ทุกสาขา"/>
+                        <field name="categ_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="ทุกหมวด"/>
+                        <field name="product_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="ทุกสินค้า"/>
+                    </group>
+                </group>
+                <div class="text-muted small">
+                    นับใบเบิกใช้วัสดุ (Operation Type CONS) หักเบิกคืน + ถ้าติ๊ก รวมใบส่งของจาก SO ราคา 0 (วิธีเดิม) &#160;|&#160;
+                    มูลค่า = จำนวน × ต้นทุน &#160;|&#160; บัญชีค่าใช้จ่ายตามหมวดสินค้า/สินค้า, สาขาตาม analytic ของ CONS
+                    &#160;|&#160; หน้าจอเป็น pivot แถว = สาขา คอลัมน์ = บัญชีค่าใช้จ่าย (เปลี่ยนเป็นหมวด/เดือน/สินค้าได้)
+                </div>
+                <footer>
+                    <button name="action_view" string="ดูรายงาน" type="object" class="btn-primary"/>
+                    <button name="action_export_xlsx" string="Excel" type="object" class="btn-secondary"/>
+                    <button name="action_print_pdf" string="PDF" type="object" class="btn-secondary"/>
+                    <button string="ยกเลิก" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_scs_wizard" model="ir.actions.act_window">
+        <field name="name">สรุปเบิกใช้วัสดุตามสาขา</field>
+        <field name="res_model">stock.consumption.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_scs_stock" name="สรุปเบิกใช้วัสดุตามสาขา"
+              parent="stock.menu_warehouse_report" action="action_scs_wizard" sequence="53"/>
+    <menuitem id="menu_scs_account" name="สรุปเบิกใช้วัสดุตามสาขา"
+              parent="account.menu_finance_reports" action="action_scs_wizard" sequence="96"/>
+
+    <record id="view_scs_line_pivot" model="ir.ui.view">
+        <field name="name">stock.consumption.line.pivot</field>
+        <field name="model">stock.consumption.line</field>
+        <field name="arch" type="xml">
+            <pivot string="สรุปเบิกใช้วัสดุ" disable_linking="1">
+                <field name="warehouse_id" type="row"/>
+                <field name="expense_account_id" type="col"/>
+                <field name="value" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_scs_line_list" model="ir.ui.view">
+        <field name="name">stock.consumption.line.list</field>
+        <field name="model">stock.consumption.line</field>
+        <field name="arch" type="xml">
+            <list string="สรุปเบิกใช้วัสดุ" create="false" edit="false" delete="false">
+                <field name="warehouse_id"/>
+                <field name="analytic_account_id" optional="hide"/>
+                <field name="month"/>
+                <field name="source"/>
+                <field name="expense_code"/>
+                <field name="expense_name" optional="show"/>
+                <field name="default_code"/>
+                <field name="product_name"/>
+                <field name="categ_id" optional="hide"/>
+                <field name="uom_id"/>
+                <field name="qty" sum="รวม"/>
+                <field name="value" sum="รวม"/>
+                <field name="return_qty" optional="hide"/>
+                <field name="return_value" optional="hide" sum="รวม"/>
+                <field name="move_count" optional="hide"/>
+                <field name="expense_account_id" column_invisible="1"/>
+                <field name="product_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_scs_line_search" model="ir.ui.view">
+        <field name="name">stock.consumption.line.search</field>
+        <field name="model">stock.consumption.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="default_code"/>
+                <field name="product_name"/>
+                <field name="product_id"/>
+                <field name="warehouse_id"/>
+                <field name="categ_id"/>
+                <field name="expense_account_id"/>
+                <field name="month"/>
+                <filter name="cons" string="ใบเบิกใช้ (CONS)" domain="[('source', '=', 'cons')]"/>
+                <filter name="legacy" string="ส่งขายราคา 0 (วิธีเดิม)" domain="[('source', '=', 'legacy')]"/>
+                <filter name="no_account" string="ไม่ได้ตั้งบัญชีค่าใช้จ่าย" domain="[('expense_account_id', '=', False)]"/>
+                <filter name="has_return" string="มีเบิกคืน" domain="[('return_qty', '&gt;', 0)]"/>
+                <group expand="0" string="จัดกลุ่ม">
+                    <filter name="group_warehouse" string="สาขา" context="{'group_by': 'warehouse_id'}"/>
+                    <filter name="group_account" string="บัญชีค่าใช้จ่าย" context="{'group_by': 'expense_account_id'}"/>
+                    <filter name="group_categ" string="หมวดสินค้า" context="{'group_by': 'categ_id'}"/>
+                    <filter name="group_month" string="เดือน" context="{'group_by': 'month'}"/>
+                    <filter name="group_source" string="แหล่ง" context="{'group_by': 'source'}"/>
+                    <filter name="group_product" string="สินค้า" context="{'group_by': 'product_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_scs_line_graph" model="ir.ui.view">
+        <field name="name">stock.consumption.line.graph</field>
+        <field name="model">stock.consumption.line</field>
+        <field name="arch" type="xml">
+            <graph string="สรุปเบิกใช้วัสดุ" type="bar" stacked="1">
+                <field name="warehouse_id"/>
+                <field name="expense_account_id"/>
+                <field name="value" type="measure"/>
+            </graph>
+        </field>
+    </record>
+</odoo>

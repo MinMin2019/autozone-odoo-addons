@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- ========================================== -->
+        <!-- ACTION สำหรับเรียกพิมพ์รายงาน -->
+        <!-- ========================================== -->
+        <record id="action_report_billing_note" model="ir.actions.report">
+            <field name="name">ใบวางบิล</field>
+            <!-- แก้ตรงนี้ให้ตรงกับชื่อโมเดลหลักของคุณ (เช่น customer.billing.note หรือ
+            account.move) -->
+            <field name="model">customer.billing.note</field>
+            <field name="report_type">qweb-pdf</field>
+            <!-- ตรงนี้ต้องระบุ "ชื่อโฟลเดอร์โมดูล.idของเทมเพลต" ให้ถูกต้อง -->
+            <field name="report_name">custom_billing_note.report_billing_note_template</field>
+            <field name="report_file">custom_billing_note.report_billing_note_template</field>
+            <field name="print_report_name">'Billing Note - %s' % (object.name)</field>
+            <field name="binding_model_id" ref="model_customer_billing_note" /> <!-- แก้ ref ตาม
+            model -->
+            <field name="binding_type">report</field>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- TEMPLATE โครงสร้างหลักของรายงาน -->
+        <!-- ========================================== -->
+        <template id="report_billing_note_template">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="o">
+                    <t t-foreach="['ต้นฉบับ (Original)', 'สำเนา (Copy)']" t-as="copy_name">
+                        <t t-call="web.basic_layout">
+                            <style>
+                                /* ปิด Header/Footer ระบบ */
+                                .header, .footer { display: none !important; }
+
+                                .page {
+                                font-family: Sarabun, sans-serif;
+                                font-size: 13px;
+                                color: #000;
+                                position: relative;
+                                }
+
+                                /* Layout Table Helper - No Borders */
+                                table.layout-table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                border: none;
+                                background-color: transparent;
+                                }
+                                table.layout-table td {
+                                vertical-align: top;
+                                padding: 0;
+                                border: none;
+                                background-color: transparent;
+                                }
+
+                                /* ท้ายกระดาษหน้าสุดท้าย: ยอดรวม + ลายเซ็น อยู่ในบล็อกเดียวกัน
+                                   ระยะห่างระหว่างกันเป็น margin 30px แน่นอน ไม่ต้องคำนวณ */
+                                .page-footer {
+                                position: absolute;
+                                bottom: 0;
+                                left: 0;
+                                width: 100%;
+                                }
+                            </style>
+
+                            <!-- ==========================================================
+                                 ค่าคงที่สำหรับคำนวณการแบ่งหน้า (หน่วย px) — ปรับจูนได้ที่นี่
+                                 วัดจากงานพิมพ์จริง: 1 หน้า ≈ 1280px, แถวละ ≈ 26px, ส่วนหัว ≈ 265px
+                                 PAGE_H    = ความสูงพื้นที่ใช้งานของ 1 หน้า (ตั้งต่ำกว่าจริงเล็กน้อยกันเนื้อหาล้น)
+                                 TOP_H     = ความสูงส่วนหัว (โลโก้ + ข้อมูลลูกค้า + หัวตาราง)
+                                 ROW_H     = ความสูงรายการ 1 แถว
+                                 FOOTER_H  = ความสูงบล็อกท้าย (ยอดรวม ~65 + ช่องว่าง 30 + ลายเซ็น ~105)
+                                 RESERVE   = FOOTER_H + ช่องว่าง 30px ระหว่างตารางกับยอดรวม
+                                 RPP_FULL  = จำนวนรายการต่อหน้า (ปรับเลขนี้ตรงๆ ได้เลย)
+                                 ROWS_LAST = จำนวนแถวมากสุดที่หน้าสุดท้ายรับได้ (คำนวณอัตโนมัติ
+                                             เผื่อที่ให้ยอดรวม+ลายเซ็น) — ถ้ารายการหน้าสุดท้ายเกินค่านี้
+                                             จะเพิ่มหน้าท้ายให้อัตโนมัติ (มีแต่ตารางเปล่า+ยอดรวม+ลายเซ็น)
+                                 * ถ้าเนื้อหาล้นไปเกิดหน้าเปล่าแทรก → ลด RPP_FULL หรือเพิ่ม ROW_H / TOP_H
+                                 * ถ้าท้ายกระดาษลอยสูงจากขอบล่าง → เพิ่ม PAGE_H
+                                 ========================================================== -->
+                            <t t-set="PAGE_H" t-value="1260" />
+                            <t t-set="TOP_H" t-value="275" />
+                            <t t-set="ROW_H" t-value="26.5" />
+                            <t t-set="FOOTER_H" t-value="175" />
+                            <t t-set="RESERVE" t-value="FOOTER_H + 30" />
+                            <t t-set="RPP_FULL" t-value="36" />
+                            <t t-set="ROWS_LAST"
+                                t-value="max(1, int((PAGE_H - TOP_H - RESERVE) / ROW_H))" />
+                            <!-- เรียงรายการตามวันที่บิล เก่า→ใหม่ วันเดียวกันเรียงตามเลขที่เอกสาร (อยากได้ใหม่→เก่า เพิ่ม reverse=True) -->
+                            <t t-set="inv_lines"
+                                t-value="list(o.invoice_ids.sorted(key=lambda inv: (str(inv.invoice_date or ''), inv.name or '')))" />
+                            <!-- แบ่งรายการเป็นหน้าๆ ละ RPP_FULL แถว (ถ้าไม่มีรายการเลย ให้มี 1 หน้าเปล่า) -->
+                            <t t-set="page_chunks"
+                                t-value="[inv_lines[i:i + RPP_FULL] for i in range(0, len(inv_lines), RPP_FULL)] or [[]]" />
+                            <!-- ถ้าหน้าสุดท้ายมีรายการเยอะจนไม่เหลือที่ให้ยอดรวม+ลายเซ็น
+                                 → เพิ่มหน้าท้ายว่างอีก 1 หน้าไว้วางยอดรวม+ลายเซ็นโดยเฉพาะ -->
+                            <t t-set="page_chunks"
+                                t-value="page_chunks + [[]] if len(page_chunks[-1]) > ROWS_LAST else page_chunks" />
+
+                            <t t-foreach="page_chunks" t-as="chunk">
+                                <t t-set="is_last_page"
+                                    t-value="chunk_index == len(page_chunks) - 1" />
+                                <!-- ความสูงที่ใช้ไปแล้วเหนือช่องว่างท้ายตาราง -->
+                                <t t-set="used_h"
+                                    t-value="TOP_H + len(chunk) * ROW_H" />
+                                <!-- ความสูงช่องว่างท้ายตาราง:
+                                     หน้าสุดท้าย = ยืดลงมาจนห่างจากยอดรวม 30px
+                                     หน้าอื่นๆ  = ยืดลงไปสุดหน้าแล้วปิดเส้นท้ายตาราง -->
+                                <t t-set="filler_h"
+                                    t-value="max(0, PAGE_H - used_h - (RESERVE if is_last_page else 4))" />
+
+                                <div class="page"
+                                    t-attf-style="height: {{PAGE_H}}px; {{'page-break-before: always;' if not (copy_name_index == 0 and chunk_index == 0) else ''}}">
+
+                                    <!-- ==================== ส่วนที่ 1: Header ==================== -->
+                                    <div class="row" style="margin-bottom: 15px;">
+                                        <div class="col-8">
+                                            <table class="table table-bordered"
+                                                style="margin-bottom: 15px; border: 1px solid #ffffff;">
+                                                <tr>
+                                                    <td style="width: 15%; padding-right: 15px;">
+                                                        <img t-if="o.company_id.logo"
+                                                            t-att-src="image_data_uri(o.company_id.logo)"
+                                                            style="max-height: 70px; width: auto;"
+                                                            alt="Logo" />
+                                                    </td>
+                                                    <td>
+                                                        <div
+                                                            style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">
+                                                            <span t-esc="o.company_id.name" />
+                                                        </div>
+                                                        <div
+                                                            style="font-size: 13px; line-height: 1.4; padding-left: 2px;">
+                                                            <span t-esc="o.company_id.partner_id.get_thai_address()" />
+                                                            <br />
+                                                            <t t-if="o.company_id.phone">โทร: <span
+                                                                    t-esc="o.company_id.phone" /></t>
+                                                            <t t-if="o.company_id.vat">
+                                                                เลขประจำตัวผู้เสียภาษี: <span
+                                                                    t-esc="o.company_id.vat" /></t>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                        <div class="col-4"
+                                            style="text-align: center; vertical-align: middle; margin-top: 10px;">
+                                            <div
+                                                style="font-size: 24px; font-weight: bold; color: #333; margin-bottom: 5px;">
+                                                <span t-esc="copy_name" />
+                                            </div>
+                                            <div style="font-size: 18px; font-weight: bold;">
+                                                <span>ใบวางบิล / Billing Note</span>
+                                            </div>
+                                            <div t-if="len(page_chunks) > 1"
+                                                style="font-size: 13px; margin-top: 3px;">
+                                                หน้า <span t-esc="chunk_index + 1" /> / <span
+                                                    t-esc="len(page_chunks)" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- ==================== ส่วนที่ 2: ข้อมูลลูกค้า
+                                    ==================== -->
+                                    <div style="margin-bottom: 15px;">
+                                        <table
+                                            style="width: 100%; border-collapse: separate; border-spacing: 5px 0;">
+                                            <tr>
+                                                <td
+                                                    style="width: 60%; vertical-align: top; border: 1px solid #000; padding: 10px;">
+                                                    <div
+                                                        style="font-weight: bold; margin-bottom: 4px; font-size: 15px;">
+                                                        <span t-field="o.partner_id.name" />
+                                                    </div>
+                                                    <div>
+                                                        <span t-esc="o.partner_id.get_thai_address()" />
+                                                    </div>
+                                                    <div t-if="o.partner_id.vat">เลขผู้เสียภาษี: <span
+                                                            t-esc="o.partner_id.vat" /></div>
+                                                </td>
+                                                <td
+                                                    style="width: 40%; vertical-align: top; padding: 0;">
+                                                    <table class="table table-bordered table-sm"
+                                                        style="width: 100%; border: 1px solid #000; margin-bottom: 0; height: 100%;">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td
+                                                                    style="width: 40%; font-weight: bold; background-color: #f8f9fa; border: 1px solid #000;">
+                                                                    วันที่
+                                                                </td>
+                                                                <td style="border: 1px solid #000;">
+                                                                    <span t-field="o.date"
+                                                                        t-options='{"widget": "date", "format": "dd/MM/yyyy"}' />
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td
+                                                                    style="font-weight: bold; background-color: #f8f9fa; border: 1px solid #000;">
+                                                                    เลขที่
+                                                                </td>
+                                                                <td style="border: 1px solid #000;">
+                                                                    <span t-field="o.name" />
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+
+                                    <!-- ==================== ส่วนที่ 3: ตารางรายการ
+                                    ==================== -->
+                                    <div class="row" style="margin-bottom: 0px;">
+                                        <div class="col-12">
+                                            <table class="table table-sm"
+                                                style="width: 100%; border: 1px solid #000; margin-bottom: 0px; border-collapse: collapse;">
+                                                <thead
+                                                    style="background-color: #f1f1f1; border-bottom: 1px solid #000;">
+                                                    <tr>
+                                                        <th
+                                                            style="width: 5%; border: 1px solid #000; text-align: center;">
+                                                            ลำดับ</th>
+                                                        <th
+                                                            style="width: 15%; border: 1px solid #000; text-align: center;">
+                                                            วันที่บิล</th>
+                                                        <th
+                                                            style="width: 35%; border: 1px solid #000; text-align: center;">
+                                                            เลขที่ใบกำกับ</th>
+                                                        <th
+                                                            style="width: 15%; border: 1px solid #000; text-align: center;">
+                                                            วันที่ครบกำหนด</th>
+                                                        <th
+                                                            style="width: 15%; border: 1px solid #000; text-align: center;">
+                                                            จำนวนเงิน</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <t t-foreach="chunk" t-as="inv">
+                                                        <tr t-attf-style="height: {{ROW_H}}px;">
+                                                            <td
+                                                                style="text-align: center; border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid transparent; border-top: none;">
+                                                                <span
+                                                                    t-esc="chunk_index * RPP_FULL + inv_index + 1" />
+                                                            </td>
+                                                            <td
+                                                                style="text-align: center; border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid transparent; border-top: none;">
+                                                                <span t-field="inv.invoice_date"
+                                                                    t-options='{"widget": "date", "format": "dd/MM/yyyy"}' />
+                                                            </td>
+                                                            <td
+                                                                style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid transparent; border-top: none; padding-left: 10px;">
+                                                                <span t-field="inv.name" />
+                                                            </td>
+                                                            <td
+                                                                style="text-align: center; border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid transparent; border-top: none;">
+                                                                <span t-field="inv.invoice_date_due"
+                                                                    t-options='{"widget": "date", "format": "dd/MM/yyyy"}' />
+                                                            </td>
+                                                            <td
+                                                                style="text-align: right; border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid transparent; border-top: none; padding-right: 10px;">
+                                                                <span t-field="inv.amount_total"
+                                                                    t-options='{"widget": "float", "precision": 2}' />
+                                                            </td>
+                                                        </tr>
+                                                    </t>
+                                                    <!-- แถวเปล่า: ยืดตารางลงไปให้เต็มพื้นที่
+                                                         (ความสูงคำนวณอัตโนมัติจากจำนวนรายการ) -->
+                                                    <tr>
+                                                        <td
+                                                            t-attf-style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid #000; border-top: none; height: {{filler_h}}px;"></td>
+                                                        <td
+                                                            style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid #000; border-top: none;"></td>
+                                                        <td
+                                                            style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid #000; border-top: none;"></td>
+                                                        <td
+                                                            style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid #000; border-top: none;"></td>
+                                                        <td
+                                                            style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid #000; border-top: none;"></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- ==================== ส่วนที่ 4+5: ยอดรวมเงิน + ลายเซ็น
+                                         (เฉพาะหน้าสุดท้าย — ยอดรวมอยู่เหนือลายเซ็น 30px พอดี)
+                                    ==================== -->
+                                    <div class="page-footer" t-if="is_last_page">
+                                        <div class="row">
+                                            <div class="col-7"></div>
+                                            <div class="col-5">
+                                                <table class="table table-sm"
+                                                    style="width: 100%; border: 1px solid #000; margin-bottom: 0px;">
+                                                    <tbody>
+                                                        <tr>
+                                                            <td
+                                                                style="width: 50%; font-weight: bold; text-align: right; border-right: 1px solid #000; background-color: #f1f1f1; padding: 10px;">
+                                                                ยอดรวมวางบิล<br />(Grand Total)</td>
+                                                            <td
+                                                                style="text-align: right; font-weight: bold; padding: 10px; font-size: 16px; vertical-align: middle;">
+                                                                <span t-field="o.amount_total"
+                                                                    t-options='{"widget": "float", "precision": 2}' />
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <div style="margin-top: 30px;">
+                                            <div
+                                                style="border: 1px solid #000; padding: 25px 10px 15px 10px; width: 96%; margin: 0 auto; background-color: white;">
+                                                <div class="row">
+                                                    <div class="col-6" style="text-align: center;">
+                                                        <div
+                                                            style="border-bottom: 1px solid #000; width: 60%; margin: 0 auto 5px auto;"></div>
+                                                        <div>ผู้รับวางบิล / Received By</div>
+                                                        <div style="margin-top: 5px;">วันที่
+                                                            _______/_______/_______</div>
+                                                    </div>
+                                                    <div class="col-6" style="text-align: center;">
+                                                        <div
+                                                            style="border-bottom: 1px solid #000; width: 60%; margin: 0 auto 5px auto;"></div>
+                                                        <div>ผู้วางบิล / Delivered By</div>
+                                                        <div style="margin-top: 5px;">วันที่
+                                                            _______/_______/_______</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </t>
+                        </t>
+
+
+                    </t>
+                </t>
+            </t>
+        </template>
+
+
+    </data>
+</odoo>

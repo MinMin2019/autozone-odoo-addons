@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- sequence -1 เหมือน Asset Code ของ custom_asset_report_code เพื่ออยู่หน้าคอลัมน์ core
+         (เรียงตาม sequence, id → Asset Code มาก่อนเพราะ record เกิดก่อน) -->
+    <record id="assets_report_analytic" model="account.report.column">
+        <field name="report_id" ref="account_asset.assets_report"/>
+        <field name="sequence">-1</field>
+        <field name="name">Analytic</field>
+        <field name="expression_label">analytic</field>
+        <field name="figure_type">string</field>
+    </record>
+</odoo>

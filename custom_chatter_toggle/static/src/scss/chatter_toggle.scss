@@ -1,0 +1,77 @@
+// Anchor the floating button to whichever container it was appended to
+// (form sheet preferred, so it stays on the left pane and never overlays
+// the attachment preview / PDF toolbar).
+.o_form_view .o_form_sheet_bg:has(> .o_chatter_toggle_toolbar),
+.o_form_view .o_content:has(> .o_chatter_toggle_toolbar) {
+    position: relative;
+}
+
+.o_chatter_toggle_toolbar {
+    position: absolute;
+    top: 48px; // clear the statusbar / status badge
+    right: 6px;
+    z-index: 1010;
+    display: flex;
+    margin: 0;
+}
+
+.o_chatter_toggle_btn {
+    white-space: nowrap;
+    padding: 2px 9px;
+    line-height: 1.1;
+    font-weight: bold;
+    border-radius: 999px;
+    opacity: 0.45;
+    transition: opacity 0.15s ease;
+
+    &:hover,
+    &:focus {
+        opacity: 1;
+    }
+}
+
+// State 1+: hide the attachment (PDF) preview pane.
+.o_form_view.o_preview_hidden .o_attachment_preview {
+    display: none !important;
+}
+
+// State 1 (wide screens / COMBO layout): with the preview hidden, Odoo's
+// in-sheet chatter clone would sit below the fold at the bottom of the form.
+// Lay the sheet background out as a 2-column grid instead, so the chatter
+// takes over the right-hand column where the PDF used to be.
+.o_form_view.o_preview_hidden:not(.o_chatter_hidden)
+    .o_form_sheet_bg:has(> .o-mail-Form-chatter.o-isInFormSheetBg) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, $o-mail-Chatter-minWidth);
+    column-gap: map-get($spacers, 3);
+    align-content: start;
+
+    > * {
+        grid-column: 1;
+    }
+
+    > .o-mail-Form-chatter.o-isInFormSheetBg {
+        grid-column: 2;
+        grid-row: 1 / span 99;
+        margin: 0;
+        align-self: start;
+        // Keep the log in view while the form scrolls.
+        position: sticky;
+        top: 0;
+        max-height: 100vh;
+        overflow-y: auto;
+    }
+}
+
+// State 2: hide the chatter as well.
+.o_form_view.o_chatter_hidden .o-mail-Form-chatter,
+.o_form_view.o_chatter_hidden .o_FormRenderer_chatterContainer {
+    display: none !important;
+}
+
+// Let the sheet reclaim the freed width in either hidden state.
+.o_form_view.o_preview_hidden .o_form_sheet_bg,
+.o_form_view.o_chatter_hidden .o_form_sheet_bg {
+    max-width: none !important;
+    margin-right: 0 !important;
+}

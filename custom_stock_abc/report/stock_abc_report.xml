@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_sabc" model="report.paperformat">
+        <field name="name">A4 Landscape ABC</field>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">10</field>
+        <field name="margin_bottom">10</field>
+        <field name="margin_left">7</field>
+        <field name="margin_right">7</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_stock_abc" model="ir.actions.report">
+        <field name="name">ABC Analysis</field>
+        <field name="model">stock.abc.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">custom_stock_abc.report_sabc_template</field>
+        <field name="report_file">custom_stock_abc.report_sabc_template</field>
+        <field name="print_report_name">'ABC %s-%s' % (object.date_from, object.date_to)</field>
+        <field name="paperformat_id" ref="paperformat_sabc"/>
+    </record>
+
+    <template id="report_sabc_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <style>
+                        .header, .footer { display: none !important; }
+                        .page { font-family: Sarabun, sans-serif; font-size: 10.5px; color: #000; }
+                        h3.ab-title { font-size: 16px; font-weight: bold; margin: 0 0 2px 0; }
+                        h4.ab-sec { font-size: 12.5px; font-weight: bold; margin: 10px 0 4px 0; border-left: 4px solid #444; padding-left: 6px; }
+                        table.ab { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+                        table.ab th, table.ab td { border: 1px solid #555; padding: 2px 4px; vertical-align: top; }
+                        table.ab th { background: #e6e6e6; text-align: center; font-weight: bold; }
+                        table.ab td.num { text-align: right; white-space: nowrap; }
+                        table.ab.small { width: 60%; }
+                        .A { background: #f8cbad; font-weight: bold; text-align: center; }
+                        .B { background: #ffe699; font-weight: bold; text-align: center; }
+                        .C { background: #e2efda; text-align: center; }
+                        .note { font-size: 10px; color: #333; }
+                    </style>
+                    <div class="page">
+                        <h3 class="ab-title"><t t-esc="o.company_id.name"/></h3>
+                        <div><b>ABC Analysis</b> <t t-esc="o.thai_date(o.date_from)"/> - <t t-esc="o.thai_date(o.date_to)"/>
+                            &#160;|&#160; เกณฑ์: <t t-esc="o.basis_label()"/>
+                            &#160;|&#160; A ≤ <t t-esc="'{:.0f}'.format(o.a_pct)"/>% B ≤ <t t-esc="'{:.0f}'.format(o.b_pct)"/>%
+                            <t t-if="o.per_warehouse"> &#160;|&#160; แยกรายสาขา</t>
+                        </div>
+                        <t t-foreach="o.groups()" t-as="g">
+                            <h4 class="ab-sec"><t t-esc="g[0].name if g[0] else 'ทั้งบริษัท'"/> — สรุป Pareto</h4>
+                            <table class="ab small">
+                                <thead><tr><th>ชั้น</th><th>จำนวนสินค้า</th><th>% รายการ</th><th>มูลค่าตามเกณฑ์</th><th>% มูลค่า</th></tr></thead>
+                                <tbody>
+                                    <tr t-foreach="o.pareto(g[0] if o.per_warehouse else None)" t-as="p">
+                                        <td t-att-class="p[0]"><t t-esc="p[0]"/></td>
+                                        <td class="num"><t t-esc="p[1]"/></td>
+                                        <td class="num"><t t-esc="'{:.2f}'.format(p[2])"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(p[3])"/></td>
+                                        <td class="num"><t t-esc="'{:.2f}'.format(p[4])"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <t t-set="ab_lines" t-value="g[1].filtered(lambda l: l.abc_class in ('A', 'B'))"/>
+                            <h4 class="ab-sec">รายการชั้น A และ B (<t t-esc="len(ab_lines)"/> รายการ; ชั้น C <t t-esc="len(g[1]) - len(ab_lines)"/> รายการ ดูในหน้าจอ/Excel)</h4>
+                            <table class="ab">
+                                <thead>
+                                    <tr>
+                                        <th style="width:5%">อันดับ</th><th style="width:4%">ชั้น</th><th style="width:10%">รหัส</th><th>สินค้า</th>
+                                        <th style="width:5%">หน่วย</th><th style="width:10%">มูลค่าตามเกณฑ์</th><th style="width:7%">% ทั้งหมด</th>
+                                        <th style="width:7%">สะสม %</th><th style="width:8%">ใช้ไป (จำนวน)</th><th style="width:8%">คงเหลือ</th><th style="width:10%">มูลค่าคงเหลือ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="ab_lines" t-as="l">
+                                        <td class="num"><t t-esc="l.rank"/></td>
+                                        <td t-att-class="l.abc_class"><t t-esc="l.abc_class"/></td>
+                                        <td><t t-esc="l.default_code"/></td>
+                                        <td><t t-esc="l.product_name"/></td>
+                                        <td><t t-esc="l.uom_id.name"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.basis_value)"/></td>
+                                        <td class="num"><t t-esc="'{:.2f}'.format(l.share_pct)"/></td>
+                                        <td class="num"><t t-esc="'{:.2f}'.format(l.cum_pct)"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.use_qty)"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.stock_qty)"/></td>
+                                        <td class="num"><t t-esc="'{:,.2f}'.format(l.stock_value)"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </t>
+                        <ul class="note">
+                            <li>A = สินค้าไม่กี่ตัวที่รวมกันเป็น 80% ของมูลค่า → คุมเข้ม นับสต็อกบ่อย (เช่น ทุกเดือน) ตั้งจุดสั่งซื้อละเอียด</li>
+                            <li>B = กลุ่มกลาง (80–95%) → นับทุกไตรมาส; C = ของเยอะตัวแต่มูลค่าน้อย → นับปีละครั้ง สั่งซื้อเป็นล็อต</li>
+                            <li>"ใช้ไป" = ส่งขาย / เบิกใช้ / โอนออกไปสาขาอื่น (ระดับทั้งบริษัทไม่นับโอนระหว่างสาขา)</li>
+                        </ul>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

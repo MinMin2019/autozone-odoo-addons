@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Action สำหรับดึง View มาแสดงเมื่อกดเมนู -->
+    <record id="action_customer_billing_note" model="ir.actions.act_window">
+        <field name="name">Billing Notes</field>
+        <field name="res_model">customer.billing.note</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_customer_billing_note_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                สร้างใบวางบิลใบแรกของคุณ!
+            </p>
+        </field>
+    </record>
+
+    <!-- นำเมนูไปต่อท้ายเมนู Customers ของแอพ Accounting -->
+    <menuitem id="menu_customer_billing_note" 
+              name="Billing Notes" 
+              parent="account.menu_finance_receivables" 
+              action="action_customer_billing_note" 
+              sequence="20"/>
+</odoo>

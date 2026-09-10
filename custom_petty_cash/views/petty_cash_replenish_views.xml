@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_petty_cash_replenish_list" model="ir.ui.view">
+        <field name="name">petty.cash.replenish.list</field>
+        <field name="model">petty.cash.replenish</field>
+        <field name="arch" type="xml">
+            <list default_order="date desc, name desc">
+                <field name="name" />
+                <field name="date" />
+                <field name="fund_id" />
+                <field name="amount_total" sum="รวม" />
+                <field name="transfer_ref" optional="show" />
+                <field name="state" widget="badge"
+                    decoration-success="state == 'done'"
+                    decoration-muted="state == 'cancel'" />
+                <field name="currency_id" column_invisible="1" />
+            </list>
+        </field>
+    </record>
+
+    <record id="view_petty_cash_replenish_form" model="ir.ui.view">
+        <field name="name">petty.cash.replenish.form</field>
+        <field name="model">petty.cash.replenish</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_done" string="เติมเงินแล้ว" type="object"
+                        class="btn-primary" invisible="state != 'draft'" />
+                    <button name="action_cancel" string="ยกเลิก" type="object"
+                        invisible="state == 'cancel'" />
+                    <button name="action_reset_draft" string="กลับเป็นร่าง" type="object"
+                        invisible="state != 'cancel'" />
+                    <field name="state" widget="statusbar" statusbar_visible="draft,done" />
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <field name="name_editable" invisible="1" />
+                        <h1><field name="name" readonly="not name_editable"
+                            placeholder="ระบบออกเลขให้เมื่อบันทึก" /></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="fund_id" readonly="state != 'draft'" />
+                            <field name="date" readonly="state != 'draft'" />
+                        </group>
+                        <group>
+                            <field name="amount_total" />
+                            <field name="transfer_ref" />
+                            <field name="currency_id" invisible="1" />
+                            <field name="company_id" invisible="1" />
+                        </group>
+                    </group>
+                    <field name="clearing_ids" readonly="state != 'draft'"
+                        widget="many2many">
+                        <list>
+                            <field name="name" />
+                            <field name="date" />
+                            <field name="amount_advance" />
+                            <field name="amount_spent" sum="รวม" />
+                            <field name="amount_return" />
+                            <field name="state" />
+                            <field name="currency_id" column_invisible="1" />
+                        </list>
+                    </field>
+                    <group>
+                        <field name="note" placeholder="หมายเหตุ..." />
+                    </group>
+                </sheet>
+                <chatter />
+            </form>
+        </field>
+    </record>
+
+    <record id="action_petty_cash_replenish" model="ir.actions.act_window">
+        <field name="name">ขอเติมเงินสดย่อย</field>
+        <field name="res_model">petty.cash.replenish</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

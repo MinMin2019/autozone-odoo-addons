@@ -1,0 +1,425 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- ========================================== -->
+        <!-- ACTION สำหรับเรียกพิมพ์รายงาน -->
+        <!-- ========================================== -->
+        <record id="action_report_garage_receipt" model="ir.actions.report">
+            <field name="name">ใบเสร็จรับเงิน</field>
+            <field name="model">account.move</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">custom_garage_receipt.report_garage_receipt_template</field>
+            <field name="report_file">custom_garage_receipt.report_garage_receipt_template</field>
+            <field name="print_report_name">'Receipt - %s' % (object.name)</field>
+            <field name="binding_model_id" ref="account.model_account_move" />
+            <field name="binding_type">report</field>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- TEMPLATE โครงสร้างหลักของรายงาน -->
+        <!-- ========================================== -->
+        <template id="report_garage_receipt_template">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="o">
+                    <t t-call="web.basic_layout">
+
+                        <!-- ========================================== -->
+                        <!-- STYLE: Sticky Footer (เลียนแบบ report_invoice_custom) -->
+                        <!-- ยอดรวม + ลายเซ็น ถูกตรึงไว้ด้านล่างของหน้า -->
+                        <!-- ตารางรายการถูกยืดลงมาชิดยอดรวม โดยเว้นระยะห่าง 30px -->
+                        <!-- ========================================== -->
+                        <style>
+                            .page {
+                                font-family: 'Sarabun', sans-serif;
+                                position: relative;
+                                min-height: 1200px; /* ความสูงโดยประมาณของพื้นที่พิมพ์ A4 (เท่ากับ report_invoice_custom) */
+                            }
+                            /* พื้นที่ตารางรายการ: ยืดเต็มความสูงที่เหลือ
+                               top = ความสูงของส่วนหัว + ข้อมูลลูกค้า
+                               bottom = ความสูง footer (120px) ทำให้เกิดช่องว่าง 30px เหนือ footer */
+                            .receipt-items-area {
+                                position: absolute;
+                                left: 0;
+                                right: 0;
+                                top: 300px;
+                                bottom: 150px; /* footer สูง 120px + ระยะห่าง 30px */
+                            }
+                            .receipt-items-area table {
+                                width: 100%;
+                                height: 100%; /* ยืดตารางให้เต็มพื้นที่ */
+                            }
+                            /* footer: ยอดรวม + ลายเซ็น ตรึงไว้ด้านล่างสุด */
+                            .receipt-footer {
+                                position: absolute;
+                                left: 0;
+                                right: 0;
+                                bottom: 0;
+                                height: 120px;
+                            }
+                        </style>
+
+                        <!-- กำหนดจำนวนหน้า (copies) ตามเงื่อนไข VAT -->
+                        <!-- ถ้า amount_tax > 0 ให้วน 2 รอบ (ต้นฉบับ, สำเนา) ถ้าไม่ใช่ วน 1 รอบ
+                        (ต้นฉบับ) -->
+                        <t t-set="print_copies" t-value="[1, 2] if o.amount_tax > 0 else [1]" />
+
+                        <!-- วนลูปตามจำนวนหน้า -->
+                        <t t-foreach="print_copies" t-as="page_num">
+
+                            <!-- ใช้ page_break_after เพื่อแบ่งหน้าเมื่อปริ้นแผ่นแรกจบ -->
+                            <div class="page"
+                                style="font-family: 'Sarabun', sans-serif; page-break-after: always;">
+
+                                <!-- ========================================== -->
+                                <!-- ส่วนที่ 1: ส่วนหัวบนสุดของหน้ากระดาษ (Header) -->
+                                <!-- ========================================== -->
+                                <div class="row" style="margin-bottom: 15px;">
+                                    <!-- ด้านซ้าย: Logo และ ชื่อบริษัท -->
+                                    <div class="col-8">
+                                        <table
+                                            style="width: 100%; border: 0px solid white; border-collapse: collapse;">
+                                            <tr>
+                                                <td
+                                                    style="width: 15%; vertical-align: top; padding-right: 15px; border: 0px;">
+                                                    <img t-if="o.company_id.logo"
+                                                        t-att-src="image_data_uri(o.company_id.logo)"
+                                                        style="max-height: 70px; width: auto;"
+                                                        alt="Logo" />
+                                                </td>
+                                                <td style="vertical-align: top; border: 0px;">
+                                                    <div
+                                                        style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">
+                                                        <span t-esc="o.company_id.name" />
+                                                    </div>
+                                                    <div style="font-size: 13px; line-height: 1.4;">
+                                                        <span t-esc="o.company_id.partner_id.get_thai_address()" />
+                                                        <br />
+                                                        <t t-if="o.company_id.phone">โทร: <span
+                                                                t-esc="o.company_id.phone" />
+                                                        </t>
+                                                        <t t-if="o.company_id.vat">
+                                                            เลขประจำตัวผู้เสียภาษี: <span
+                                                                t-esc="o.company_id.vat" /></t>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+
+                                    <!-- ด้านขวา: ชื่อเอกสารและ ต้นฉบับ/สำเนา -->
+                                    <div class="col-4"
+                                        style="text-align: center; vertical-align: top;">
+
+                                        <!-- เช็คตัวแปร page_num เพื่อแสดงคำว่า ต้นฉบับ หรือ สำเนา -->
+                                        <div
+                                            style="font-size: 20px; font-weight: bold; color: #555; margin-bottom: 10px;">
+                                            <t t-if="o.amount_tax > 0 and page_num == 1">
+                                                <span>&#160;ต้นฉบับ / Original&#160;</span>
+                                            </t>
+                                            <t t-if="page_num == 2">
+                                                <span>&#160;สำเนา / Copy&#160;</span>
+                                            </t>
+                                        </div>
+
+                                        <div style="font-size: 16px; font-weight: bold;">
+                                            <!-- เช็คเงื่อนไข VAT -->
+                                            <t t-if="o.amount_tax > 0">
+                                                <span>&#160;บิลเงินสด / ใบกำกับภาษี&#160;</span>
+                                                <br />
+                                                <span>( อย่างย่อ )</span>
+                                            </t>
+                                            <t t-else="">
+                                                <span>&#160;ใบเสร็จรับเงิน&#160;</span>
+                                                <br />
+                                                <span>Sales Receipt</span>
+                                            </t>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                <!-- ========================================== -->
+                                <!-- ส่วนที่ 2: ส่วนหัว (รายละเอียดเอกสารและลูกค้า) -->
+                                <!-- ========================================== -->
+                                <!-- ใช้ d-flex และ align-items-stretch
+                            เพื่อให้คอลัมน์ซ้าย-ขวายืดความสูงเท่ากัน -->
+                                <div class="row d-flex align-items-stretch"
+                                    style="margin-bottom: 20px; font-size: 14px;">
+
+                                    <!-- ===================================== -->
+                                    <!-- ด้านซ้าย: ข้อมูลลูกค้า (จัดเรียงบรรทัดตามแบบ) -->
+                                    <!-- ===================================== -->
+                                    <div class="col-7">
+                                        <!-- min-height: 180px; เป็นการกะระยะให้พอดีกับตาราง 6
+                                    บรรทัดฝั่งขวา (ปรับเลขได้ตามเหมาะสม) -->
+                                        <div
+                                            style="border: 1px solid #ccc; border-radius: 5px; padding: 15px; height: 100%; min-height: 180px; margin-right: 15px;">
+
+                                            <!-- บรรทัดที่ 1: หัวข้อ -->
+                                            <div
+                                                style="font-weight: bold; font-size: 15px; margin-bottom: 8px;">
+                                                ขายให้ / SOLD TO
+                                            </div>
+
+                                            <!-- บรรทัดที่ 2: ชื่อลูกค้า (ทำให้หนาตามรูปตัวอย่าง) -->
+                                            <div style="font-weight: bold; margin-bottom: 4px;">
+                                                <span t-field="o.partner_id.name" />
+                                            </div>
+
+                                            <!-- บรรทัดที่ 3: ที่อยู่ (รูปแบบไทยกลางจาก autozone_base_address) -->
+                                            <div style="margin-bottom: 4px;">
+                                                <span t-out="o.partner_id.get_thai_address()" />
+                                            </div>
+
+                                            <!-- บรรทัดที่ 4: เลขผู้เสียภาษี -->
+                                            <div t-if="o.partner_id.vat"> เลขผู้เสียภาษี: <span
+                                                    t-field="o.partner_id.vat" />
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+                                    <!-- ===================================== -->
+                                    <!-- ด้านขวา: ข้อมูลเอกสารและรถยนต์ (มีเส้นตาราง) -->
+                                    <!-- ===================================== -->
+                                    <div class="col-5">
+                                        <table class="table table-bordered table-sm"
+                                            style="width: 100%; border: 1px solid #ccc; margin-bottom: 0; height: 100%;">
+                                            <tbody>
+                                                <tr>
+                                                    <td
+                                                        style="font-weight: bold; background-color: #f8f9fa;">วันที่
+                                                        :</td>
+                                                    <td>
+                                                        <span t-field="o.invoice_date"
+                                                            t-options='{"widget": "date", "format": "dd/MM/yyyy"}' />
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td
+                                                        style="width: 40%; font-weight: bold; background-color: #f8f9fa;">เลขที่
+                                                        :</td>
+                                                    <td>
+                                                        <span t-field="o.name" />
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td
+                                                        style="font-weight: bold; background-color: #f8f9fa;">การชำระเงิน
+                                                        :</td>
+                                                    <td>
+                                                        <span t-field="o.custom_payment_method" />
+                                                    </td>
+                                                </tr>
+
+                                                <tr>
+                                                    <td
+                                                        style="font-weight: bold; background-color: #f8f9fa;">เลขที่งานซ่อม
+                                                        :</td>
+                                                    <td>
+                                                        <span t-field="o.repair_job_no" />
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td
+                                                        style="font-weight: bold; background-color: #f8f9fa;">ยี่ห้อรถ
+                                                        :</td>
+                                                    <td>
+                                                        <span t-field="o.vehicle_brand" />
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td
+                                                        style="font-weight: bold; background-color: #f8f9fa;">ทะเบียนรถ
+                                                        :</td>
+                                                    <td>
+                                                        <span t-field="o.license_plate" />
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                </div>
+
+                                <!-- ========================================== -->
+                                <!-- ส่วนที่ 3: ส่วนบอดี้ (ตารางรายการสินค้า) -->
+                                <!-- ยืดเต็มความสูงที่เหลือ และชิดกับยอดรวม (เว้น 30px) -->
+                                <!-- ========================================== -->
+                                <div class="receipt-items-area">
+                                    <div class="col-12" style="height: 100%;">
+                                        <!-- เปลี่ยนคลาสไม่ใช้ table-bordered เพื่อควบคุมเส้นเอง -->
+                                        <table class="table table-sm"
+                                            style="width: 100%; height: 100%; border: 1px solid #000; font-size: 14px; margin-bottom: 0px;">
+
+                                            <!-- หัวตาราง -->
+                                            <thead
+                                                style="background-color: #f1f1f1; border-bottom: 1px solid #000;">
+                                                <tr>
+                                                    <th
+                                                        style="width: 5%; border: 1px solid #000; text-align: center !important; vertical-align: middle;">
+                                                        ลำดับ</th>
+                                                    <th
+                                                        style="width: 50%; border: 1px solid #000; text-align: center !important; vertical-align: middle;">รายการ
+                                                        / Description</th>
+                                                    <th
+                                                        style="width: 10%; border: 1px solid #000; text-align: center !important; vertical-align: middle;">
+                                                        จำนวน</th>
+                                                    <th
+                                                        style="width: 15%; border: 1px solid #000; text-align: center !important; vertical-align: middle;">
+                                                        ราคา/หน่วย</th>
+                                                    <th
+                                                        style="width: 20%; border: 1px solid #000; text-align: center !important; vertical-align: middle;">
+                                                        จำนวนเงิน</th>
+                                                </tr>
+                                            </thead>
+
+                                            <!-- ข้อมูลในตาราง -->
+                                            <tbody style="border-bottom: 1px solid #000;">
+                                                <t t-set="count" t-value="1" />
+                                                <t
+                                                    t-foreach="o.invoice_line_ids.filtered(lambda l: l.display_type == 'product')"
+                                                    t-as="line">
+                                                    <!-- ไม่มี border-bottom และ border-top
+                                                ในบรรทัดข้อมูล -->
+                                                    <tr
+                                                        style="border-bottom: none !important; border-top: none !important;">
+                                                        <td
+                                                            style="text-align: center; border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: none; border-top: none;">
+                                                            <span t-esc="count" />
+                                                            <t t-set="count" t-value="count + 1" />
+                                                        </td>
+                                                        <td
+                                                            style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: none; border-top: none;">
+                                                            <span t-field="line.name" />
+                                                        </td>
+                                                        <td
+                                                            style="text-align: center; border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: none; border-top: none;">
+                                                            <span t-field="line.quantity"
+                                                                t-options='{"widget": "float", "precision": 0}' />
+                                                        </td>
+                                                        <td
+                                                            style="text-align: right; border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: none; border-top: none;">
+                                                            <span t-field="line.price_unit"
+                                                                t-options='{"widget": "float", "precision": 2}' />
+                                                        </td>
+                                                        <td
+                                                            style="text-align: right; border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: none; border-top: none;">
+                                                            <span t-field="line.price_subtotal"
+                                                                t-options='{"widget": "float", "precision": 2}' />
+                                                        </td>
+                                                    </tr>
+                                                </t>
+
+                                                <!-- พื้นที่ว่างดันตาราง (ยืดเต็มความสูงที่เหลือ) -->
+                                                <tr
+                                                    style="height: 100%; border-bottom: none !important; border-top: none !important;">
+                                                    <td
+                                                        style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: none; border-top: none;"></td>
+                                                    <td
+                                                        style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: none; border-top: none;"></td>
+                                                    <td
+                                                        style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: none; border-top: none;"></td>
+                                                    <td
+                                                        style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: none; border-top: none;"></td>
+                                                    <td
+                                                        style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: none; border-top: none;"></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- ========================================== -->
+                                <!-- ส่วนที่ 4: ส่วนท้าย (รวมเงิน และ ลายเซ็น) -->
+                                <!-- ตรึงไว้ด้านล่างสุดของรายงาน (sticky footer) -->
+                                <!-- ========================================== -->
+                                <div class="receipt-footer">
+                                    <div class="row"
+                                        style="font-size: 14px; page-break-inside: avoid;">
+
+                                        <!-- ฝั่งซ้าย -->
+                                        <div class="col-7">
+                                        </div>
+
+                                        <!-- ฝั่งขวา: ตารางรวมยอดเงิน -->
+                                        <div class="col-5">
+                                            <table class="table table-sm"
+                                                style="width: 100%; border: 1px solid #000; margin-bottom: 0px;">
+                                                <tbody>
+
+                                                    <!-- บรรทัดรวมเงิน / Subtotal (แสดงเสมอ) -->
+                                                    <tr>
+                                                        <td
+                                                            style="width: 60%; font-weight: bold; text-align: right; border-bottom: 1px solid #000; border-right: 1px solid #000; border-top: none;">
+                                                            รวมเงิน / Subtotal :
+                                                        </td>
+                                                        <td
+                                                            style="text-align: right; border-bottom: 1px solid #000; border-top: none;">
+                                                            <span t-field="o.amount_untaxed"
+                                                                t-options='{"widget": "float", "precision": 2}' />
+                                                        </td>
+                                                    </tr>
+
+                                                    <!-- บรรทัดภาษีมูลค่าเพิ่ม -->
+                                                    <tr>
+                                                        <td
+                                                            style="font-weight: bold; text-align: right; border-bottom: 1px solid #000; border-right: 1px solid #000; border-top: none;">
+                                                            ภาษีมูลค่าเพิ่ม / VAT :
+                                                        </td>
+                                                        <td
+                                                            style="text-align: right; border-bottom: 1px solid #000; border-top: none;">
+                                                            <span t-field="o.amount_tax"
+                                                                t-options='{"widget": "float", "precision": 2}' />
+                                                        </td>
+                                                    </tr>
+
+                                                    <!-- บรรทัดยอดรวมสุทธิ (แสดงเสมอ) -->
+                                                    <tr>
+                                                        <!-- ปรับแก้ความกว้าง 60%
+                                                        เผื่อกรณีบรรทัดบนหายไป
+                                                จะได้รักษาระยะความกว้างเท่าเดิม -->
+                                                        <td
+                                                            style="width: 60%; font-weight: bold; text-align: right; border-right: 1px solid #000; border-bottom: none; border-top: none;">
+                                                            ยอดรวมสุทธิ / Grand Total :
+                                                        </td>
+                                                        <td
+                                                            style="text-align: right; font-weight: bold; border-bottom: none; border-top: none;">
+                                                            <span t-field="o.amount_total"
+                                                                t-options='{"widget": "float", "precision": 2}' />
+                                                        </td>
+                                                    </tr>
+
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                    </div>
+
+                                    <!-- ลายเซ็นผู้รับเงิน (ขวาล่าง) -->
+                                    <div class="row"
+                                        style="margin-top: 50px; font-size: 14px; page-break-inside: avoid;">
+                                        <div class="col-7"></div>
+                                        <div class="col-5" style="text-align: center;">
+                                            <div
+                                                style="border-bottom: 1px solid #000; width: 80%; margin: 0 auto 10px auto;"></div>
+                                            <div>ผู้รับเงิน / Receiver</div>
+                                            <div style="margin-top: 5px;">วันที่
+                                                _______/_______/_______</div>
+                                        </div>
+                                    </div>
+
+                                </div> <!--
+                                สิ้นสุด .receipt-footer -->
+
+                            </div> <!--
+                            สิ้นสุด .page -->
+                        </t> <!--
+                        สิ้นสุด t-foreach วนหน้ากระดาษ -->
+
+                    </t>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>

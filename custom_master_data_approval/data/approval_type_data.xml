@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="mda_type_partner" model="az.approval.type">
+            <field name="name">Vendor / Customer Master</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="approver_group_id" ref="group_mda_approver_partner"/>
+        </record>
+        <record id="mda_type_product" model="az.approval.type">
+            <field name="name">Item Code (สินค้า)</field>
+            <field name="model_id" ref="product.model_product_template"/>
+            <field name="approver_group_id" ref="group_mda_approver_product"/>
+        </record>
+    </data>
+</odoo>

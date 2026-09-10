@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ============================================================
+             ราคาต่อหน่วยในเอกสารพิมพ์: ใช้ค่าความละเอียดเต็ม (exact_price_unit)
+             และแสดง 4 ตำแหน่งทั้งคอลัมน์เมื่อใบนั้นมีบรรทัดที่กำหนดยอดรวมเอง
+             (exact_price_digits) ใบที่ไม่ได้กำหนดยอดเองพิมพ์ 2 ตำแหน่งเหมือนเดิม
+
+             ทำไมต้องพิมพ์ 4 ตำแหน่ง: ถ้าพิมพ์ 733.22 คู่กับยอดรวม 123,181.56
+             คนตรวจฝั่งลูกค้ากดเครื่องคิดเลขตามจะได้ 123,180.96 เอกสารตรวจสอบตัวเองไม่ผ่าน
+
+             ขอบเขต: เฉพาะเอกสาร A4 (ใบกำกับ 5 ใบ + ใบลดหนี้) เท่านั้น
+             ฟอร์มสำเร็จรูป dot-matrix (report_invoice_form) จงใจไม่แตะ เพราะบริษัท
+             พิมพ์งานนี้ลง A4 และช่องราคาบนฟอร์มกว้าง 19mm มี overflow:hidden
+             ถ้าใส่ 4 ตำแหน่งแล้วเลข 5 หลักขึ้นไปจะถูกตัดหัวเงียบ ๆ
+             ============================================================ -->
+
+        <!-- ใบกำกับภาษี 5 ใบ -->
+        <template id="invoice_layout_exact_price"
+                  inherit_id="custom_invoice_print.custom_invoice_full_layout">
+            <xpath expr="//span[contains(@t-esc, 'line.price_unit')]" position="attributes">
+                <attribute name="t-esc">('{:,.%df}' % line.move_id.exact_price_digits).format(line.exact_price_unit)</attribute>
+            </xpath>
+        </template>
+
+        <!-- ใบลดหนี้ -->
+        <template id="credit_note_layout_exact_price"
+                  inherit_id="custom_invoice_print.custom_credit_note_full_layout">
+            <xpath expr="//span[contains(@t-esc, 'line.price_unit')]" position="attributes">
+                <attribute name="t-esc">('{:,.%df}' % line.move_id.exact_price_digits).format(line.exact_price_unit)</attribute>
+            </xpath>
+        </template>
+
+    </data>
+</odoo>

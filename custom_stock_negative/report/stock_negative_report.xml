@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_sn" model="report.paperformat">
+        <field name="name">A4 Landscape Negative Stock</field>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">10</field>
+        <field name="margin_bottom">10</field>
+        <field name="margin_left">7</field>
+        <field name="margin_right">7</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_stock_negative" model="ir.actions.report">
+        <field name="name">สต็อกติดลบ (Negative Stock)</field>
+        <field name="model">stock.negative.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">custom_stock_negative.report_sn_template</field>
+        <field name="report_file">custom_stock_negative.report_sn_template</field>
+        <field name="print_report_name">'NegativeStock %s %s' % (object.mode, object.date_to)</field>
+        <field name="paperformat_id" ref="paperformat_sn"/>
+    </record>
+
+    <template id="report_sn_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <style>
+                        .header, .footer { display: none !important; }
+                        .page { font-family: Sarabun, sans-serif; font-size: 10.5px; color: #000; }
+                        h3.sn-title { font-size: 16px; font-weight: bold; margin: 0 0 2px 0; }
+                        .sn-sub { margin-bottom: 8px; }
+                        table.sn { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+                        table.sn th, table.sn td { border: 1px solid #555; padding: 2px 3px; vertical-align: top; }
+                        table.sn th { background: #e6e6e6; text-align: center; font-weight: bold; }
+                        table.sn td.num { text-align: right; white-space: nowrap; }
+                        table.sn tr.grp td { background: #dde8f5; font-weight: bold; }
+                        table.sn tr.sub td { background: #e4f1dc; font-weight: bold; }
+                        table.sn tr.tot td { background: #c9dfc0; font-weight: bold; }
+                        .neg { color: #b00000; }
+                        .ok { color: #0a6b2f; }
+                        table.sn.small { width: 55%; }
+                    </style>
+                    <div class="page">
+                        <t t-set="current" t-value="o.mode == 'current'"/>
+                        <t t-set="split" t-value="o.split_by_location"/>
+                        <h3 class="sn-title"><t t-esc="o.company_id.name"/></h3>
+                        <div class="sn-sub">
+                            <b><t t-esc="o.name"/></b>
+                            &#160;|&#160; <t t-esc="'แยกตำแหน่งในสาขา' if split else 'สรุปต่อสาขา'"/>
+                            &#160;|&#160; <t t-esc="len(o.line_ids)"/> รายการ
+                            &#160;|&#160; มูลค่ารวม <t t-esc="'{:,.2f}'.format(sum(o.line_ids.mapped('value')))"/>
+                        </div>
+
+                        <table class="sn small">
+                            <thead><tr><th>ประเภทรายการที่ทำให้ติดลบ</th><th style="width:18%">จำนวนรายการ</th><th style="width:25%">มูลค่าติดลบ</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="o.kind_summary()" t-as="k">
+                                    <td><t t-esc="k[0]"/></td>
+                                    <td class="num"><t t-esc="k[1]"/></td>
+                                    <td class="num neg"><t t-esc="'{:,.2f}'.format(k[2])"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <table class="sn">
+                            <thead>
+                                <tr>
+                                    <th style="width:9%">รหัส</th>
+                                    <th>สินค้า</th>
+                                    <th t-if="split" style="width:8%">ตำแหน่ง</th>
+                                    <th style="width:5%">หน่วย</th>
+                                    <th t-if="not current" style="width:7%">วันที่</th>
+                                    <th t-if="not current" style="width:6%">ยอดก่อน</th>
+                                    <th t-if="not current" style="width:6%">จ่าย</th>
+                                    <th style="width:6%"><t t-esc="'ติดลบ' if current else 'ยอดหลัง'"/></th>
+                                    <th style="width:8%">มูลค่า</th>
+                                    <th t-if="current" style="width:7%">ตั้งแต่</th>
+                                    <th t-if="current" style="width:4%">วัน</th>
+                                    <th style="width:8%">ประเภท</th>
+                                    <th style="width:10%">เอกสาร</th>
+                                    <th style="width:9%">ไป</th>
+                                    <th style="width:8%">ผู้ทำ</th>
+                                    <th t-if="current" style="width:6%">ค้างรับ</th>
+                                    <th t-if="current" style="width:5%">พอแก้</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="o.warehouse_groups()" t-as="g">
+                                    <tr class="grp"><td t-att-colspan="17"><t t-esc="g[0].name"/> (<t t-esc="len(g[1])"/> รายการ, มูลค่า <t t-esc="'{:,.2f}'.format(sum(l.value for l in g[1]))"/>)</td></tr>
+                                    <tr t-foreach="g[1]" t-as="l">
+                                        <td><t t-esc="l.default_code"/></td>
+                                        <td><t t-esc="l.product_name"/></td>
+                                        <td t-if="split"><t t-esc="l.location_id.name"/></td>
+                                        <td><t t-esc="l.uom_id.name"/></td>
+                                        <td t-if="not current"><t t-esc="o.local_date(l.date)"/></td>
+                                        <td t-if="not current" class="num"><t t-esc="'{:,.2f}'.format(l.qty_before)"/></td>
+                                        <td t-if="not current" class="num"><t t-esc="'{:,.2f}'.format(l.move_qty)"/></td>
+                                        <td class="num neg"><t t-esc="'{:,.2f}'.format(l.qty)"/></td>
+                                        <td class="num neg"><t t-esc="'{:,.2f}'.format(l.value)"/></td>
+                                        <td t-if="current"><t t-esc="o.thai_date(l.neg_since)"/></td>
+                                        <td t-if="current" class="num"><t t-esc="l.days_negative"/></td>
+                                        <td><t t-esc="l.kind"/></td>
+                                        <td><t t-esc="l.reference"/></td>
+                                        <td><t t-esc="l.counterpart"/></td>
+                                        <td><t t-esc="l.user_id.name"/></td>
+                                        <td t-if="current" class="num"><t t-esc="'{:,.2f}'.format(l.pending_in_qty) if l.pending_in_qty else ''"/></td>
+                                        <td t-if="current" t-att-class="'ok' if l.covered else 'neg'" style="text-align:center"><t t-esc="'ใช่' if l.covered else 'ไม่'"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_purchaseorder_custom_final_v5"
+        inherit_id="purchase.report_purchaseorder_document">
+
+        <!-- 1. ลบ Address & Info Block เดิม -->
+        <xpath expr="//t[@t-set='address']" position="replace">
+            <t t-set="address" />
+        </xpath>
+        <xpath expr="//t[@t-set='information_block']" position="replace">
+            <t t-set="information_block" />
+        </xpath>
+
+        <xpath expr="//div[@class='page']" position="inside">
+            <style>
+                /* ซ่อน Header เดิม */
+                #informations { display: none !important; }
+                .page > h2:not(.my-custom-title) { display: none !important; }
+                .page > p.mt-4 { display: none !important; }
+
+                /* ตัวหนังสือส่วน body เป็นตัวบาง (strong/หัวข้อยังหนาปกติ) */
+                .page { font-weight: 200; }
+            </style>
+        </xpath>
+
+        <!-- 2. "แทนที่" บล็อกหัวข้อเดิมด้วยหัวข้อใหม่ของเรา -->
+        <!-- เราเจาะจงไปที่ div ที่มี class='mt-4' ซึ่งเป็นตัวครอบโค้ด layout_document_title
+        ที่คุณเจอ -->
+        <!-- ใช้ [1] เพื่อระบุว่าเป็น div.mt-4 ตัวแรกสุดในหน้า page (ซึ่งก็คือหัวข้อเอกสาร) -->
+        <xpath expr="//div[@class='page']/div[hasclass('mt-4')][1]" position="replace">
+
+            <!-- ส่วนหัวใหม่ของเรา (ใส่แทนที่ลงไปตรงนี้เลย) -->
+            <!-- <div class="header-custom-new mb-4"> -->
+            <table class="table table-bordered"
+                style="margin-bottom: 15px; border: 1px solid #ffffff;">
+                <tr>
+                    <!-- Col 1: Logo -->
+                    <td
+                        style="width: 1%; white-space: nowrap; padding-right: 15px; vertical-align: middle;">
+                        <img t-if="o.company_id.logo" t-att-src="image_data_uri(o.company_id.logo)"
+                            style="max-height: 55px; width: auto;" alt="Logo" />
+                    </td>
+
+                    <!-- Col 2: Company Info -->
+                    <td style="vertical-align: middle;">
+                        <strong style="font-size: 18px;">
+                            <span t-field="o.company_id.name" />
+                        </strong>
+                        <div style="font-size: 12px; line-height: 1.3;">
+                            <span t-out="o.company_id.partner_id.get_thai_address()" />
+                            <br />
+                            <span>โทร: </span>
+                            <span t-field="o.company_id.phone" />
+                            <span t-if="o.company_id.vat"> เลขประจำตัวผู้เสียภาษี: <span
+                                    t-field="o.company_id.vat" />
+                            </span>
+                        </div>
+                    </td>
+
+                </tr>
+            </table>
+
+            <!-- 1. ส่วนหัว "ใบสั่งซื้อ" (เหมือนเดิม) -->
+            <div class="row mb-4">
+                <div class="col-12 text-center">
+                    <h3 class="my-custom-title" style="font-weight: bold; margin-bottom: 5px;">ใบสั่งซื้อ
+                        / Purchase Order</h3>
+                </div>
+            </div>
+
+            <!-- 2. Vendor & Shipping Address (city/state/zip บรรทัดเดียวกัน) -->
+            <t t-set="vendor" t-value="o.partner_id" />
+            <t t-set="ship" t-value="o.dest_address_id or o.picking_type_id.warehouse_id.partner_id" />
+            <div class="row mb-4">
+                <div class="col-6" style="padding-right: 20px;">
+                    <div
+                        style="border-bottom: 1px solid #ddd; margin-bottom: 10px; padding-bottom: 5px;">
+                        <strong>Vendor:</strong>
+                    </div>
+                    <div>
+                        <div><strong t-field="vendor.name" /></div>
+                        <div><span t-out="vendor.get_thai_address()" /></div>
+                        <div t-if="vendor.phone">โทร: <span t-field="vendor.phone" /></div>
+                        <div t-if="vendor.vat">VAT: <span t-field="vendor.vat" /></div>
+                    </div>
+                </div>
+                <div class="col-6" style="padding-left: 20px;">
+                    <div
+                        style="border-bottom: 1px solid #ddd; margin-bottom: 10px; padding-bottom: 5px;">
+                        <strong>Shipping Address:</strong>
+                    </div>
+                    <div t-if="ship">
+                        <div><strong t-field="ship.name" /></div>
+                        <div><span t-out="ship.get_thai_address()" /></div>
+                        <div t-if="ship.phone">โทร: <span t-field="ship.phone" /></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. ชื่อเอกสาร (Purchase Order #...) (เหมือนเดิม) -->
+            <div class="row mb-3">
+                <div class="col-12 text-left">
+                    <t t-if="o.state in ['draft', 'sent', 'to approve']">
+                        <h4 style="font-weight: bold;">Request for Quotation #<span t-field="o.name" />
+                        </h4>
+                    </t>
+                    <t t-if="o.state in ['purchase', 'done']">
+                        <h4 style="font-weight: bold;">PO NO #<span t-field="o.name" />
+                        </h4>
+                    </t>
+                    <t t-if="o.state == 'cancel'">
+                        <h4 style="font-weight: bold;">Cancelled Purchase Order #<span
+                                t-field="o.name" />
+                        </h4>
+                    </t>
+                </div>
+            </div>
+
+            <!-- 4. ข้อมูล Order Date, Arrival, Payment Terms, Buyer (แก้ไขใหม่!) -->
+            <div class="row mt-3 mb-3">
+
+                <!-- Col 1: Order Date (ซ้ายสุด) -->
+                <div class="col-4" t-if="o.date_order">
+                    <strong style="color: #666;">Order Date:</strong>
+                    <br />
+                    <span t-field="o.date_order" t-options='{"widget": "date"}' />
+                </div>
+
+                <!-- Col 2: Order Reference (ตรงกลาง) -->
+                <div class="col-4">
+                    <t t-if="o.partner_ref">
+                        <strong style="color: #666;">Order Ref:</strong>
+                        <br />
+                        <span t-field="o.partner_ref" />
+                    </t>
+                </div>
+
+                <!-- Col 3: ข้อมูลฝั่งขวา (จัดชิดขวา) -->
+                <div class="col-4" style="text-align: right;">
+
+                    <!-- 1. Expected Arrival -->
+                    <div t-if="o.date_planned" class="mb-2">
+                        <strong style="color: #666;">Expected Arrival:</strong>
+                        <br />
+                        <span t-field="o.date_planned" t-options='{"widget": "date"}' />
+                    </div>
+
+                    <!-- 2. Payment Terms -->
+                    <div class="mb-2">
+                        <strong style="color: #666;">Payment Terms:</strong>
+                        <br />
+                        <span t-if="o.payment_term_id" t-field="o.payment_term_id.name"
+                            style="color: #666;" />
+                        <span t-else=""></span>                        <!-- ถ้าไม่มีค่า ใส่ขีด หรือปล่อยว่างไว้ก็ได้ -->
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- </div> -->
+
+        </xpath>
+
+        <xpath expr="//th[@name='th_taxes']" position="replace">
+            <!-- ลบทิ้ง -->
+        </xpath>
+
+        <!-- เพิ่มคอลัมน์ "รูปสินค้า" ต่อจาก Description -->
+        <xpath expr="//th[@name='th_description']" position="after">
+            <th name="th_product_image" class="text-center">รูปสินค้า</th>
+        </xpath>
+
+        <!-- เซลล์รูปสินค้าในแต่ละแถว -->
+        <xpath expr="//td[@id='product']" position="after">
+            <td class="text-center">
+                <img t-if="line.product_id.image_128"
+                    t-att-src="image_data_uri(line.product_id.image_128)"
+                    style="max-height: 60px; max-width: 60px; object-fit: contain;"
+                    alt="Product" />
+            </td>
+        </xpath>
+
+        <!-- แยกคอลัมน์ Qty ออกเป็น Qty (ตัวเลข) + Unit (หน่วย) -->
+        <xpath expr="//th[@name='th_quantity']" position="after">
+            <th name="th_uom" class="text-start"><strong>Unit</strong></th>
+        </xpath>
+        <xpath expr="//td[span[@t-field='line.product_qty']]" position="replace">
+            <td class="text-end">
+                <span t-field="line.product_qty" />
+                <span t-if="line.product_packaging_id">
+                    (<span t-field="line.product_packaging_qty" t-options='{"widget": "integer"}' /> <span t-field="line.product_packaging_id" />)
+                </span>
+            </td>
+            <td class="text-start">
+                <span t-field="line.product_uom.name" groups="uom.group_uom" />
+            </td>
+        </xpath>
+
+        <!-- 2. ลบ Body Row (Td) -->
+        <!-- เนื่องจาก td ของ taxes ไม่มี name เราจึงต้องหาจาก content ข้างใน -->
+        <!-- ใน code ต้นฉบับ มันคือ td ที่มี t-out="', '.join([(tax.invoice_label or tax.name) for
+        tax in line.taxes_id])" -->
+
+        <xpath
+            expr="//td[span[@t-out=&quot;', '.join([(tax.invoice_label or tax.name) for tax in line.taxes_id])&quot;]]"
+            position="replace">
+            <!-- ลบทิ้ง (วิธีนี้แม่นยำที่สุดเพราะระบุเนื้อหาข้างในเป๊ะๆ) -->
+        </xpath>
+
+        <xpath expr="//strong[contains(text(), 'Payment Terms') and not(@style)]" position="replace">
+            <!-- ลบทิ้ง -->
+        </xpath>
+
+        <xpath expr="//span[@t-field='o.payment_term_id' and not(@style)]" position="replace">
+            <!-- ลบ span ที่เป็นค่า Payment Terms -->
+        </xpath>
+        <!-- ลบ Notes เดิม (ตัวที่โผล่ใต้รายเซ็น) -->
+        <xpath expr="//p[@t-field='o.notes']" position="replace"/>
+
+
+        <xpath expr="//div[@id='total']" position="after">
+
+            <!-- Notes -->
+            <div class="row mt-2" t-if="o.notes">
+                <div class="col-12">
+                    <span t-field="o.notes" />
+                </div>
+            </div>
+
+            <!-- Signature Block -->
+            <!-- ใช้ align-items-center เพื่อให้ทุกคอลัมน์อยู่กึ่งกลางแนวตั้ง -->
+            <div class="row mt-5 mb-4 align-items-center justify-content-between"
+                style="page-break-inside: avoid; font-size: 13px; padding-left: 50px; padding-right: 50px;">
+
+                <!-- Column 1 -->
+                <div class="col-3 text-center">
+                    <div style="height: 55px; margin-bottom: 15px;">
+                        <img t-if="o.create_uid.purchase_signature"
+                            t-att-src="image_data_uri(o.create_uid.purchase_signature)"
+                            style="max-height: 55px; max-width: 90%;" alt="Signature" />
+                    </div>
+                    <div style="border-top: 1px solid #000; margin: 0 auto 5px auto; width: 90%;"></div>
+                    <div>
+                        <strong>Purchasing</strong>
+                    </div>
+                </div>
+
+                <!-- Column 2 -->
+                <div class="col-3 text-center">
+                    <div style="height: 55px; margin-bottom: 15px;"></div>
+                    <div style="border-top: 1px solid #000; margin: 0 auto 5px auto; width: 90%;"></div>
+                    <div>
+                        <strong>Supervisor</strong>
+                    </div>
+                </div>
+
+                <!-- Column 3 -->
+                <div class="col-3 text-center">
+                    <div style="height: 55px; margin-bottom: 15px;"></div>
+                    <div style="border-top: 1px solid #000; margin: 0 auto 5px auto; width: 90%;"></div>
+                    <div>
+                        <strong>Manager</strong>
+                    </div>
+                </div>
+
+            </div>
+        </xpath>
+
+
+    </template>
+</odoo>

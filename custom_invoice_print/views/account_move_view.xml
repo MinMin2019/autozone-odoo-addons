@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- 1) Sale Order: เพิ่มช่องรายละเอียดสั้นในตารางรายการสินค้า -->
+        <record id="view_order_form_inherit_custom_name" model="ir.ui.view">
+            <field name="name">sale.order.form.inherit.custom.name</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='order_line']//list//field[@name='name']"
+                    position="after">
+                    <field name="x_custom_name" optional="show" string="ชื่อรายการ (แก้ไขเอง)" />
+                </xpath>
+            </field>
+        </record>
+
+        <!-- เพิ่ม analytic ที่ header -->
+        <record id="view_order_form_inherit_analytic_json" model="ir.ui.view">
+            <field name="name">sale.order.form.inherit.analytic.json</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='partner_id']" position="after">
+                    <field name="analytic_precision" invisible="1" />
+                    <field name="x_analytic_distribution"
+                        widget="analytic_distribution"
+                        groups="analytic.group_analytic_accounting" />
+                </xpath>
+            </field>
+        </record>
+
+        <!-- 2) Invoice: เพิ่มหัวบิล + รายการสินค้า + รายละเอียดเต็ม -->
+        <record id="view_move_form_inherit_custom_po" model="ir.ui.view">
+            <field name="name">account.move.form.inherit.custom.po</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_move_form" />
+            <field name="arch" type="xml">
+                
+                <!-- header fields -->
+                <xpath expr="//field[@name='invoice_date']" position="after">
+
+                    <field name="x_po_reference"
+                        invisible="x_claim_reference or move_type != 'out_invoice'" />
+                    <field name="x_do_reference"
+                        invisible="x_claim_reference or move_type != 'out_invoice'" />
+
+                    <field name="x_job_reference"
+                        invisible="x_do_reference or x_po_reference or move_type != 'out_invoice'" />
+                    <field name="x_brand_reference"
+                        invisible="x_do_reference or x_po_reference or move_type != 'out_invoice'" />
+                    <field name="x_car_reg_reference"
+                        invisible="x_do_reference or x_po_reference or move_type != 'out_invoice'" />
+                    <field name="x_claim_reference"
+                        invisible="x_do_reference or x_po_reference or move_type != 'out_invoice'" />
+                    <field name="x_policy_reference"
+                        invisible="x_do_reference or x_po_reference or move_type != 'out_invoice'" />
+
+                </xpath>
+
+                <!-- สำคัญ: เอา editable/no_open ออก เพื่อให้กดเข้า line form ได้ -->
+                <xpath expr="//field[@name='invoice_line_ids']/list" position="attributes">
+                    <attribute name="editable">bottom</attribute>
+                    <attribute name="no_open">1</attribute>
+                </xpath>
+
+                <!-- เพิ่มฟิลด์ใน list ของ invoice lines -->
+                <xpath expr="//field[@name='invoice_line_ids']//list//field[@name='name']"
+                    position="after">
+                    <field name="x_custom_name" optional="show" string="รายละเอียด" />
+                </xpath>
+
+                <!-- เพิ่มฟิลด์ใน form ของ invoice line -->
+                <xpath expr="//field[@name='invoice_line_ids']/form//field[@name='name']"
+                    position="after">
+                    <field name="x_custom_name" placeholder="ข้อความสั้นสำหรับ list" />
+                    <field name="x_custom_name_long"
+                        widget="text"
+                        placeholder="รายละเอียดเต็มหลายบรรทัด" />
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- 2.5) Credit Note: ใบกำกับเดิม + เหตุผลการลดหนี้ + ปุ่มพิมพ์ใบลดหนี้ -->
+        <record id="view_move_form_inherit_credit_note" model="ir.ui.view">
+            <field name="name">account.move.form.inherit.credit.note</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_move_form" />
+            <field name="arch" type="xml">
+
+                <!-- ปุ่มพิมพ์ใบลดหนี้ (เฉพาะเอกสาร Credit Note) -->
+                <xpath expr="//header" position="inside">
+                    <button name="%(custom_invoice_print.action_report_credit_note_custom)d"
+                        type="action"
+                        string="พิมพ์ใบลดหนี้"
+                        invisible="move_type != 'out_refund'" />
+                </xpath>
+
+                <!-- ใบกำกับเดิม (reversed_entry_id ใส่อัตโนมัติเมื่อออก CN ผ่านปุ่ม Credit Note
+                     แต่เปิดให้เลือกเองได้ เผื่อสร้าง CN ตรง ๆ) + วันที่ใบเดิม + เหตุผล -->
+                <xpath expr="//field[@name='invoice_date']" position="after">
+                    <field name="reversed_entry_id"
+                        string="เลขที่ใบกำกับภาษีเดิม"
+                        invisible="move_type != 'out_refund'"
+                        domain="[('move_type', '=', 'out_invoice'), ('state', '=', 'posted')]" />
+                    <field name="x_original_invoice_date"
+                        invisible="move_type != 'out_refund'" />
+                    <field name="x_cn_reason"
+                        invisible="move_type != 'out_refund'" />
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- 3) แสดง create_date ใน Tree View ของ Invoice -->
+        <record id="view_invoice_tree_inherit_create_date" model="ir.ui.view">
+            <field name="name">account.move.tree.inherit.create.date</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_invoice_tree" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='invoice_date']" position="before">
+                    <field name="create_date_only" string="Created On" optional="show" />
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

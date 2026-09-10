@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_az_account_group_sync_form" model="ir.ui.view">
+        <field name="name">az.account.group.sync.form</field>
+        <field name="model">az.account.group.sync</field>
+        <field name="arch" type="xml">
+            <form string="สร้าง Account Groups จากผังแม่">
+                <div class="alert alert-info" role="alert">
+                    สร้างกลุ่มบัญชี (Account Group) ตามผังแม่ เพื่อให้รายงาน
+                    งบกำไรขาดทุน / งบดุล / งบทดลอง แสดงเป็นชั้นพร้อมยอดรวมย่อย
+                    เมื่อเปิดสวิตช์ <b>Options → Hierarchy and Subtotals</b>
+                    <br/>
+                    กด <b>ตรวจก่อน</b> เพื่อดูว่าจะเปลี่ยนอะไรบ้าง (ยังไม่บันทึก)
+                </div>
+                <group>
+                    <group>
+                        <field name="min_prefix_len"/>
+                        <field name="include_childless_views"/>
+                    </group>
+                    <group>
+                        <field name="purge_others"/>
+                    </group>
+                </group>
+                <field name="report" widget="text" nolabel="1" readonly="1"
+                       invisible="not report" style="font-family: monospace;"/>
+                <footer>
+                    <button name="action_preview" type="object" string="ตรวจก่อน"
+                            class="btn-primary"/>
+                    <button name="action_apply" type="object" string="สร้าง/อัปเดตจริง"
+                            class="btn-secondary"
+                            confirm="ยืนยันแก้ Account Groups ตามแผนที่ตรวจไว้?"/>
+                    <button string="ปิด" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_az_account_group_sync" model="ir.actions.act_window">
+        <field name="name">สร้าง Account Groups จากผังแม่</field>
+        <field name="res_model">az.account.group.sync</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_az_account_group_sync"
+              name="Account Groups จากผังแม่"
+              parent="account.account_account_menu"
+              action="action_az_account_group_sync"
+              groups="account.group_account_manager"
+              sequence="25"/>
+</odoo>

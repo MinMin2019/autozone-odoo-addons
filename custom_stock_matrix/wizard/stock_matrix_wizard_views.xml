@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_smx_wizard_form" model="ir.ui.view">
+        <field name="name">stock.matrix.wizard.form</field>
+        <field name="model">stock.matrix.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Stock Matrix สินค้า × สาขา">
+                <group>
+                    <group string="วันที่">
+                        <field name="date_to"/>
+                        <field name="measure" widget="radio"/>
+                        <field name="company_id" invisible="1"/>
+                    </group>
+                    <group string="ขอบเขต">
+                        <field name="warehouse_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="ทุกสาขา"/>
+                        <field name="categ_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="ทุกหมวด"/>
+                        <field name="product_ids" widget="many2many_tags" options="{'no_create': True}" placeholder="ทุกสินค้า"/>
+                    </group>
+                </group>
+                <group string="ตัวเลือก">
+                    <field name="only_negative_or_multi"/>
+                    <field name="include_non_storable"/>
+                </group>
+                <div class="text-muted small">
+                    หน้าจอเป็น pivot: แถว = สินค้า, คอลัมน์ = สาขา กดหัวคอลัมน์เพื่อสลับ จำนวน/มูลค่า หรือกดแถวเพื่อย่อ-ขยายหมวด
+                    &#160;|&#160; Excel มีตารางจริง 2 ชีท (จำนวน/มูลค่า) &#160;|&#160; PDF แบ่งสาขาชุดละ 13 คอลัมน์
+                </div>
+                <footer>
+                    <button name="action_view" string="ดูตาราง" type="object" class="btn-primary"/>
+                    <button name="action_export_xlsx" string="Excel" type="object" class="btn-secondary"/>
+                    <button name="action_print_pdf" string="PDF" type="object" class="btn-secondary"/>
+                    <button string="ยกเลิก" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_smx_wizard" model="ir.actions.act_window">
+        <field name="name">Stock Matrix (สินค้า × สาขา)</field>
+        <field name="res_model">stock.matrix.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_smx" name="Stock Matrix (สินค้า × สาขา)"
+              parent="stock.menu_warehouse_report" action="action_smx_wizard" sequence="52"/>
+
+    <record id="view_smx_cell_pivot" model="ir.ui.view">
+        <field name="name">stock.matrix.cell.pivot</field>
+        <field name="model">stock.matrix.cell</field>
+        <field name="arch" type="xml">
+            <pivot string="Stock Matrix" disable_linking="1" default_order="default_code asc">
+                <field name="product_id" type="row"/>
+                <field name="warehouse_id" type="col"/>
+                <field name="qty" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_smx_cell_list" model="ir.ui.view">
+        <field name="name">stock.matrix.cell.list</field>
+        <field name="model">stock.matrix.cell</field>
+        <field name="arch" type="xml">
+            <list string="Stock Matrix" create="false" edit="false" delete="false">
+                <field name="default_code"/>
+                <field name="product_name"/>
+                <field name="categ_id" optional="hide"/>
+                <field name="uom_id"/>
+                <field name="warehouse_id"/>
+                <field name="qty" sum="รวม" decoration-danger="qty &lt; 0"/>
+                <field name="unit_cost" optional="hide"/>
+                <field name="value" sum="รวม"/>
+                <field name="product_total_qty" optional="show"/>
+                <field name="holder_count" optional="show"/>
+                <field name="product_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_smx_cell_search" model="ir.ui.view">
+        <field name="name">stock.matrix.cell.search</field>
+        <field name="model">stock.matrix.cell</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="default_code"/>
+                <field name="product_name"/>
+                <field name="product_id"/>
+                <field name="warehouse_id"/>
+                <field name="categ_id"/>
+                <filter name="negative" string="มีสาขาติดลบ" domain="[('qty', '&lt;', 0)]"/>
+                <filter name="multi" string="มีของมากกว่า 1 สาขา" domain="[('holder_count', '&gt;', 1)]"/>
+                <group expand="0" string="จัดกลุ่ม">
+                    <filter name="group_categ" string="หมวดสินค้า" context="{'group_by': 'categ_id'}"/>
+                    <filter name="group_product" string="สินค้า" context="{'group_by': 'product_id'}"/>
+                    <filter name="group_warehouse" string="สาขา" context="{'group_by': 'warehouse_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_smx_cell_graph" model="ir.ui.view">
+        <field name="name">stock.matrix.cell.graph</field>
+        <field name="model">stock.matrix.cell</field>
+        <field name="arch" type="xml">
+            <graph string="Stock Matrix" type="bar" stacked="1">
+                <field name="warehouse_id"/>
+                <field name="categ_id"/>
+                <field name="value" type="measure"/>
+            </graph>
+        </field>
+    </record>
+</odoo>

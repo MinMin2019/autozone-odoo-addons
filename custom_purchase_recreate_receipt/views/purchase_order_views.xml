@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="purchase_order_form_recreate_receipt" model="ir.ui.view">
+        <field name="name">purchase.order.form.recreate.receipt</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='button_cancel']" position="before">
+                <button name="action_recreate_receipt"
+                    string="สร้างใบรับใหม่"
+                    type="object"
+                    class="oe_highlight"
+                    invisible="not can_recreate_receipt"
+                    groups="stock.group_stock_user"
+                    confirm="ใบรับสินค้าเดิมถูกยกเลิกไปแล้ว ต้องการออกใบรับสินค้าใหม่ตามจำนวนที่ยังค้างรับหรือไม่?"/>
+            </xpath>
+            <xpath expr="//field[@name='currency_id']" position="after">
+                <field name="can_recreate_receipt" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

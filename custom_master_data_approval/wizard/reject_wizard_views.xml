@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_mda_reject_wizard_form" model="ir.ui.view">
+        <field name="name">az.mda.reject.wizard.form</field>
+        <field name="model">az.mda.reject.wizard</field>
+        <field name="arch" type="xml">
+            <form string="ตีกลับข้อมูลหลัก">
+                <field name="res_model" invisible="1"/>
+                <field name="res_ids" invisible="1"/>
+                <group>
+                    <field name="reason" placeholder="เช่น เลขผู้เสียภาษีไม่ถูกต้อง / ข้อมูลซ้ำกับที่มีอยู่"/>
+                </group>
+                <footer>
+                    <button string="ตีกลับ" type="object" name="action_reject" class="btn-primary"/>
+                    <button string="ยกเลิก" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

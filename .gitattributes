@@ -1,0 +1,10 @@
+# เก็บใน repo เป็น LF เสมอ, เช็คเอาต์บน Windows ตามปกติ
+* text=auto eol=lf
+*.ttf  binary
+*.ttc  binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.pdf  binary
+*.xlsx binary

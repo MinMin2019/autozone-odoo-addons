@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ===== Deletion Log ===== -->
+    <record id="view_record_delete_log_list" model="ir.ui.view">
+        <field name="name">record.delete.log.list</field>
+        <field name="model">record.delete.log</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false" default_order="delete_date desc">
+                <field name="delete_date"/>
+                <field name="action"/>
+                <field name="model_desc"/>
+                <field name="model_name" optional="hide"/>
+                <field name="res_id" optional="hide"/>
+                <field name="record_name"/>
+                <field name="user_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_record_delete_log_form" model="ir.ui.view">
+        <field name="name">record.delete.log.form</field>
+        <field name="model">record.delete.log</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false" delete="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="action"/>
+                            <field name="model_desc"/>
+                            <field name="model_name"/>
+                            <field name="res_id"/>
+                            <field name="record_name"/>
+                        </group>
+                        <group>
+                            <field name="delete_date"/>
+                            <field name="user_id"/>
+                            <field name="user_name"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Data Snapshot">
+                            <field name="data_json" readonly="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_record_delete_log_search" model="ir.ui.view">
+        <field name="name">record.delete.log.search</field>
+        <field name="model">record.delete.log</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="record_name"/>
+                <field name="model_name"/>
+                <field name="model_desc"/>
+                <field name="user_id"/>
+                <field name="data_json" string="Snapshot Content"/>
+                <filter string="Deleted" name="action_delete" domain="[('action', '=', 'delete')]"/>
+                <filter string="Archived" name="action_archive" domain="[('action', '=', 'archive')]"/>
+                <filter string="Unarchived" name="action_unarchive" domain="[('action', '=', 'unarchive')]"/>
+                <separator/>
+                <filter string="Deleted Today" name="today"
+                        domain="[('delete_date', '&gt;=', 'today')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Model" name="group_model" context="{'group_by': 'model_desc'}"/>
+                    <filter string="Deleted By" name="group_user" context="{'group_by': 'user_id'}"/>
+                    <filter string="Deleted Date" name="group_date" context="{'group_by': 'delete_date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_record_delete_log" model="ir.actions.act_window">
+        <field name="name">Deletion Logs</field>
+        <field name="res_model">record.delete.log</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">ยังไม่มีการลบ record ของโมเดลที่ติดตามอยู่</p>
+        </field>
+    </record>
+
+    <!-- ===== Tracked Models ===== -->
+    <record id="view_record_delete_rule_list" model="ir.ui.view">
+        <field name="name">record.delete.rule.list</field>
+        <field name="model">record.delete.rule</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="model_id"/>
+                <field name="model_name"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_record_delete_rule" model="ir.actions.act_window">
+        <field name="name">Tracked Models</field>
+        <field name="res_model">record.delete.rule</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">เพิ่มโมเดลที่ต้องการเก็บ log เมื่อมีการลบ record</p>
+        </field>
+    </record>
+
+    <!-- ===== Login Log ===== -->
+    <record id="view_auth_log_list" model="ir.ui.view">
+        <field name="name">auth.log.list</field>
+        <field name="model">auth.log</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false" default_order="create_date desc">
+                <field name="create_date" string="Date"/>
+                <field name="login"/>
+                <field name="success" widget="boolean_toggle" readonly="1"/>
+                <field name="ip"/>
+                <field name="user_agent" optional="hide"/>
+                <field name="user_id" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_auth_log_search" model="ir.ui.view">
+        <field name="name">auth.log.search</field>
+        <field name="model">auth.log</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="login"/>
+                <field name="ip"/>
+                <filter string="Failed" name="failed" domain="[('success', '=', False)]"/>
+                <filter string="Successful" name="successful" domain="[('success', '=', True)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Login" name="group_login" context="{'group_by': 'login'}"/>
+                    <filter string="Date" name="group_date" context="{'group_by': 'create_date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_auth_log" model="ir.actions.act_window">
+        <field name="name">Login Logs</field>
+        <field name="res_model">auth.log</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <!-- ===== Module Log ===== -->
+    <record id="view_module_change_log_list" model="ir.ui.view">
+        <field name="name">module.change.log.list</field>
+        <field name="model">module.change.log</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false" default_order="create_date desc">
+                <field name="create_date" string="Date"/>
+                <field name="module_name"/>
+                <field name="shortdesc"/>
+                <field name="old_state"/>
+                <field name="new_state"/>
+                <field name="latest_version"/>
+                <field name="user_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_module_change_log" model="ir.actions.act_window">
+        <field name="name">Module Logs</field>
+        <field name="res_model">module.change.log</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <!-- ===== Menu: Settings > Technical > Audit Log ===== -->
+    <menuitem id="menu_delete_log_root" name="Audit Log"
+              parent="base.menu_custom" sequence="90"
+              groups="base.group_system"/>
+    <menuitem id="menu_delete_log" name="Deletion / Archive Logs"
+              parent="menu_delete_log_root" action="action_record_delete_log" sequence="10"/>
+    <menuitem id="menu_auth_log" name="Login Logs"
+              parent="menu_delete_log_root" action="action_auth_log" sequence="15"/>
+    <menuitem id="menu_module_change_log" name="Module Logs"
+              parent="menu_delete_log_root" action="action_module_change_log" sequence="18"/>
+    <menuitem id="menu_delete_rule" name="Tracked Models"
+              parent="menu_delete_log_root" action="action_record_delete_rule" sequence="20"/>
+
+</odoo>
