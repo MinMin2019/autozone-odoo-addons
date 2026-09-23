@@ -86,7 +86,7 @@
                 <field name="out_consume_qty" optional="show"/>
                 <field name="out_other_qty" optional="show"/>
                 <field name="out_qty" string="จ่ายรวม" optional="hide"/>
-                <field name="closing_qty" decoration-danger="closing_qty &lt; 0"/>
+                <field name="closing_qty" sum="รวม" decoration-danger="closing_qty &lt; 0"/>
                 <field name="unit_cost" optional="hide"/>
                 <field name="opening_value" sum="รวม"/>
                 <field name="in_purchase_value" sum="รวม" optional="hide"/>

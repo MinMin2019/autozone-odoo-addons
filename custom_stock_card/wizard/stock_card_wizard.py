@@ -660,8 +660,8 @@ class StockCardWizard(models.TransientModel):
             r += 1
         if lines:
             first, last = hr + 2, r
-            for c, (_h, _w, _g, kind) in enumerate(cols):
-                if kind == "v":
+            for c, (_h, _w, getter, kind) in enumerate(cols):
+                if kind == "v" or getter == "closing_qty":
                     col = xlsxwriter.utility.xl_col_to_name(c)
                     ws.write_formula(
                         r, c, "=SUM(%s%d:%s%d)" % (col, first, col, last), f_tot_n

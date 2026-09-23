@@ -126,6 +126,7 @@
                                 <t t-set="t_in" t-value="0.0"/>
                                 <t t-set="t_out" t-value="0.0"/>
                                 <t t-set="t_close" t-value="0.0"/>
+                                <t t-set="t_close_qty" t-value="0.0"/>
                                 <tr t-foreach="lines" t-as="l">
                                     <td><t t-esc="l.warehouse_id.name"/></td>
                                     <td t-if="split"><t t-esc="l.location_id.complete_name"/></td>
@@ -143,9 +144,11 @@
                                     <t t-set="t_in" t-value="t_in + l.in_value"/>
                                     <t t-set="t_out" t-value="t_out + l.out_value"/>
                                     <t t-set="t_close" t-value="t_close + l.closing_value"/>
+                                    <t t-set="t_close_qty" t-value="t_close_qty + l.closing_qty"/>
                                 </tr>
                                 <tr class="tot">
-                                    <td t-att-colspan="16 if split else 15">รวมมูลค่า</td>
+                                    <td t-att-colspan="16 if split else 15">รวม</td>
+                                    <td t-att-class="'num neg' if t_close_qty &lt; 0 else 'num'"><t t-esc="'{:,.2f}'.format(t_close_qty)"/></td>
                                     <td class="num"><t t-esc="'{:,.2f}'.format(t_open)"/></td>
                                     <td class="num"><t t-esc="'{:,.2f}'.format(t_in)"/></td>
                                     <td class="num"><t t-esc="'{:,.2f}'.format(t_out)"/></td>

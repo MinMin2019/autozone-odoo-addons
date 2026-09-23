@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="seq_az_branch_consumption" model="ir.sequence">
+        <field name="name">ใบเบิกใช้วัสดุ</field>
+        <field name="code">az.branch.consumption</field>
+        <field name="prefix">MC%(year)s%(month)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+</odoo>

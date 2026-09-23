@@ -1,6 +1,6 @@
 {
     "name": "Stock Card (บัญชีคุมสินค้า)",
-    "version": "18.0.1.1.0",
+    "version": "18.0.1.1.1",
     "category": "Autozone/Inventory",
     "author": "Autozone",
     "summary": "บัญชีคุมสินค้า ยกมา/รับ/จ่าย/ยกไป ต่อสินค้าต่อสาขา (หรือต่อตำแหน่ง) ทั้งจำนวนและมูลค่า + PDF/Excel",

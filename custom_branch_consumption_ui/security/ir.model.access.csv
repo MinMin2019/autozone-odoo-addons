@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_az_branch_consumption_user,az.branch.consumption user,model_az_branch_consumption,stock.group_stock_user,1,1,1,0
+access_az_branch_consumption_manager,az.branch.consumption manager,model_az_branch_consumption,stock.group_stock_manager,1,1,1,1
+access_az_branch_consumption_line_user,az.branch.consumption.line user,model_az_branch_consumption_line,stock.group_stock_user,1,1,1,1
