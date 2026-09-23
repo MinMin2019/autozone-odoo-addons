@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="group_classification_manager" model="res.groups">
+        <field name="name">ผู้ดูแลค่าจัดกลุ่มสินค้า</field>
+        <field name="category_id" ref="base.module_category_inventory_inventory"/>
+        <field name="comment">เพิ่ม/แก้/ปิดใช้งาน ค่าในรายการ แบรนด์ ประเภทย่อย เจ้าของสินค้า ชิ้นส่วน ยี่ห้อรถ รุ่นรถ</field>
+        <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+    </record>
+</odoo>

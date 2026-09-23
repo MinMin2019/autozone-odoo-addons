@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- คลังสินค้า > การตั้งค่า > จัดกลุ่มสินค้า -->
+    <menuitem id="menu_classification_root" name="จัดกลุ่มสินค้า"
+              parent="stock.menu_stock_config_settings" sequence="5"/>
+    <menuitem id="menu_az_brand" action="az_product_brand_action" parent="menu_classification_root" sequence="10"/>
+    <menuitem id="menu_az_subtype" action="az_product_subtype_action" parent="menu_classification_root" sequence="20"/>
+    <menuitem id="menu_az_owner" action="az_product_owner_action" parent="menu_classification_root" sequence="30"/>
+    <menuitem id="menu_az_part" action="az_car_part_action" parent="menu_classification_root" sequence="40"/>
+    <menuitem id="menu_az_make" action="az_car_make_action" parent="menu_classification_root" sequence="50"/>
+    <menuitem id="menu_az_model" action="az_car_model_action" parent="menu_classification_root" sequence="60"/>
+</odoo>

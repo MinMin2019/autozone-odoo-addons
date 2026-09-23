@@ -9,14 +9,41 @@
                 <field name="payslip_run_id" invisible="1"/>
                 <field name="currency_id" invisible="1"/>
 
-                <!-- Step 1: Upload -->
+                <!-- Step 1: เลือกแหล่งข้อมูล -->
                 <group invisible="state != 'upload'">
+                    <field name="source" widget="radio"/>
+                    <field name="bplus_configured" invisible="1"/>
+                    <field name="loan_source" widget="radio"/>
+                    <field name="skip_unknown"/>
+                </group>
+                <div invisible="state != 'upload' or not skip_unknown" class="text-warning">
+                    <p>โหมดทดสอบ: คนที่ยังไม่มีใน Odoo จะถูกข้าม ยอดรวมจะน้อยกว่า Business Plus — ห้ามใช้กับงวดจริง</p>
+                </div>
+                <div invisible="state != 'upload'" class="text-muted">
+                    <p>ทั้งสองแบบ ระบบจะเทียบยอดหักเงินกู้ของ Business Plus กับงวดที่ถึงกำหนดในทะเบียนเงินกู้ Odoo
+                       แล้วแสดงคนที่ไม่ตรงในหน้า Preview (เตือน ไม่บล็อก)</p>
+                </div>
+                <group invisible="state != 'upload' or source != 'bplus'" col="4">
+                    <field name="bplus_year" options="{'enable_formatting': false}"/>
+                    <field name="bplus_month"/>
+                </group>
+                <div invisible="state != 'upload' or source != 'bplus'" class="text-muted">
+                    <p invisible="bplus_configured" class="text-danger">
+                        ยังไม่ได้ตั้งค่าการเชื่อมต่อ Business Plus (Settings › Technical › System Parameters:
+                        bplus.server / bplus.database / bplus.user / bplus.password)</p>
+                    <p>ดึงผลคำนวณงวด <b>เดือนที่จ่าย</b> จาก Business Plus (เช่น Batch 22 ก.ค. → 21 ส.ค. = งวด 8)
+                       ระบบตรวจสมการ รายได้ − หัก − เงินกู้ = สุทธิ ทุกคนก่อน แล้วเข้าหน้า Preview ทันที
+                       ไฟล์ที่ดึงจะถูกแนบไว้ในแชทเตอร์ของ Batch</p>
+                    <p>ต้องกด <b>Generate Payslips</b> ก่อน และ HR ต้องปิดงวดใน Business Plus แล้ว
+                       · เงินกู้ไม่ถูกดึงมา (โมดูลเงินกู้หักเอง) · ภาษีใช้ยอดหักจริง</p>
+                </div>
+                <group invisible="state != 'upload' or source != 'file'">
                     <field name="file_data" filename="file_name" widget="binary"/>
                     <field name="file_name" invisible="1"/>
                 </group>
-                <div invisible="state != 'upload'" class="text-muted">
-                    <p>ไฟล์จาก <b>Business Plus</b> (สคริปต์ bplus_extract.py) อัปโหลดได้ทันที ระบบจะอ่านชีต Import
-                       และใช้ชีต Control เทียบยอดสุทธิรายคนให้อัตโนมัติ</p>
+                <div invisible="state != 'upload' or source != 'file'" class="text-muted">
+                    <p>ไฟล์จากสคริปต์ bplus_extract.py (ทางสำรองเมื่อต่อ SQL Server จาก Odoo ไม่ได้) อัปโหลดได้ทันที
+                       ระบบจะอ่านชีต Import และใช้ชีต Control เทียบยอดสุทธิรายคนให้อัตโนมัติ</p>
                     <p>ขั้นตอน: อัปโหลดไฟล์ → กด <b>ตรวจสอบไฟล์ (Preview)</b> → ตรวจยอดสรุป → กด <b>ยืนยันนำเข้า</b></p>
                     <p>เงื่อนไข: จับคู่พนักงานด้วย <b>รหัสพนักงาน (Registration Number)</b> เท่านั้น,
                        ต้องกด Generate Payslips ใน Batch ก่อน,
@@ -36,8 +63,12 @@
                         <field name="skipped_note" string="หมายเหตุ" invisible="not skipped_note"/>
                         <field name="control_note" string="ตรวจทาน BPlus" invisible="not control_note"/>
                         <field name="warning_note" string="คำเตือน" invisible="not warning_note"/>
+                        <field name="loan_check_note" string="ตรวจเงินกู้" invisible="not loan_check_note"/>
                     </group>
                 </group>
+                <div invisible="state != 'preview' or not loan_check_html">
+                    <field name="loan_check_html" nolabel="1"/>
+                </div>
                 <field name="line_ids" invisible="state != 'preview'" readonly="1">
                     <list create="0" delete="0" edit="0">
                         <field name="registration_number"/>
@@ -58,10 +89,12 @@
                 </div>
 
                 <footer>
+                    <button name="action_fetch_bplus" string="ดึงจาก Business Plus (Preview)" type="object"
+                            class="btn-primary" invisible="state != 'upload' or source != 'bplus'"/>
                     <button name="action_parse_file" string="ตรวจสอบไฟล์ (Preview)" type="object"
-                            class="btn-primary" invisible="state != 'upload'"/>
+                            class="btn-primary" invisible="state != 'upload' or source != 'file'"/>
                     <button name="action_download_template" string="Download Template" type="object"
-                            class="btn-secondary" invisible="state != 'upload'"/>
+                            class="btn-secondary" invisible="state != 'upload' or source != 'file'"/>
                     <button name="action_confirm_import" string="ยืนยันนำเข้า" type="object"
                             class="btn-primary" invisible="state != 'preview'"/>
                     <button name="action_back_to_upload" string="ย้อนกลับ" type="object"

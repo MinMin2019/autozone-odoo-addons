@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ================= แบรนด์ ================= -->
+    <record id="az_product_brand_view_list" model="ir.ui.view">
+        <field name="name">az.product.brand.list</field>
+        <field name="model">az.product.brand</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="product_count"/>
+                <field name="note" optional="show"/>
+                <field name="active" widget="boolean_toggle"/>
+                <button name="action_view_products" type="object" string="ดูสินค้า" icon="fa-cubes"/>
+            </list>
+        </field>
+    </record>
+    <record id="az_product_brand_action" model="ir.actions.act_window">
+        <field name="name">แบรนด์</field>
+        <field name="res_model">az.product.brand</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'active_test': False}</field>
+    </record>
+
+    <!-- ================= ประเภทย่อย ================= -->
+    <record id="az_product_subtype_view_list" model="ir.ui.view">
+        <field name="name">az.product.subtype.list</field>
+        <field name="model">az.product.subtype</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="product_count"/>
+                <field name="note" optional="show"/>
+                <field name="active" widget="boolean_toggle"/>
+                <button name="action_view_products" type="object" string="ดูสินค้า" icon="fa-cubes"/>
+            </list>
+        </field>
+    </record>
+    <record id="az_product_subtype_action" model="ir.actions.act_window">
+        <field name="name">ประเภทย่อย</field>
+        <field name="res_model">az.product.subtype</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'active_test': False}</field>
+    </record>
+
+    <!-- ================= เจ้าของสินค้า ================= -->
+    <record id="az_product_owner_view_list" model="ir.ui.view">
+        <field name="name">az.product.owner.list</field>
+        <field name="model">az.product.owner</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="partner_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                <field name="product_count"/>
+                <field name="note" optional="show"/>
+                <field name="active" widget="boolean_toggle"/>
+                <button name="action_view_products" type="object" string="ดูสินค้า" icon="fa-cubes"/>
+            </list>
+        </field>
+    </record>
+    <record id="az_product_owner_action" model="ir.actions.act_window">
+        <field name="name">เจ้าของสินค้า</field>
+        <field name="res_model">az.product.owner</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">เพิ่มลูกค้าที่เป็นเจ้าของแบบ/เจ้าของงาน</p>
+            <p>สินค้าที่ลูกค้าหลายรายใช้ร่วมกัน ให้เว้นช่องเจ้าของสินค้าว่างไว้</p>
+        </field>
+    </record>
+
+    <!-- ================= ชิ้นส่วน ================= -->
+    <record id="az_car_part_view_list" model="ir.ui.view">
+        <field name="name">az.car.part.list</field>
+        <field name="model">az.car.part</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="product_count"/>
+                <field name="note" optional="show"/>
+                <field name="active" widget="boolean_toggle"/>
+                <button name="action_view_products" type="object" string="ดูสินค้า" icon="fa-cubes"/>
+            </list>
+        </field>
+    </record>
+    <record id="az_car_part_action" model="ir.actions.act_window">
+        <field name="name">ชิ้นส่วน</field>
+        <field name="res_model">az.car.part</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'active_test': False}</field>
+    </record>
+
+    <!-- ================= ยี่ห้อรถ ================= -->
+    <record id="az_car_make_view_list" model="ir.ui.view">
+        <field name="name">az.car.make.list</field>
+        <field name="model">az.car.make</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="product_count"/>
+                <field name="note" optional="show"/>
+                <field name="active" widget="boolean_toggle"/>
+                <button name="action_view_products" type="object" string="ดูสินค้า" icon="fa-cubes"/>
+            </list>
+        </field>
+    </record>
+    <record id="az_car_make_action" model="ir.actions.act_window">
+        <field name="name">ยี่ห้อรถ</field>
+        <field name="res_model">az.car.make</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'active_test': False}</field>
+    </record>
+
+    <!-- ================= รุ่นรถ ================= -->
+    <record id="az_car_model_view_list" model="ir.ui.view">
+        <field name="name">az.car.model.list</field>
+        <field name="model">az.car.model</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="make_id" options="{'no_create': True}"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="is_placeholder" optional="hide"/>
+                <field name="product_count"/>
+                <field name="note" optional="show"/>
+                <field name="active" widget="boolean_toggle"/>
+                <button name="action_view_products" type="object" string="ดูสินค้า" icon="fa-cubes"/>
+            </list>
+        </field>
+    </record>
+    <record id="az_car_model_view_search" model="ir.ui.view">
+        <field name="name">az.car.model.search</field>
+        <field name="model">az.car.model</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="make_id"/>
+                <group expand="0" string="จัดกลุ่มตาม">
+                    <filter name="group_make" string="ยี่ห้อรถ" context="{'group_by': 'make_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="az_car_model_action" model="ir.actions.act_window">
+        <field name="name">รุ่นรถ</field>
+        <field name="res_model">az.car.model</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'active_test': False}</field>
+    </record>
+</odoo>

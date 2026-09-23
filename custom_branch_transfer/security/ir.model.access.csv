@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_az_branch_transfer_user,az.branch.transfer user,model_az_branch_transfer,stock.group_stock_user,1,1,1,0
+access_az_branch_transfer_manager,az.branch.transfer manager,model_az_branch_transfer,stock.group_stock_manager,1,1,1,1
+access_az_branch_transfer_line_user,az.branch.transfer.line user,model_az_branch_transfer_line,stock.group_stock_user,1,1,1,1

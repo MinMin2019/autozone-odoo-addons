@@ -43,6 +43,8 @@
                         .sc-card.short { page-break-inside: avoid; }
                         .sc-card-head { font-weight: bold; font-size: 12px; margin: 6px 0 3px 0;
                                         border-left: 4px solid #444; padding-left: 6px; page-break-after: avoid; }
+                        table.sc.sm { font-size: 9px; }
+                        table.sc.sm th, table.sc.sm td { padding: 2px 3px; }
                         .neg { color: #b00000; }
                         .pb { page-break-before: always; }
                     </style>
@@ -52,30 +54,71 @@
                         <t t-set="lines" t-value="o.line_ids"/>
 
                         <!-- ===== หน้าสรุป ===== -->
+                        <t t-set="cats" t-value="o.cat_labels()"/>
+                        <t t-set="flt" t-value="o.kind_filter_label()"/>
                         <h3 class="sc-title"><t t-esc="company.name"/></h3>
                         <div class="sc-sub">
                             <b>บัญชีคุมสินค้า (Stock Card) - สรุป</b>
                             ตั้งแต่ <t t-esc="o.thai_date(o.date_from)"/> ถึง <t t-esc="o.thai_date(o.date_to)"/>
                             &#160;|&#160; <t t-esc="'แยกตำแหน่งในสาขา' if split else 'สรุปต่อสาขา'"/>
                             &#160;|&#160; <t t-esc="len(lines)"/> รายการ
+                            <t t-if="flt">&#160;|&#160; เฉพาะประเภท: <t t-esc="flt"/> (ยอดคงเหลือคิดจากทุกรายการ)</t>
                         </div>
-                        <table class="sc">
+
+                        <!-- มูลค่ารวมต่อสาขา แยกตามประเภท -->
+                        <t t-set="bs" t-value="o.branch_summary()"/>
+                        <div class="sc-card-head">มูลค่ารวมต่อสาขา แยกตามประเภทรายการ (บาท)</div>
+                        <table class="sc sm">
                             <thead>
                                 <tr>
-                                    <th>สาขา</th>
-                                    <th t-if="split">ตำแหน่ง</th>
-                                    <th>รหัส</th>
-                                    <th>สินค้า</th>
-                                    <th>หน่วย</th>
+                                    <th rowspan="2">สาขา</th>
+                                    <th rowspan="2">ยกมา</th>
+                                    <th colspan="4">รับเข้า</th>
+                                    <th colspan="5">จ่ายออก</th>
+                                    <th rowspan="2">ยกไป</th>
+                                </tr>
+                                <tr>
+                                    <th t-foreach="cats" t-as="c" style="width:8%"><t t-esc="c[1]"/></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="bs[0]" t-as="b">
+                                    <td><t t-esc="b['name']"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(b['opening'])"/></td>
+                                    <td class="num" t-foreach="cats" t-as="c"><t t-esc="'{:,.2f}'.format(b[c[0]]) if b[c[0]] else ''"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(b['closing'])"/></td>
+                                </tr>
+                                <tr class="tot">
+                                    <td><t t-esc="bs[1]['name']"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(bs[1]['opening'])"/></td>
+                                    <td class="num" t-foreach="cats" t-as="c"><t t-esc="'{:,.2f}'.format(bs[1][c[0]])"/></td>
+                                    <td class="num"><t t-esc="'{:,.2f}'.format(bs[1]['closing'])"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- สรุปต่อสินค้า -->
+                        <div class="sc-card-head">สรุปต่อสินค้า (จำนวนแยกประเภท + มูลค่ารวม)</div>
+                        <table class="sc sm">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2">สาขา</th>
+                                    <th rowspan="2" t-if="split">ตำแหน่ง</th>
+                                    <th rowspan="2">รหัส</th>
+                                    <th rowspan="2">สินค้า</th>
+                                    <th rowspan="2">หน่วย</th>
+                                    <th rowspan="2">ยกมา</th>
+                                    <th colspan="4">รับเข้า (จำนวน)</th>
+                                    <th colspan="5">จ่ายออก (จำนวน)</th>
+                                    <th rowspan="2">ยกไป</th>
+                                    <th colspan="4">มูลค่า (บาท)</th>
+                                </tr>
+                                <tr>
+                                    <th t-foreach="cats" t-as="c"><t t-esc="c[1]"/></th>
                                     <th>ยกมา</th>
                                     <th>รับ</th>
                                     <th>จ่าย</th>
                                     <th>ยกไป</th>
-                                    <th>ต้นทุน/หน่วย</th>
-                                    <th>มูลค่ายกมา</th>
-                                    <th>มูลค่ารับ</th>
-                                    <th>มูลค่าจ่าย</th>
-                                    <th>มูลค่ายกไป</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -90,10 +133,8 @@
                                     <td><t t-esc="l.product_name"/></td>
                                     <td><t t-esc="l.uom_id.name"/></td>
                                     <td class="num"><t t-esc="'{:,.2f}'.format(l.opening_qty)"/></td>
-                                    <td class="num"><t t-esc="'{:,.2f}'.format(l.in_qty)"/></td>
-                                    <td class="num"><t t-esc="'{:,.2f}'.format(l.out_qty)"/></td>
-                                    <td class="num" t-att-class="'num neg' if l.closing_qty &lt; 0 else 'num'"><t t-esc="'{:,.2f}'.format(l.closing_qty)"/></td>
-                                    <td class="num"><t t-esc="'{:,.2f}'.format(l.unit_cost)"/></td>
+                                    <td class="num" t-foreach="cats" t-as="c"><t t-esc="'{:,.2f}'.format(l[c[0] + '_qty']) if l[c[0] + '_qty'] else ''"/></td>
+                                    <td t-att-class="'num neg' if l.closing_qty &lt; 0 else 'num'"><t t-esc="'{:,.2f}'.format(l.closing_qty)"/></td>
                                     <td class="num"><t t-esc="'{:,.2f}'.format(l.opening_value)"/></td>
                                     <td class="num"><t t-esc="'{:,.2f}'.format(l.in_value)"/></td>
                                     <td class="num"><t t-esc="'{:,.2f}'.format(l.out_value)"/></td>
@@ -104,7 +145,7 @@
                                     <t t-set="t_close" t-value="t_close + l.closing_value"/>
                                 </tr>
                                 <tr class="tot">
-                                    <td t-att-colspan="10 if split else 9">รวมมูลค่า</td>
+                                    <td t-att-colspan="16 if split else 15">รวมมูลค่า</td>
                                     <td class="num"><t t-esc="'{:,.2f}'.format(t_open)"/></td>
                                     <td class="num"><t t-esc="'{:,.2f}'.format(t_in)"/></td>
                                     <td class="num"><t t-esc="'{:,.2f}'.format(t_out)"/></td>
@@ -169,7 +210,7 @@
                                         </tr>
                                         <tr class="close">
                                             <td><t t-esc="o.thai_date(o.date_to)"/></td>
-                                            <td colspan="4">ยอดยกไป</td>
+                                            <td colspan="4">ยอดยกไป<t t-if="flt"> (รับ/จ่ายรวมทุกประเภท)</t></td>
                                             <td class="num"><t t-esc="'{:,.2f}'.format(l.in_qty)"/></td>
                                             <td class="num"><t t-esc="'{:,.2f}'.format(l.out_qty)"/></td>
                                             <td t-att-class="'num neg' if l.closing_qty &lt; 0 else 'num'"><t t-esc="'{:,.2f}'.format(l.closing_qty)"/></td>

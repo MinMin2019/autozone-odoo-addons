@@ -10,6 +10,7 @@
             <field name="name">Item Code (สินค้า)</field>
             <field name="model_id" ref="product.model_product_template"/>
             <field name="approver_group_id" ref="group_mda_approver_product"/>
+            <field name="free_field_prefixes">az_</field>
         </record>
     </data>
 </odoo>

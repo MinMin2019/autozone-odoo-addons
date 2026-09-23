@@ -1,6 +1,6 @@
 {
     "name": "Exact Line Subtotal",
-    "version": "18.0.1.0.0",
+    "version": "18.0.1.1.0",
     "category": "Autozone/Sales",
     "author": "Autozone",
     "summary": "กำหนดยอดรวมของบรรทัดเองให้ตรงกับ PO ลูกค้าที่ใช้ราคาต่อหน่วยทศนิยม 4 ตำแหน่ง โดยไม่ต้องเพิ่ม Decimal Accuracy ทั้งระบบ",

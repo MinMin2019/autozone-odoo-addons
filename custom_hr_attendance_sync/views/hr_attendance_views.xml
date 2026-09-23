@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- แสดงที่มาของข้อมูลในจอบันทึกเวลา ให้แยกออกว่าแถวไหนมาจากเครื่องสแกน แถวไหนคีย์เอง -->
+    <record id="view_attendance_list_az_source" model="ir.ui.view">
+        <field name="name">hr.attendance.list.az.source</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="hr_attendance.view_attendance_tree"/>
+        <field name="arch" type="xml">
+            <field name="worked_hours" position="after">
+                <field name="az_scan_date" optional="hide"/>
+                <field name="az_source" optional="show"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_attendance_filter_az_source" model="ir.ui.view">
+        <field name="name">hr.attendance.search.az.source</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="hr_attendance.hr_attendance_view_filter"/>
+        <field name="arch" type="xml">
+            <search position="inside">
+                <filter name="az_from_device" string="มาจากเครื่องสแกน"
+                        domain="[('az_source', '=', 'bpcontrol')]"/>
+                <filter name="az_manual" string="คีย์เอง/Kiosk"
+                        domain="[('az_source', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+</odoo>

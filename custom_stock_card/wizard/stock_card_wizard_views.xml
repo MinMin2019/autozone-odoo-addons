@@ -25,6 +25,7 @@
                     </group>
                 </group>
                 <group string="ตัวเลือก">
+                    <field name="kind_filter"/>
                     <field name="split_by_location"/>
                     <field name="include_non_storable"/>
                     <field name="hide_zero"/>
@@ -32,6 +33,9 @@
                 <div class="text-muted small">
                     มูลค่าต่อบรรทัด = จำนวน × ต้นทุนที่ระบบบันทึกไว้กับรายการนั้น (valuation layer)
                     ถ้ารายการไม่มี layer (เช่น โอนระหว่างสาขา) ใช้ต้นทุนปัจจุบันของสินค้า
+                    <br/>
+                    รับ/จ่ายแยก 9 ประเภท — ส่งขายราคา 0 บาทนับเป็น "เบิกใช้" ไม่ใช่ "ขาย",
+                    ของผ่านคลังพักระหว่างทางนับเป็น "โอนเข้า/โอนออก"
                 </div>
                 <footer>
                     <button name="action_view" string="ดูรายงาน" type="object" class="btn-primary"/>
@@ -71,12 +75,30 @@
                 <field name="categ_id" optional="hide"/>
                 <field name="uom_id"/>
                 <field name="opening_qty"/>
-                <field name="in_qty"/>
-                <field name="out_qty"/>
+                <field name="in_purchase_qty" optional="show"/>
+                <field name="in_return_qty" optional="show"/>
+                <field name="in_transfer_qty" optional="show"/>
+                <field name="in_other_qty" optional="show"/>
+                <field name="in_qty" string="รับรวม" optional="hide"/>
+                <field name="out_sale_qty" optional="show"/>
+                <field name="out_return_qty" optional="show"/>
+                <field name="out_transfer_qty" optional="show"/>
+                <field name="out_consume_qty" optional="show"/>
+                <field name="out_other_qty" optional="show"/>
+                <field name="out_qty" string="จ่ายรวม" optional="hide"/>
                 <field name="closing_qty" decoration-danger="closing_qty &lt; 0"/>
-                <field name="unit_cost" optional="show"/>
+                <field name="unit_cost" optional="hide"/>
                 <field name="opening_value" sum="รวม"/>
+                <field name="in_purchase_value" sum="รวม" optional="hide"/>
+                <field name="in_return_value" sum="รวม" optional="hide"/>
+                <field name="in_transfer_value" sum="รวม" optional="hide"/>
+                <field name="in_other_value" sum="รวม" optional="hide"/>
                 <field name="in_value" sum="รวม"/>
+                <field name="out_sale_value" sum="รวม" optional="hide"/>
+                <field name="out_return_value" sum="รวม" optional="hide"/>
+                <field name="out_transfer_value" sum="รวม" optional="hide"/>
+                <field name="out_consume_value" sum="รวม" optional="hide"/>
+                <field name="out_other_value" sum="รวม" optional="hide"/>
                 <field name="out_value" sum="รวม"/>
                 <field name="closing_value" sum="รวม" decoration-danger="closing_value &lt; 0"/>
                 <field name="move_count" optional="hide"/>
@@ -99,6 +121,14 @@
                 <filter name="negative" string="ยอดติดลบ" domain="[('closing_qty', '&lt;', 0)]"/>
                 <filter name="has_move" string="มีการเคลื่อนไหว" domain="[('move_count', '&gt;', 0)]"/>
                 <filter name="no_move" string="ไม่เคลื่อนไหว" domain="[('move_count', '=', 0)]"/>
+                <separator/>
+                <filter name="f_purchase" string="มีรับซื้อ" domain="[('in_purchase_qty', '!=', 0)]"/>
+                <filter name="f_cust_return" string="มีรับคืนจากลูกค้า" domain="[('in_return_qty', '!=', 0)]"/>
+                <filter name="f_transfer" string="มีโอนเข้า/ออก" domain="['|', ('in_transfer_qty', '!=', 0), ('out_transfer_qty', '!=', 0)]"/>
+                <filter name="f_sale" string="มีขาย" domain="[('out_sale_qty', '!=', 0)]"/>
+                <filter name="f_vendor_return" string="มีส่งคืนผู้ขาย" domain="[('out_return_qty', '!=', 0)]"/>
+                <filter name="f_consume" string="มีเบิกใช้" domain="[('out_consume_qty', '!=', 0)]"/>
+                <filter name="f_other" string="มีปรับปรุงสต็อก/อื่นๆ" domain="['|', ('in_other_qty', '!=', 0), ('out_other_qty', '!=', 0)]"/>
                 <group expand="0" string="จัดกลุ่ม">
                     <filter name="group_warehouse" string="สาขา / คลัง" context="{'group_by': 'warehouse_id'}"/>
                     <filter name="group_location" string="ตำแหน่ง" context="{'group_by': 'location_id'}"/>
@@ -136,15 +166,30 @@
                     <group>
                         <group string="จำนวน">
                             <field name="opening_qty" readonly="1"/>
-                            <field name="in_qty" readonly="1"/>
-                            <field name="out_qty" readonly="1"/>
+                            <field name="in_qty" string="รับรวม" readonly="1"/>
+                            <field name="out_qty" string="จ่ายรวม" readonly="1"/>
                             <field name="closing_qty" readonly="1"/>
                         </group>
                         <group string="มูลค่า">
                             <field name="opening_value" readonly="1"/>
-                            <field name="in_value" readonly="1"/>
-                            <field name="out_value" readonly="1"/>
+                            <field name="in_value" string="มูลค่ารับรวม" readonly="1"/>
+                            <field name="out_value" string="มูลค่าจ่ายรวม" readonly="1"/>
                             <field name="closing_value" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="รับเข้า แยกประเภท (จำนวน)">
+                            <field name="in_purchase_qty" readonly="1"/>
+                            <field name="in_return_qty" readonly="1"/>
+                            <field name="in_transfer_qty" readonly="1"/>
+                            <field name="in_other_qty" readonly="1"/>
+                        </group>
+                        <group string="จ่ายออก แยกประเภท (จำนวน)">
+                            <field name="out_sale_qty" readonly="1"/>
+                            <field name="out_return_qty" readonly="1"/>
+                            <field name="out_transfer_qty" readonly="1"/>
+                            <field name="out_consume_qty" readonly="1"/>
+                            <field name="out_other_qty" readonly="1"/>
                         </group>
                     </group>
                     <notebook>
@@ -154,6 +199,7 @@
                                     <field name="date" widget="date"/>
                                     <field name="reference"/>
                                     <field name="origin" optional="show"/>
+                                    <field name="category" optional="show"/>
                                     <field name="kind"/>
                                     <field name="counterpart"/>
                                     <field name="location_id" optional="hide"/>

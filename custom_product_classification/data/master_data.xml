@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="car_model_not_applicable" model="az.car.model">
+        <field name="name">ไม่ผูกรุ่น</field>
+        <field name="is_placeholder" eval="True"/>
+        <field name="sequence">1</field>
+    </record>
+    <record id="car_model_pending" model="az.car.model">
+        <field name="name">รอระบุ</field>
+        <field name="is_placeholder" eval="True"/>
+        <field name="sequence">2</field>
+    </record>
+</odoo>

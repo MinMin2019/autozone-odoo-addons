@@ -215,7 +215,8 @@ class HrEmployeeLoanPushWizardLine(models.TransientModel):
     loan_id = fields.Many2one(related='loan_line_id.loan_id', string='เงินกู้')
     employee_id = fields.Many2one(related='loan_line_id.employee_id', string='พนักงาน')
     registration_number = fields.Char(
-        related='employee_id.registration_number', string='รหัสพนักงาน')
+        related='employee_id.registration_number', string='รหัสพนักงาน',
+        groups='base.group_user')
     number = fields.Integer(related='loan_line_id.number', string='งวดที่')
     date_due = fields.Date(related='loan_line_id.date_due', string='กำหนดหัก')
     amount_remaining = fields.Monetary(

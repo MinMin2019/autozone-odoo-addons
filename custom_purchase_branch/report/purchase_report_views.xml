@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_purchase_order_search_az_branch" model="ir.ui.view">
+        <field name="name">purchase.report.search.az.branch</field>
+        <field name="model">purchase.report</field>
+        <field name="inherit_id" ref="purchase.view_purchase_order_search"/>
+        <field name="arch" type="xml">
+            <filter name="group_partner_id" position="before">
+                <filter string="สาขา" name="group_az_branch" context="{'group_by': 'az_branch_id'}"/>
+            </filter>
+        </field>
+    </record>
+</odoo>

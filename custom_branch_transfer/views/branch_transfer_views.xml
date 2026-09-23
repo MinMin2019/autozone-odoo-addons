@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_az_branch_transfer_form" model="ir.ui.view">
+        <field name="name">az.branch.transfer.form</field>
+        <field name="model">az.branch.transfer</field>
+        <field name="arch" type="xml">
+            <form string="ใบโอนสินค้าไปสาขา">
+                <header>
+                    <button name="action_confirm" string="ยืนยัน" type="object" class="btn-primary"
+                            invisible="state != 'draft'"
+                            help="สร้างใบส่ง (ส่วนกลาง) และใบรับ (สาขา) คู่กันอัตโนมัติ"/>
+                    <button name="action_send" string="ส่งของ" type="object" class="btn-primary"
+                            invisible="not can_send"
+                            confirm="ยืนยันว่าจัดของครบและส่งออกจากคลังส่วนกลางแล้ว?"/>
+                    <button name="action_receive" string="รับของทั้งหมด" type="object" class="btn-primary"
+                            invisible="not can_receive"
+                            confirm="ยืนยันว่าได้รับสินค้าครบตามจำนวนที่ส่งมา?"/>
+                    <button name="action_open_receipt" string="รับบางส่วน / แก้จำนวนรับ" type="object"
+                            invisible="not can_receive"/>
+                    <button name="action_print" string="พิมพ์ใบโอน" type="object"
+                            invisible="state in ('draft', 'cancel')"/>
+                    <button name="action_cancel" string="ยกเลิก" type="object"
+                            invisible="state not in ('draft', 'confirmed')"
+                            confirm="ยกเลิกใบโอนนี้?"/>
+                    <button name="action_draft" string="กลับเป็นร่าง" type="object"
+                            invisible="state != 'cancel'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,confirmed,sent,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_pickings" type="object" class="oe_stat_button"
+                                icon="fa-truck" invisible="picking_count == 0">
+                            <field name="picking_count" widget="statinfo" string="ใบส่ง/ใบรับ"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="source_warehouse_id" options="{'no_open': True}"/>
+                            <field name="warehouse_id" options="{'no_open': True, 'no_create': True}"
+                                   readonly="state != 'draft'"/>
+                            <field name="date" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="user_id" options="{'no_open': True}"/>
+                            <field name="tout_picking_id" invisible="not tout_picking_id"/>
+                            <field name="tin_picking_ids" widget="many2many_tags" string="ใบรับ (TIN)"
+                                   invisible="not tin_picking_ids"/>
+                            <field name="company_id" invisible="1"/>
+                            <field name="can_send" invisible="1"/>
+                            <field name="can_receive" invisible="1"/>
+                            <field name="cancelled" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="รายการสินค้า" name="lines">
+                            <field name="line_ids" readonly="state != 'draft'">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_id" options="{'no_create': True}"/>
+                                    <field name="qty_available_src" string="คงเหลือต้นทาง"
+                                           column_invisible="parent.state not in ('draft', 'confirmed')"/>
+                                    <field name="product_uom_qty" string="จำนวนที่ส่ง"/>
+                                    <field name="product_uom_id"/>
+                                    <field name="qty_sent" string="ส่งแล้ว"
+                                           column_invisible="parent.state in ('draft', 'cancel')"/>
+                                    <field name="qty_received" string="สาขารับแล้ว"
+                                           column_invisible="parent.state in ('draft', 'confirmed', 'cancel')"/>
+                                </list>
+                            </field>
+                            <group class="oe_subtotal_footer">
+                                <field name="qty_total"/>
+                                <field name="qty_sent_total" invisible="state in ('draft', 'cancel')"/>
+                                <field name="qty_received_total"
+                                       invisible="state in ('draft', 'confirmed', 'cancel')"/>
+                            </group>
+                        </page>
+                        <page string="หมายเหตุ" name="note">
+                            <field name="note" placeholder="เช่น รอบรถวันศุกร์ / ส่งพร้อมใบสั่งซื้อ..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_az_branch_transfer_list" model="ir.ui.view">
+        <field name="name">az.branch.transfer.list</field>
+        <field name="model">az.branch.transfer</field>
+        <field name="arch" type="xml">
+            <list decoration-info="state == 'confirmed'" decoration-warning="state in ('sent', 'partial')"
+                  decoration-muted="state == 'cancel'" decoration-success="state == 'done'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="source_warehouse_id" optional="hide"/>
+                <field name="warehouse_id"/>
+                <field name="qty_total" sum="รวม"/>
+                <field name="qty_sent_total" optional="show"/>
+                <field name="qty_received_total" optional="show"/>
+                <field name="user_id" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'confirmed'"
+                       decoration-warning="state in ('sent', 'partial')"
+                       decoration-success="state == 'done'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_az_branch_transfer_search" model="ir.ui.view">
+        <field name="name">az.branch.transfer.search</field>
+        <field name="model">az.branch.transfer</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="warehouse_id"/>
+                <field name="line_ids" string="สินค้า" filter_domain="[('line_ids.product_id', 'ilike', self)]"/>
+                <filter name="to_send" string="รอส่วนกลางส่ง" domain="[('state', '=', 'confirmed')]"/>
+                <filter name="to_receive" string="รอสาขารับ" domain="[('state', 'in', ('sent', 'partial'))]"/>
+                <filter name="done" string="รับครบ" domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter name="open" string="ยังไม่จบ" domain="[('state', 'not in', ('done', 'cancel'))]"/>
+                <group expand="0" string="จัดกลุ่ม">
+                    <filter name="group_wh" string="สาขา" context="{'group_by': 'warehouse_id'}"/>
+                    <filter name="group_state" string="สถานะ" context="{'group_by': 'state'}"/>
+                    <filter name="group_date" string="เดือน" context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ฝั่งส่วนกลาง: สร้าง/ส่ง -->
+    <record id="action_az_branch_transfer" model="ir.actions.act_window">
+        <field name="name">โอนสินค้าไปสาขา</field>
+        <field name="res_model">az.branch.transfer</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_az_branch_transfer_search"/>
+        <field name="context">{'search_default_open': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">สร้างใบโอนสินค้าไปสาขา</p>
+            <p>เลือกสาขาปลายทาง ใส่สินค้าหลายรายการ แล้วกดยืนยัน
+               ระบบจะสร้างใบส่ง (ส่วนกลาง) และใบรับ (สาขา) คู่กันให้เอง</p>
+        </field>
+    </record>
+
+    <!-- ฝั่งสาขา: รับ -->
+    <record id="action_az_branch_transfer_receive" model="ir.actions.act_window">
+        <field name="name">รับโอนจากส่วนกลาง</field>
+        <field name="res_model">az.branch.transfer</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_az_branch_transfer_search"/>
+        <field name="domain">[('state', 'in', ('sent', 'partial', 'done'))]</field>
+        <field name="context">{'search_default_to_receive': 1, 'create': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">ยังไม่มีของส่งมาจากส่วนกลาง</p>
+            <p>เมื่อส่วนกลางกด "ส่งของ" ใบโอนจะมาแสดงที่นี่ ตรวจของแล้วกด "รับของทั้งหมด"</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_az_branch_transfer" name="โอนสินค้าไปสาขา"
+              parent="stock.menu_stock_warehouse_mgmt" action="action_az_branch_transfer"
+              sequence="15" groups="stock.group_stock_user"/>
+    <menuitem id="menu_az_branch_transfer_receive" name="รับโอนจากส่วนกลาง"
+              parent="stock.menu_stock_warehouse_mgmt" action="action_az_branch_transfer_receive"
+              sequence="16" groups="stock.group_stock_user"/>
+
+</odoo>

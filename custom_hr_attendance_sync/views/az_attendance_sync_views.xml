@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_az_attendance_sync_list" model="ir.ui.view">
+        <field name="name">az.attendance.sync.list</field>
+        <field name="model">az.attendance.sync</field>
+        <field name="arch" type="xml">
+            <list string="ประวัติการดึงเวลา" create="false" decoration-danger="state == 'error'"
+                  decoration-warning="failed_count &gt; 0 or unmatched_count &gt; 0">
+                <field name="create_date" string="ดึงเมื่อ"/>
+                <field name="name"/>
+                <field name="trigger"/>
+                <field name="user_id" widget="many2one_avatar_user" optional="hide"/>
+                <field name="source_rows" sum="รวม"/>
+                <field name="employee_count"/>
+                <field name="created_count" sum="รวม"/>
+                <field name="updated_count" sum="รวม"/>
+                <field name="deleted_count" sum="รวม" optional="show"/>
+                <field name="unchanged_count" optional="hide"/>
+                <field name="incomplete_count" optional="show"/>
+                <field name="dup_branch_count" optional="show"/>
+                <field name="overlap_count" optional="show"/>
+                <field name="unmatched_count" optional="show"/>
+                <field name="failed_count" optional="show"/>
+                <field name="duration" digits="[6,1]" optional="hide"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'"
+                       decoration-danger="state == 'error'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_az_attendance_sync_form" model="ir.ui.view">
+        <field name="name">az.attendance.sync.form</field>
+        <field name="model">az.attendance.sync</field>
+        <field name="arch" type="xml">
+            <form string="ผลการดึงเวลา" create="false" edit="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="รอบการดึง">
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="trigger"/>
+                            <field name="user_id"/>
+                            <field name="duration" digits="[6,1]"/>
+                            <field name="state" widget="badge" decoration-success="state == 'done'"
+                                   decoration-danger="state == 'error'"/>
+                        </group>
+                        <group string="ผลลัพธ์">
+                            <field name="source_rows"/>
+                            <field name="employee_count"/>
+                            <field name="created_count"/>
+                            <field name="updated_count"/>
+                            <field name="deleted_count"/>
+                            <field name="unchanged_count"/>
+                        </group>
+                    </group>
+                    <group string="รายการที่ต้องตามต่อ">
+                        <field name="incomplete_count"
+                               help="ตอกเข้าแล้วไม่ตอกออก — ไม่สร้างบันทึกเวลาให้ ต้องให้หัวหน้าสาขาแก้ที่ต้นทาง"/>
+                        <field name="dup_branch_count"/>
+                        <field name="overlap_count"/>
+                        <field name="unmatched_count"/>
+                        <field name="unmatched_codes" widget="text"
+                               invisible="unmatched_count == 0"/>
+                        <field name="failed_count"/>
+                        <field name="message" widget="text" invisible="not message"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_az_attendance_sync" model="ir.actions.act_window">
+        <field name="name">ประวัติการดึงเวลา</field>
+        <field name="res_model">az.attendance.sync</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">ยังไม่มีการดึงเวลาจากเครื่องสแกน</p>
+            <p>ระบบจะดึงอัตโนมัติทุกวัน หรือสั่งเองได้ที่เมนู "ดึงเวลาจากเครื่องสแกน"</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_az_attendance_sync_log"
+              name="ประวัติการดึงเวลา"
+              parent="hr_attendance.menu_hr_attendance_settings"
+              action="action_az_attendance_sync"
+              sequence="90"
+              groups="hr_attendance.group_hr_attendance_manager"/>
+
+</odoo>

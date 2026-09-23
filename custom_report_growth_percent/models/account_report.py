@@ -20,6 +20,18 @@ class AccountReport(models.Model):
         default="%",
         help="หัวคอลัมน์ % common-size เช่น %ขาย หรือ %สินทรัพย์",
     )
+    az_growth_pct_default = fields.Boolean(
+        string="Show ±% by Default",
+        default=False,
+        help="เปิดคอลัมน์ ±% เทียบงวดก่อนมาตั้งแต่แรกเมื่อเปิด Comparison "
+             "(ผู้ใช้สลับเองได้ที่เมนู Options ของรายงาน)",
+    )
+    az_common_size_default = fields.Boolean(
+        string="Show Common-size % by Default",
+        default=False,
+        help="เปิดคอลัมน์ % common-size มาตั้งแต่แรก "
+             "(ผู้ใช้สลับเองได้ที่เมนู Options ของรายงาน)",
+    )
 
     # ------------------------------------------------------------------
     # Options: ฉีดคอลัมน์ % ต่อท้ายแต่ละงวด
@@ -93,6 +105,31 @@ class AccountReport(models.Model):
 
         # --- % common-size: ต้อง config บรรทัดฐานไว้ที่ตัวรายงาน ---
         cs_ok = bool(self.az_common_size_base_line_id)
+
+        # --- สวิตช์เปิด/ปิดของผู้ใช้ (เมนู Options ของรายงาน) ---
+        # *_available = โครงสร้างรายงานตอนนี้แสดงคอลัมน์นั้นได้ (JS ใช้ตัดสินว่าจะโชว์ปุ่ม)
+        # *_enabled   = ผู้ใช้เปิดอยู่ไหม จำค่าข้าม reload ผ่าน previous_options,
+        #               ครั้งแรกใช้ค่าเริ่มต้นของรายงาน (บัญชีขอให้ปิดมาก่อน)
+        options["az_growth_pct_available"] = growth_ok
+        options["az_common_size_available"] = cs_ok
+        options["az_common_size_label"] = self.az_common_size_label or "%"
+        options["az_growth_pct_enabled"] = bool(
+            previous_options["az_growth_pct_enabled"]
+            if "az_growth_pct_enabled" in previous_options
+            else self.az_growth_pct_default
+        )
+        options["az_common_size_enabled"] = bool(
+            previous_options["az_common_size_enabled"]
+            if "az_common_size_enabled" in previous_options
+            else self.az_common_size_default
+        )
+
+        if growth_ok and not options["az_growth_pct_enabled"]:
+            # ปิด ±% = ไม่เอา % ทั้งของเราและคอลัมน์ % เดี่ยวของ Enterprise
+            if options.get("column_percent_comparison") == "growth":
+                options.pop("column_percent_comparison", None)
+            growth_ok = False
+        cs_ok = cs_ok and options["az_common_size_enabled"]
 
         if not growth_ok and not cs_ok:
             return

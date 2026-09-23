@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_az_branch_transfer" model="ir.actions.report">
+        <field name="name">ใบโอนสินค้าไปสาขา</field>
+        <field name="model">az.branch.transfer</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">custom_branch_transfer.report_az_branch_transfer</field>
+        <field name="report_file">custom_branch_transfer.report_az_branch_transfer</field>
+        <field name="print_report_name">'%s' % object.name</field>
+        <field name="paperformat_id" ref="paperformat_az_branch_transfer"/>
+        <field name="binding_model_id" ref="model_az_branch_transfer"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_az_branch_transfer">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.basic_layout">
+                    <div class="page" style="font-size:13px;">
+                        <table style="width:100%;border-collapse:collapse;">
+                            <tr>
+                                <td style="width:60%;vertical-align:top;">
+                                    <div style="font-size:16px;font-weight:bold;"><t t-esc="doc.company_id.name"/></div>
+                                    <div t-esc="doc.company_id.partner_id.get_thai_address()"/>
+                                </td>
+                                <td style="width:40%;vertical-align:top;text-align:right;">
+                                    <div style="font-size:20px;font-weight:bold;">ใบโอนสินค้าไปสาขา</div>
+                                    <div>เลขที่ <b><t t-esc="doc.name"/></b></div>
+                                    <div>วันที่ <t t-esc="doc.date" t-options="{'widget': 'date'}"/></div>
+                                </td>
+                            </tr>
+                        </table>
+                        <table style="width:100%;border-collapse:collapse;margin-top:8px;border:1px solid #444;">
+                            <tr>
+                                <td style="width:50%;padding:6px;border-right:1px solid #444;">
+                                    <b>จาก:</b> <t t-esc="doc.source_warehouse_id.name"/><br/>
+                                    <span>ใบส่ง: <t t-esc="doc.tout_picking_id.name or '-'"/></span>
+                                </td>
+                                <td style="width:50%;padding:6px;">
+                                    <b>ถึงสาขา:</b> <t t-esc="doc.warehouse_id.name"/><br/>
+                                    <span>ใบรับ: <t t-esc="', '.join(doc.tin_picking_ids.mapped('name')) or '-'"/></span>
+                                </td>
+                            </tr>
+                        </table>
+                        <table class="table table-sm" style="width:100%;border-collapse:collapse;margin-top:10px;">
+                            <thead>
+                                <tr style="background:#eee;">
+                                    <th style="border:1px solid #444;padding:4px;width:5%;text-align:center;">#</th>
+                                    <th style="border:1px solid #444;padding:4px;width:15%;">รหัส</th>
+                                    <th style="border:1px solid #444;padding:4px;">รายการ</th>
+                                    <th style="border:1px solid #444;padding:4px;width:10%;">หน่วย</th>
+                                    <th style="border:1px solid #444;padding:4px;width:12%;text-align:right;">จำนวนส่ง</th>
+                                    <th style="border:1px solid #444;padding:4px;width:12%;text-align:right;">รับจริง</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-set="i" t-value="0"/>
+                                <tr t-foreach="doc.line_ids" t-as="l">
+                                    <t t-set="i" t-value="i + 1"/>
+                                    <td style="border:1px solid #444;padding:4px;text-align:center;"><t t-esc="i"/></td>
+                                    <td style="border:1px solid #444;padding:4px;"><t t-esc="l.product_id.default_code or ''"/></td>
+                                    <td style="border:1px solid #444;padding:4px;"><t t-esc="l.product_id.name"/></td>
+                                    <td style="border:1px solid #444;padding:4px;"><t t-esc="l.product_uom_id.name"/></td>
+                                    <td style="border:1px solid #444;padding:4px;text-align:right;">
+                                        <t t-esc="l.qty_sent if doc.state != 'confirmed' else l.product_uom_qty" t-options="{'widget': 'float', 'precision': 2}"/>
+                                    </td>
+                                    <td style="border:1px solid #444;padding:4px;text-align:right;">
+                                        <t t-if="doc.state in ('partial', 'done')" t-esc="l.qty_received" t-options="{'widget': 'float', 'precision': 2}"/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div t-if="doc.note" style="margin-top:6px;"><b>หมายเหตุ:</b> <t t-esc="doc.note"/></div>
+                        <table style="width:100%;margin-top:40px;text-align:center;">
+                            <tr>
+                                <td style="width:33%;">______________________<br/>ผู้จัดส่ง (ส่วนกลาง)<br/>วันที่ ________</td>
+                                <td style="width:33%;">______________________<br/>ผู้ขนส่ง<br/>วันที่ ________</td>
+                                <td style="width:33%;">______________________<br/>ผู้รับ (สาขา)<br/>วันที่ ________</td>
+                            </tr>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

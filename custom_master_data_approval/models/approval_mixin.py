@@ -78,9 +78,10 @@ class AzApprovalMixin(models.AbstractModel):
         t = self._mda_type()
         if not t:
             return super().write(vals)
+        free_prefixes = FREE_FIELD_PREFIXES + t._free_prefixes()
         meaningful = [
             f for f in vals
-            if f not in FREE_FIELDS and not f.startswith(FREE_FIELD_PREFIXES)
+            if f not in FREE_FIELDS and not f.startswith(free_prefixes)
         ]
         if not meaningful or t._user_is_approver(self.env.user):
             return super().write(vals)

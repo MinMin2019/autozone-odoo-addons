@@ -64,6 +64,7 @@ PYTHONUTF8=1 python odoo-bin shell -c odoo.conf -d <DB> --no-http < custom_addon
 | `import_all_shell.py` | shell | import แผนก→สาขา→พนักงาน→หัวหน้า→ผูก user (commit เมื่อ error=0 เท่านั้น) | หลัง convert ทุกครั้ง |
 | `gen_payroll_config.py` | python | ตารางแม็ป Business Plus → Odoo (1 รหัส = 1 บรรทัดสลิป) → generate XML structure/rules + wire script + `bplus_map.json` + `doc/BPLUS_CODE_MAP.md` | เมื่อเพิ่ม/แก้รายได้-รายหัก หรือเปลี่ยนบัญชี (แล้ว -u + wiring) |
 | `wire_payroll_accounts_shell.py` | shell | ผูกบัญชี Dr/Cr + ชื่อ/รหัส/ลำดับ 186 rules + สร้างสมุด PAYR + เปิดโหมดรวมใบ + เก็บกวาดของเก่า | **ทุกครั้งหลัง restore DB** + **ทุกครั้งหลัง -u โมดูล** (record ใน XML เป็น noupdate) |
+| `create_bplus_reader_login.sql` / `change_bplus_reader_password.sql` | SQL (SSMS, sa) | สร้าง login อ่านอย่างเดียว odoo_reader / เปลี่ยนรหัสผ่าน (แล้วอัปเดต System Parameter bplus.password + ini) | ครั้งแรก / เมื่อต้องการหมุนรหัส |
 | `bplus_extract.py` | python (เครื่องในออฟฟิศ) | ดึงผลคำนวณงวดจาก SQL Server ของ Business Plus → ไฟล์ `payslip_inputs_<ปี>-<เดือน>.xlsx` พร้อมชีต Control ไว้เทียบยอดสุทธิ | ทุกเดือนหลัง HR ปิดงวดใน Business Plus |
 | `create_contracts_shell.py` | shell | สร้างสัญญาจ้าง Running ตามกลุ่มสายงาน (wage จากไฟล์ 04 ถ้ามี ไม่มีก็ 0) / รันซ้ำ = อัปเดตเงินเดือน | หลัง import พนักงาน และตอน HR ส่งเงินเดือนจริงมาเติม |
 | `set_contract_analytic_shell.py` | shell | ผูกกอง Analytic รายสาขาลงสัญญาทุกใบ (จับคู่รหัสสาขา = code ของกอง, AZG→H.O.) | หลังสร้างสัญญา + เมื่อมีพนักงาน/สาขาใหม่ + หลัง restore |
@@ -170,7 +171,13 @@ ssh administrator@103.253.74.190 "cmd /c C:\Users\Administrator\run_payroll_tool
 ## 5. งานประจำเดือน (โฟลว์ผู้ใช้)
 
 ### ฝั่ง HR
-0. **ดึงไฟล์จาก Business Plus** (เครื่องในออฟฟิศที่มองเห็น 192.168.100.5 — ทำหลังปิดงวดใน Business Plus แล้ว):
+0. **ทางหลัก: ปุ่มใน Odoo** — หลัง Generate Payslips (ข้อ 2) กด **Import Inputs (Excel)** → เลือก "ดึงจาก Business Plus"
+   ระบบเติมปี/เดือนให้จากวันสิ้นงวดของ Batch → กด **ดึงจาก Business Plus (Preview)** → ได้หน้า Preview ทันที (ข้ามข้อ 0ข และ 3)
+   ต้องตั้งค่าครั้งเดียว: Settings › Technical › **System Parameters** 4 ค่า `bplus.server` (IP Tailscale ของเครื่อง SQL Server บน production
+   / 192.168.100.5 บนเครื่องใน LAN), `bplus.database` = PayrollAutozone, `bplus.user` = odoo_reader, `bplus.password`
+   (+ `bplus.driver` ถ้าต้องระบุ เช่น `ODBC Driver 17 for SQL Server`) และ server Odoo ต้องมี **ODBC Driver 17/18 for SQL Server + pyodbc**
+   (`<python ของ Odoo> -m pip install pyodbc` แล้ว restart service) — ถ้ายังไม่ได้ตั้ง หน้าจอจะขึ้นเตือนสีแดง
+0ข. **ทางสำรอง: สคริปต์** (เครื่องในออฟฟิศที่มองเห็น 192.168.100.5 — ทำหลังปิดงวดใน Business Plus แล้ว):
    ```
    PYTHONUTF8=1 python bplus_extract.py --year 2026 --month 9 --out D:\payroll
    ```
@@ -183,15 +190,19 @@ ssh administrator@103.253.74.190 "cmd /c C:\Users\Administrator\run_payroll_tool
 1. Payroll → Payslips → **Batches → New** ตั้งชื่อ+ช่วงวันที่ตามที่สคริปต์บอก เช่น "เงินเดือน ก.ย. 2569" 22 ส.ค. → 21 ก.ย.
 2. กด **Generate Payslips** → เลือก Structure ทีละกลุ่ม (โรงงาน → สำนักงาน → ผู้บริหาร รัน 3 รอบใน Batch เดียว)
    ระบบสร้างสลิปให้ทุกคนที่มีสัญญา Running
-3. กด **Import Inputs (Excel)** บนหน้า Batch → อัปโหลดไฟล์จากข้อ 0 ได้ทันที
-   - พนักงานที่มีใน Business Plus แต่ยังไม่มีใน Odoo → ระบบฟ้องทั้งไฟล์ (ไม่นำเข้าอะไรเลย) → HR สร้างพนักงาน+สัญญาก่อน (คู่มือ Employee_Lifecycle) แล้วอัปโหลดใหม่
+3. (เฉพาะทางสำรอง) กด **Import Inputs (Excel)** → เลือก "อัปโหลดไฟล์ Excel" → อัปโหลดไฟล์จากข้อ 0ข
+   - ทั้งสองทาง: พนักงานที่มีใน Business Plus แต่ยังไม่มีใน Odoo → ระบบฟ้องเป็นรายชื่อ (ไม่นำเข้าอะไรเลย) → HR สร้างพนักงาน+สัญญาก่อน (คู่มือ Employee_Lifecycle) แล้ว Generate Payslips + ดึงใหม่
+   - ช่วงวันที่ Batch ไม่ตรงงวด Business Plus (22 → 21) → เตือนในช่อง "คำเตือน" ไม่บล็อก แต่ควรแก้ Batch ให้ตรงก่อนปิดงวด
    - ชื่อสะกดต่างกันสองระบบ → แค่**เตือน** (นำเข้าตามรหัส) รายชื่ออยู่ในช่อง "คำเตือน" และแชทเตอร์ → แจ้ง HR แก้การสะกดให้ตรง
    - ไฟล์ทำมือ (ไม่มีชีต Control) ยังใช้ได้ตามกติกาเดิม: จับคู่ด้วย**รหัสพนักงาน** / จำนวนเงิน**ค่าบวกเสมอ** / ห้ามมี LOAN
    - Import ซ้ำ = ล้างของเก่าที่มาจากไฟล์แล้วลงใหม่ทั้งชุด (ไฟล์คือความจริง รายการคีย์มือไม่ถูกแตะ)
 4. หน้า **Preview**: ระบบตรวจแล้วว่ายอดในไฟล์ตรงกับสุทธิ Business Plus ทุกคน (ถ้าไม่ตรงจะไม่ให้ไปต่อ) → กด **ยืนยันนำเข้า**
 5. หน้า **ผลเทียบ NET**: ระบบเทียบ NET ของสลิปแต่ละใบกับสุทธิ Business Plus
    - "ตรง" = จบ · "ต่างเท่ากับเงินกู้" = ปกติ ไปทำข้อ 6 · "ไม่ตรง" = ห้ามปิดงวด ตรวจสลิปคนนั้นก่อน (ผลถูกบันทึกในแชทเตอร์ของ Batch)
-6. โมดูลเงินกู้: กด **หักเงินกู้พนักงาน** บน Batch → คนที่ "ต่างเท่ากับเงินกู้" ต้องกลายเป็นตรง (ยอดงวดในทะเบียนเงินกู้ต้องเท่ากับ Business Plus ช่วงคู่ขนาน)
+6. **เงินกู้** — ในหน้า Import เลือก "เงินกู้หักจาก" ได้ 2 แบบ (ค่าเริ่มต้น = ทะเบียน; ตั้งค่าเริ่มต้นถาวรได้ที่ System Parameter `bplus.loan_source` = `module` หรือ `bplus`):
+   - **ทะเบียนเงินกู้ใน Odoo หักเอง** (แนะนำเมื่อทะเบียนครบ): ยอด 2320 ของ Business Plus ไม่ถูกนำเข้า → หลัง Preview/ยืนยัน กด **หักเงินกู้พนักงาน** บน Batch → คนที่ "ต่างเท่ากับเงินกู้" ต้องกลายเป็นตรง
+   - **หักตามยอด Business Plus**: นำเข้า 2320 เป็นรายการ LOAN ตามยอดเดิม ทะเบียนเงินกู้ใช้ดู/เทียบเท่านั้น **ห้ามกด "หักเงินกู้พนักงาน" ซ้ำ** (ระบบกันหักซ้ำอยู่แล้ว แต่จะขึ้นเตือนทุกคน)
+   - ทั้งสองแบบ หน้า Preview มีตาราง **ตรวจเงินกู้**: เทียบยอด 2320 ของ Business Plus กับงวดที่ถึงกำหนด (date_due ≤ วันสิ้นงวด Batch, ยังไม่ชำระเอง) ในทะเบียน แยกเป็น ตรง / ยอดต่าง / BPlus หักแต่ทะเบียนไม่มีงวด / ทะเบียนมีงวดแต่ BPlus ไม่หัก — **เตือน ไม่บล็อก** และบันทึกลงแชทเตอร์ตอนยืนยัน → ส่งรายชื่อให้ HR/บัญชีตามแก้ทะเบียนหรือ Business Plus ให้ตรงกัน
 7. สุ่มตรวจสลิป (ทุกรายการแยกบรรทัดตามรหัส Business Plus รวม OT 4 อัตรา) → **Confirm** ทั้ง Batch → ระบบตั้งใบสำคัญร่างให้บัญชี
 
 ### ฝั่งบัญชี
@@ -236,6 +247,9 @@ ssh administrator@103.253.74.190 "cmd /c C:\Users\Administrator\run_payroll_tool
 | wizard ฟ้อง "Control: พนักงาน X ยอดในไฟล์ ... ไม่เท่ากับ" | ไฟล์ถูกแก้มือหลัง extract หรือ rule ของรหัสนั้นไม่มีใน structure ของสลิป | extract ใหม่ / ตรวจว่า input code นั้นมี rule ใน 3 structures (รัน wiring) |
 | ผลเทียบ NET "ไม่ตรง" ทั้งที่ Preview ผ่าน | rule ใน Odoo คำนวณต่างจากไฟล์ — มักเป็นรายการคีย์มือค้างในสลิป หรือโมดูลเงินกู้ push ยอดไม่เท่า BPlus | เปิดสลิปคนนั้น ดู Other Inputs ที่ไม่ได้มาจากไฟล์ |
 | sqlcmd ต่อ SQL Server ไม่ได้ | เครื่องอยู่นอก LAN / ยังไม่สร้าง login odoo_reader | ต้องรันจากเครื่องในออฟฟิศ + รัน create_bplus_reader_login.sql ครั้งเดียวด้วย sa |
+| ปุ่ม "ดึงจาก Business Plus" ฟ้อง "server นี้ยังไม่มี pyodbc" | ยังไม่ลง ODBC Driver + pyodbc ใน Python ของ Odoo | ลง msi "ODBC Driver 17 for SQL Server" + `python -m pip install pyodbc` + restart service |
+| ปุ่มฟ้อง "ต่อ SQL Server ... ไม่ได้" (timeout) | Tailscale บนเครื่อง SQL Server ไม่ขึ้น / เครื่องปิด / bplus.server ผิด | ping IP Tailscale จาก server Odoo ก่อน; ระหว่างนั้นใช้ทางสำรอง (สคริปต์ + อัปโหลด) |
+| ปุ่มฟ้อง "ไม่พบรหัสรายการ 'LATE'" หรือรหัสอื่นทั้งที่ map แล้ว | ลืมรัน wiring หลัง restore/-u (input type ยัง archive / rule ยังไม่ผูก) | รัน `wire_payroll_accounts_shell.py` (กฎเหล็กข้อ 1) |
 | odoo shell พ่นภาษาไทยไม่ได้ / UnicodeEncodeError | คอนโซล Windows เป็น cp1252 | ใส่ `PYTHONUTF8=1` หน้าทุกคำสั่ง (ตามตัวอย่างในคู่มือ) |
 
 ---

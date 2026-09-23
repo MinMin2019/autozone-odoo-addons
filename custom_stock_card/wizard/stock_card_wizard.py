@@ -13,6 +13,12 @@
   - ต้นทุน/หน่วย = ที่ Odoo บันทึกใน stock.valuation.layer ของ move นั้น (sum(value)/sum(quantity))
   - ถ้า move ไม่มี layer (โอนระหว่างสาขา, สินค้าไม่ตีมูลค่า) ใช้ต้นทุนปัจจุบันของสินค้า (standard_price)
 * ยอดยกมา = ผลรวมสะสมของทุกบรรทัดก่อนวันเริ่ม, ยอดยกไป = ยกมา + รับ - จ่าย
+* รับ/จ่าย แตกเป็น 9 ประเภท (CATS_IN / CATS_OUT) ตาม usage ของ location ฝั่งตรงข้าม
+  - ผลรวม 4 ช่องรับ = รับรวม, ผลรวม 5 ช่องจ่าย = จ่ายรวม เสมอ
+  - ผ่านคลังพัก/ระหว่างทาง (transit) นับเป็น โอนเข้า/โอนออก
+  - ส่งให้ลูกค้าด้วยใบขายราคา 0 บาท = "เบิกใช้" (วิธีเบิกแบบเก่าก่อนมี CONS) ไม่นับเป็นขาย
+  - ตำแหน่งที่ติ๊ก is_expense_consumption (custom_branch_consumption) = "เบิกใช้"
+* ตัวกรองประเภทรายการ: แสดงเฉพาะสินค้า/รายการประเภทที่เลือก แต่ยอดคงเหลือยังคิดจากทุกรายการ
 """
 import base64
 import io
@@ -47,6 +53,70 @@ KIND_OUT = {
     "transit": "ส่งระหว่างทาง",
     "view": "จ่ายออก",
 }
+
+# ประเภทรายการ (ช่องในหน้าสรุป) — ชื่อฟิลด์ = <code>_qty / <code>_value
+CATS_IN = [
+    ("in_purchase", "รับซื้อ"),
+    ("in_return", "รับคืนจากลูกค้า"),
+    ("in_transfer", "โอนเข้า"),
+    ("in_other", "ปรับเพิ่ม/รับอื่น"),
+]
+CATS_OUT = [
+    ("out_sale", "ขาย"),
+    ("out_return", "ส่งคืนผู้ขาย"),
+    ("out_transfer", "โอนออก"),
+    ("out_consume", "เบิกใช้"),
+    ("out_other", "ปรับลด/จ่ายอื่น"),
+]
+CATS = CATS_IN + CATS_OUT
+CAT_LABEL = dict(CATS)
+
+# ตัวกรองประเภทรายการใน wizard -> ชุดประเภทที่แสดง
+KIND_FILTERS = {
+    "purchase": {"in_purchase"},
+    "cust_return": {"in_return"},
+    "sale": {"out_sale"},
+    "vendor_return": {"out_return"},
+    "transfer": {"in_transfer", "out_transfer"},
+    "transfer_in": {"in_transfer"},
+    "transfer_out": {"out_transfer"},
+    "consume": {"out_consume"},
+    "other": {"in_other", "out_other"},
+}
+
+
+def classify(r, sign):
+    """(ประเภท, ป้ายชื่อรายการ) ของบรรทัด r ในมุมของฝั่งรับ (sign>0) หรือฝั่งจ่าย (sign<0)"""
+    if sign > 0:
+        usage = r["src_usage"]
+        label = KIND_IN.get(usage, "")
+        if r["src_cons"]:
+            return "in_other", "คืนเบิก"
+        if usage == "supplier":
+            return "in_purchase", label
+        if usage == "customer":
+            if r["zero_so"]:
+                return "in_other", "คืนเบิก (ขายราคา 0)"
+            return "in_return", label
+        if usage in ("internal", "transit"):
+            return "in_transfer", label
+        return "in_other", label
+    usage = r["dst_usage"]
+    label = KIND_OUT.get(usage, "")
+    if r["dst_cons"]:
+        return "out_consume", "เบิกใช้"
+    if usage == "supplier":
+        return "out_return", label
+    if usage == "customer":
+        if r["zero_so"]:
+            return "out_consume", "เบิกใช้ (ขายราคา 0)"
+        return "out_sale", label
+    if usage in ("internal", "transit"):
+        return "out_transfer", label
+    if usage == "production":
+        return "out_consume", label
+    return "out_other", label
+
 
 THAI_MONTHS = [
     "", "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
@@ -97,6 +167,24 @@ class StockCardWizard(models.TransientModel):
     )
     hide_zero = fields.Boolean(
         "ซ่อนรายการที่ไม่มียอดและไม่มีการเคลื่อนไหว", default=True
+    )
+    kind_filter = fields.Selection(
+        [
+            ("all", "ทุกประเภท"),
+            ("purchase", "รับซื้อ"),
+            ("cust_return", "รับคืนจากลูกค้า"),
+            ("sale", "ขาย"),
+            ("vendor_return", "ส่งคืนผู้ขาย"),
+            ("transfer", "โอนระหว่างสาขา (เข้า + ออก)"),
+            ("transfer_in", "โอนเข้า"),
+            ("transfer_out", "โอนออก"),
+            ("consume", "เบิกใช้"),
+            ("other", "ปรับปรุงสต็อก / อื่นๆ"),
+        ],
+        "ประเภทรายการ", default="all", required=True,
+        help="เลือกประเภท = แสดงเฉพาะสินค้าที่มีรายการประเภทนั้นในช่วงวันที่ "
+        "และหน้ารายละเอียดแสดงเฉพาะรายการประเภทนั้น "
+        "(ยอดยกมา/ยกไป/คงเหลือ ยังคิดจากทุกรายการตามจริง)",
     )
     line_ids = fields.One2many("stock.card.line", "wizard_id")
     line_count = fields.Integer(compute="_compute_line_count")
@@ -169,6 +257,17 @@ class StockCardWizard(models.TransientModel):
     # คำนวณ
     # ------------------------------------------------------------------
     def _fetch_rows(self, warehouse_ids, product_ids, end):
+        # ส่วนเสริมที่มีเฉพาะเมื่อโมดูลนั้นติดตั้ง (sale_stock / custom_branch_consumption)
+        if "sale_line_id" in self.env["stock.move"]._fields:
+            zero_so = "(sol.id IS NOT NULL AND sol.price_unit = 0)"
+            sale_join = "LEFT JOIN sale_order_line sol ON sol.id = m.sale_line_id"
+        else:
+            zero_so, sale_join = "FALSE", ""
+        if "is_expense_consumption" in self.env["stock.location"]._fields:
+            src_cons = "COALESCE(ls.is_expense_consumption, FALSE)"
+            dst_cons = "COALESCE(ld.is_expense_consumption, FALSE)"
+        else:
+            src_cons = dst_cons = "FALSE"
         query = """
             SELECT ml.id            AS ml_id,
                    ml.date          AS date,
@@ -185,12 +284,16 @@ class StockCardWizard(models.TransientModel):
                    ld.warehouse_id  AS dst_wh,
                    COALESCE(p.origin, m.origin)         AS origin,
                    COALESCE(p.partner_id, m.partner_id) AS partner_id,
-                   svl.unit_cost    AS unit_cost
+                   svl.unit_cost    AS unit_cost,
+                   {zero_so}        AS zero_so,
+                   {src_cons}       AS src_cons,
+                   {dst_cons}       AS dst_cons
               FROM stock_move_line ml
               JOIN stock_move m       ON m.id = ml.move_id
               JOIN stock_location ls  ON ls.id = ml.location_id
               JOIN stock_location ld  ON ld.id = ml.location_dest_id
          LEFT JOIN stock_picking p    ON p.id = ml.picking_id
+         {sale_join}
          LEFT JOIN (
                    SELECT stock_move_id,
                           CASE WHEN SUM(quantity) <> 0
@@ -206,7 +309,9 @@ class StockCardWizard(models.TransientModel):
                AND (ls.warehouse_id = ANY(%(wh)s) OR ld.warehouse_id = ANY(%(wh)s))
                AND ml.product_id = ANY(%(products)s)
           ORDER BY ml.date, ml.id
-        """
+        """.format(
+            zero_so=zero_so, src_cons=src_cons, dst_cons=dst_cons, sale_join=sale_join
+        )
         self.env.flush_all()
         self.env.cr.execute(
             query,
@@ -295,6 +400,7 @@ class StockCardWizard(models.TransientModel):
 
         Line = self.env["stock.card.line"]
         Move = self.env["stock.card.move"]
+        show_cats = KIND_FILTERS.get(self.kind_filter)  # None = ทุกประเภท
         line_vals, move_vals = [], []
         for (pid, key), evs in entries.items():
             product = prod_by_id.get(pid)
@@ -313,6 +419,10 @@ class StockCardWizard(models.TransientModel):
                 opening_qty, precision_rounding=rounding
             ):
                 continue
+            # ประเภทของแต่ละรายการในช่วง (คู่กับ in_range ตามลำดับ)
+            kinds = [classify(r, 1 if q >= 0 else -1) for r, q, c in in_range]
+            if show_cats is not None and not any(k[0] in show_cats for k in kinds):
+                continue
 
             if split:
                 loc = loc_by_id.get(key)
@@ -326,8 +436,10 @@ class StockCardWizard(models.TransientModel):
 
             in_qty = out_qty = in_val = out_val = 0.0
             bal_qty, bal_val = opening_qty, opening_val
+            cat_qty = defaultdict(float)
+            cat_val = defaultdict(float)
             moves = []
-            for r, q, c in in_range:
+            for (r, q, c), (cat, kind) in zip(in_range, kinds):
                 val = q * c
                 bal_qty += q
                 bal_val += val
@@ -337,12 +449,15 @@ class StockCardWizard(models.TransientModel):
                 else:
                     out_qty += -q
                     out_val += -val
+                cat_qty[cat] += abs(q)
+                cat_val[cat] += abs(val)
                 sign = 1 if q >= 0 else -1
-                other_usage = r["src_usage"] if sign > 0 else r["dst_usage"]
-                kind = (KIND_IN if sign > 0 else KIND_OUT).get(other_usage, "")
+                if show_cats is not None and cat not in show_cats:
+                    continue
                 moves.append(
                     {
                         "date": r["date"],
+                        "category": cat,
                         "move_line_id": r["ml_id"],
                         "picking_id": r["picking_id"],
                         "reference": r["reference"] or "",
@@ -361,8 +476,13 @@ class StockCardWizard(models.TransientModel):
                         "balance_value": bal_val,
                     }
                 )
+            cat_fields = {}
+            for cat, _label in CATS:
+                cat_fields[cat + "_qty"] = cat_qty[cat]
+                cat_fields[cat + "_value"] = cat_val[cat]
             line_vals.append(
                 {
+                    **cat_fields,
                     "wizard_id": self.id,
                     "product_id": pid,
                     "default_code": product.default_code or "",
@@ -491,58 +611,111 @@ class StockCardWizard(models.TransientModel):
             self.date_to.strftime("%d/%m/%Y"),
             "แยกตำแหน่งในสาขา" if split else "สรุปต่อสาขา",
         )
+        flt = self.kind_filter_label()
+        if flt:
+            subtitle += "  |  เฉพาะประเภท: %s (ยอดคงเหลือคิดจากทุกรายการ)" % flt
+        hr = 3
 
         # ---------- sheet 1: สรุป ----------
         ws = wb.add_worksheet("สรุป")
         ws.write(0, 0, "บัญชีคุมสินค้า (Stock Card) - สรุป", f_title)
         ws.write(1, 0, subtitle)
-        heads = [
-            ("สาขา", 14), ("ตำแหน่ง", 22), ("รหัสสินค้า", 14), ("ชื่อสินค้า", 40),
-            ("หมวด", 22), ("หน่วย", 8),
-            ("ยกมา (จำนวน)", 12), ("รับ (จำนวน)", 12), ("จ่าย (จำนวน)", 12), ("ยกไป (จำนวน)", 12),
-            ("ต้นทุน/หน่วย", 12),
-            ("ยกมา (มูลค่า)", 14), ("รับ (มูลค่า)", 14), ("จ่าย (มูลค่า)", 14), ("ยกไป (มูลค่า)", 14),
+        # (หัวคอลัมน์, กว้าง, ฟิลด์/ฟังก์ชัน, ชนิด t=ข้อความ q=จำนวน v=มูลค่า(มีรวม) c=ต้นทุน)
+        cols = [
+            ("สาขา", 14, lambda l: l.warehouse_id.name or "", "t"),
+            ("ตำแหน่ง", 22, lambda l: l.location_id.complete_name if l.location_id else "", "t"),
+            ("รหัสสินค้า", 14, lambda l: l.default_code or "", "t"),
+            ("ชื่อสินค้า", 40, lambda l: l.product_name or "", "t"),
+            ("หมวด", 22, lambda l: l.categ_id.complete_name or "", "t"),
+            ("หน่วย", 8, lambda l: l.uom_id.name or "", "t"),
+            ("ยกมา (จำนวน)", 12, "opening_qty", "q"),
         ]
-        hr = 3
-        for c, (h, w) in enumerate(heads):
+        cols += [(label, 12, cat + "_qty", "q") for cat, label in CATS_IN]
+        cols.append(("รับรวม", 12, "in_qty", "q"))
+        cols += [(label, 12, cat + "_qty", "q") for cat, label in CATS_OUT]
+        cols += [
+            ("จ่ายรวม", 12, "out_qty", "q"),
+            ("ยกไป (จำนวน)", 12, "closing_qty", "q"),
+            ("ต้นทุน/หน่วย", 12, "unit_cost", "c"),
+            ("ยกมา (มูลค่า)", 14, "opening_value", "v"),
+        ]
+        cols += [("มูลค่า" + label, 14, cat + "_value", "v") for cat, label in CATS_IN]
+        cols.append(("มูลค่ารับรวม", 14, "in_value", "v"))
+        cols += [("มูลค่า" + label, 14, cat + "_value", "v") for cat, label in CATS_OUT]
+        cols += [
+            ("มูลค่าจ่ายรวม", 14, "out_value", "v"),
+            ("ยกไป (มูลค่า)", 14, "closing_value", "v"),
+        ]
+        for c, (h, w, _g, _k) in enumerate(cols):
             ws.write(hr, c, h, f_head)
             ws.set_column(c, c, w)
-        ws.freeze_panes(hr + 1, 0)
+        ws.freeze_panes(hr + 1, 4)
         r = hr + 1
         for l in lines:
-            ws.write(r, 0, l.warehouse_id.name or "", f_text)
-            ws.write(r, 1, l.location_id.complete_name if l.location_id else "", f_text)
-            ws.write(r, 2, l.default_code or "", f_text)
-            ws.write(r, 3, l.product_name or "", f_text)
-            ws.write(r, 4, l.categ_id.complete_name or "", f_text)
-            ws.write(r, 5, l.uom_id.name or "", f_text)
-            ws.write_number(r, 6, l.opening_qty, f_qty)
-            ws.write_number(r, 7, l.in_qty, f_qty)
-            ws.write_number(r, 8, l.out_qty, f_qty)
-            ws.write_number(r, 9, l.closing_qty, f_qty)
-            ws.write_number(r, 10, l.unit_cost, f_val)
-            ws.write_number(r, 11, l.opening_value, f_val)
-            ws.write_number(r, 12, l.in_value, f_val)
-            ws.write_number(r, 13, l.out_value, f_val)
-            ws.write_number(r, 14, l.closing_value, f_val)
+            for c, (_h, _w, getter, kind) in enumerate(cols):
+                if kind == "t":
+                    ws.write(r, c, getter(l), f_text)
+                else:
+                    ws.write_number(r, c, l[getter], f_qty if kind == "q" else f_val)
             r += 1
         if lines:
             first, last = hr + 2, r
-            ws.write(r, 0, "รวม", f_tot)
-            for c in range(1, 11):
-                ws.write(r, c, "", f_tot)
-            for c in range(11, 15):
-                col = xlsxwriter.utility.xl_col_to_name(c)
-                ws.write_formula(r, c, "=SUM(%s%d:%s%d)" % (col, first, col, last), f_tot_n)
-        ws.autofilter(hr, 0, max(r - 1, hr), len(heads) - 1)
+            for c, (_h, _w, _g, kind) in enumerate(cols):
+                if kind == "v":
+                    col = xlsxwriter.utility.xl_col_to_name(c)
+                    ws.write_formula(
+                        r, c, "=SUM(%s%d:%s%d)" % (col, first, col, last), f_tot_n
+                    )
+                else:
+                    ws.write(r, c, "รวม" if c == 0 else "", f_tot)
+        ws.autofilter(hr, 0, max(r - 1, hr), len(cols) - 1)
 
-        # ---------- sheet 2: รายละเอียด ----------
+        # ---------- sheet 2: สรุปสาขา (มูลค่าแยกประเภท) ----------
+        wb_rows, wb_total = self.branch_summary()
+        wsb = wb.add_worksheet("สรุปสาขา")
+        wsb.write(0, 0, "บัญชีคุมสินค้า (Stock Card) - มูลค่ารวมต่อสาขา แยกตามประเภทรายการ", f_title)
+        wsb.write(1, 0, subtitle)
+        bcols = [("สาขา", 18, "name"), ("ยกมา", 15, "opening")]
+        bcols += [(label, 15, cat) for cat, label in CATS_IN]
+        bcols.append(("รับรวม", 15, "in"))
+        bcols += [(label, 15, cat) for cat, label in CATS_OUT]
+        bcols += [("จ่ายรวม", 15, "out"), ("ยกไป", 15, "closing")]
+        for c, (h, w, _k) in enumerate(bcols):
+            wsb.write(hr, c, h, f_head)
+            wsb.set_column(c, c, w)
+        wsb.freeze_panes(hr + 1, 1)
+        r = hr + 1
+        for d in wb_rows:
+            for c, (_h, _w, k) in enumerate(bcols):
+                if k == "name":
+                    wsb.write(r, c, d[k], f_text)
+                else:
+                    wsb.write_number(r, c, d[k], f_val)
+            r += 1
+        for c, (_h, _w, k) in enumerate(bcols):
+            if k == "name":
+                wsb.write(r, c, wb_total[k], f_tot)
+            else:
+                wsb.write_number(r, c, wb_total[k], f_tot_n)
+        r += 2
+        if not self.warehouse_ids and not flt:
+            wsb.write(r, 0, "ตรวจสอบการโอน (ดูทุกสาขา): มูลค่าโอนออกรวม - โอนเข้ารวม =", f_open)
+            wsb.write_number(
+                r, 4, wb_total["out_transfer"] - wb_total["in_transfer"], f_open_n
+            )
+            wsb.write(
+                r + 1, 0,
+                "ถ้าไม่เป็น 0 = มีของออกจากสาขาต้นทางแล้วแต่ปลายทางยังไม่รับ (ค้างระหว่างทาง) "
+                "หรือสาขาปลายทางอยู่นอกสิทธิ์ที่เห็น",
+            )
+
+        # ---------- sheet 3: รายละเอียด ----------
         wd = wb.add_worksheet("รายละเอียด")
         wd.write(0, 0, "บัญชีคุมสินค้า (Stock Card) - รายละเอียดการเคลื่อนไหว", f_title)
         wd.write(1, 0, subtitle)
         dheads = [
             ("สาขา", 14), ("ตำแหน่ง", 22), ("รหัสสินค้า", 14), ("ชื่อสินค้า", 36), ("หน่วย", 8),
-            ("วันที่", 11), ("เลขที่เอกสาร", 18), ("อ้างอิง", 18), ("รายการ", 18),
+            ("วันที่", 11), ("เลขที่เอกสาร", 18), ("อ้างอิง", 18), ("ประเภท", 16), ("รายการ", 18),
             ("คู่ค้า / ตำแหน่งตรงข้าม", 28),
             ("รับ", 11), ("จ่าย", 11), ("คงเหลือ", 11), ("ต้นทุน/หน่วย", 12),
             ("มูลค่ารับ", 14), ("มูลค่าจ่าย", 14), ("มูลค่าคงเหลือ", 14),
@@ -552,6 +725,7 @@ class StockCardWizard(models.TransientModel):
             wd.set_column(c, c, w)
         wd.freeze_panes(hr + 1, 0)
         tz = pytz.timezone(self.env.user.tz or "Asia/Bangkok")
+        ncol = len(dheads)
         r = hr + 1
         for l in lines:
             base = [
@@ -562,20 +736,12 @@ class StockCardWizard(models.TransientModel):
                 l.uom_id.name or "",
             ]
             # ยอดยกมา
-            for c, v in enumerate(base):
-                wd.write(r, c, v, f_open)
+            for c in range(ncol):
+                wd.write(r, c, base[c] if c < len(base) else "", f_open)
             wd.write_datetime(r, 5, datetime.combine(self.date_from, time.min), f_date)
-            wd.write(r, 6, "", f_open)
-            wd.write(r, 7, "", f_open)
-            wd.write(r, 8, "ยอดยกมา", f_open)
-            wd.write(r, 9, "", f_open)
-            wd.write(r, 10, "", f_open)
-            wd.write(r, 11, "", f_open)
-            wd.write_number(r, 12, l.opening_qty, f_open_n)
-            wd.write(r, 13, "", f_open)
-            wd.write(r, 14, "", f_open)
-            wd.write(r, 15, "", f_open)
-            wd.write_number(r, 16, l.opening_value, f_open_n)
+            wd.write(r, 9, "ยอดยกมา", f_open)
+            wd.write_number(r, 13, l.opening_qty, f_open_n)
+            wd.write_number(r, 17, l.opening_value, f_open_n)
             r += 1
             for m in l.move_ids:
                 for c, v in enumerate(base):
@@ -584,31 +750,28 @@ class StockCardWizard(models.TransientModel):
                 wd.write_datetime(r, 5, local_dt, f_date)
                 wd.write(r, 6, m.reference or "", f_text)
                 wd.write(r, 7, m.origin or "", f_text)
-                wd.write(r, 8, m.kind or "", f_text)
-                wd.write(r, 9, m.counterpart or "", f_text)
-                wd.write_number(r, 10, m.in_qty, f_qty)
-                wd.write_number(r, 11, m.out_qty, f_qty)
-                wd.write_number(r, 12, m.balance_qty, f_qty)
-                wd.write_number(r, 13, m.unit_cost, f_val)
-                wd.write_number(r, 14, m.in_value, f_val)
-                wd.write_number(r, 15, m.out_value, f_val)
-                wd.write_number(r, 16, m.balance_value, f_val)
+                wd.write(r, 8, CAT_LABEL.get(m.category, ""), f_text)
+                wd.write(r, 9, m.kind or "", f_text)
+                wd.write(r, 10, m.counterpart or "", f_text)
+                wd.write_number(r, 11, m.in_qty, f_qty)
+                wd.write_number(r, 12, m.out_qty, f_qty)
+                wd.write_number(r, 13, m.balance_qty, f_qty)
+                wd.write_number(r, 14, m.unit_cost, f_val)
+                wd.write_number(r, 15, m.in_value, f_val)
+                wd.write_number(r, 16, m.out_value, f_val)
+                wd.write_number(r, 17, m.balance_value, f_val)
                 r += 1
-            # ยอดยกไป
-            for c, v in enumerate(base):
-                wd.write(r, c, v, f_tot)
+            # ยอดยกไป (รับ/จ่ายรวมของทุกประเภท แม้กรองประเภทอยู่)
+            for c in range(ncol):
+                wd.write(r, c, base[c] if c < len(base) else "", f_tot)
             wd.write_datetime(r, 5, datetime.combine(self.date_to, time.min), f_date)
-            wd.write(r, 6, "", f_tot)
-            wd.write(r, 7, "", f_tot)
-            wd.write(r, 8, "ยอดยกไป", f_tot)
-            wd.write(r, 9, "", f_tot)
-            wd.write_number(r, 10, l.in_qty, f_tot_n)
-            wd.write_number(r, 11, l.out_qty, f_tot_n)
-            wd.write_number(r, 12, l.closing_qty, f_tot_n)
-            wd.write(r, 13, "", f_tot)
-            wd.write_number(r, 14, l.in_value, f_tot_n)
-            wd.write_number(r, 15, l.out_value, f_tot_n)
-            wd.write_number(r, 16, l.closing_value, f_tot_n)
+            wd.write(r, 9, "ยอดยกไป (รวมทุกประเภท)" if flt else "ยอดยกไป", f_tot)
+            wd.write_number(r, 11, l.in_qty, f_tot_n)
+            wd.write_number(r, 12, l.out_qty, f_tot_n)
+            wd.write_number(r, 13, l.closing_qty, f_tot_n)
+            wd.write_number(r, 15, l.in_value, f_tot_n)
+            wd.write_number(r, 16, l.out_value, f_tot_n)
+            wd.write_number(r, 17, l.closing_value, f_tot_n)
             r += 1
         wd.autofilter(hr, 0, max(r - 1, hr), len(dheads) - 1)
 
@@ -616,8 +779,46 @@ class StockCardWizard(models.TransientModel):
         return buf.getvalue()
 
     # ------------------------------------------------------------------
-    # helper สำหรับ QWeb
+    # helper สำหรับ QWeb / Excel
     # ------------------------------------------------------------------
+    def cat_labels(self):
+        """[(code, ป้ายชื่อ)] ของ 9 ประเภท เรียงตามคอลัมน์"""
+        return list(CATS)
+
+    def kind_filter_label(self):
+        self.ensure_one()
+        if self.kind_filter == "all":
+            return ""
+        return dict(self._fields["kind_filter"].selection).get(self.kind_filter, "")
+
+    def branch_summary(self):
+        """มูลค่ารวมต่อสาขา แยกตามประเภท (แถวรวมท้ายสาขา) + แถวรวมทั้งหมด
+
+        คืน (rows, total) — แต่ละตัวเป็น dict: name, opening, <cat>..., in, out, closing
+        """
+        self.ensure_one()
+        keys = ["opening", "in", "out", "closing"] + [c for c, _l in CATS]
+        by_wh = {}
+        for l in self.line_ids:
+            d = by_wh.get(l.warehouse_id.id)
+            if d is None:
+                d = dict.fromkeys(keys, 0.0)
+                d["name"] = l.warehouse_id.name or ""
+                by_wh[l.warehouse_id.id] = d
+            d["opening"] += l.opening_value
+            d["in"] += l.in_value
+            d["out"] += l.out_value
+            d["closing"] += l.closing_value
+            for c, _l in CATS:
+                d[c] += l[c + "_value"]
+        rows = sorted(by_wh.values(), key=lambda d: d["name"])
+        total = dict.fromkeys(keys, 0.0)
+        total["name"] = "รวมทุกสาขา"
+        for d in rows:
+            for k in keys:
+                total[k] += d[k]
+        return rows, total
+
     def thai_date(self, d):
         return thai_date(d)
 
@@ -652,6 +853,25 @@ class StockCardLine(models.TransientModel):
     in_value = fields.Float("มูลค่ารับ", digits=(16, 2))
     out_value = fields.Float("มูลค่าจ่าย", digits=(16, 2))
     closing_value = fields.Float("มูลค่ายกไป", digits=(16, 2))
+    # รับ/จ่าย แตกตามประเภท (ผลรวม in_* = in_qty, ผลรวม out_* = out_qty)
+    in_purchase_qty = fields.Float("รับซื้อ", digits=(16, 2))
+    in_return_qty = fields.Float("รับคืนลูกค้า", digits=(16, 2))
+    in_transfer_qty = fields.Float("โอนเข้า", digits=(16, 2))
+    in_other_qty = fields.Float("ปรับเพิ่ม/รับอื่น", digits=(16, 2))
+    out_sale_qty = fields.Float("ขาย", digits=(16, 2))
+    out_return_qty = fields.Float("ส่งคืนผู้ขาย", digits=(16, 2))
+    out_transfer_qty = fields.Float("โอนออก", digits=(16, 2))
+    out_consume_qty = fields.Float("เบิกใช้", digits=(16, 2))
+    out_other_qty = fields.Float("ปรับลด/จ่ายอื่น", digits=(16, 2))
+    in_purchase_value = fields.Float("มูลค่ารับซื้อ", digits=(16, 2))
+    in_return_value = fields.Float("มูลค่ารับคืนลูกค้า", digits=(16, 2))
+    in_transfer_value = fields.Float("มูลค่าโอนเข้า", digits=(16, 2))
+    in_other_value = fields.Float("มูลค่าปรับเพิ่ม/รับอื่น", digits=(16, 2))
+    out_sale_value = fields.Float("มูลค่าขาย (ทุน)", digits=(16, 2))
+    out_return_value = fields.Float("มูลค่าส่งคืนผู้ขาย", digits=(16, 2))
+    out_transfer_value = fields.Float("มูลค่าโอนออก", digits=(16, 2))
+    out_consume_value = fields.Float("มูลค่าเบิกใช้", digits=(16, 2))
+    out_other_value = fields.Float("มูลค่าปรับลด/จ่ายอื่น", digits=(16, 2))
     move_count = fields.Integer("จำนวนรายการ")
     move_ids = fields.One2many("stock.card.move", "line_id", "การเคลื่อนไหว")
     date_from = fields.Date(related="wizard_id.date_from")
@@ -680,6 +900,7 @@ class StockCardMove(models.TransientModel):
     location_id = fields.Many2one("stock.location", "จาก")
     location_dest_id = fields.Many2one("stock.location", "ไป")
     kind = fields.Char("รายการ")
+    category = fields.Selection(CATS, "ประเภท")
     counterpart = fields.Char("คู่ค้า / ตำแหน่งตรงข้าม")
     in_qty = fields.Float("รับ", digits=(16, 2))
     out_qty = fields.Float("จ่าย", digits=(16, 2))

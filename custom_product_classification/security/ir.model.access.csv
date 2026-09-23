@@ -1,0 +1,13 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_az_product_brand_user,az.product.brand user,model_az_product_brand,base.group_user,1,0,0,0
+access_az_product_brand_manager,az.product.brand manager,model_az_product_brand,group_classification_manager,1,1,1,1
+access_az_product_subtype_user,az.product.subtype user,model_az_product_subtype,base.group_user,1,0,0,0
+access_az_product_subtype_manager,az.product.subtype manager,model_az_product_subtype,group_classification_manager,1,1,1,1
+access_az_product_owner_user,az.product.owner user,model_az_product_owner,base.group_user,1,0,0,0
+access_az_product_owner_manager,az.product.owner manager,model_az_product_owner,group_classification_manager,1,1,1,1
+access_az_car_part_user,az.car.part user,model_az_car_part,base.group_user,1,0,0,0
+access_az_car_part_manager,az.car.part manager,model_az_car_part,group_classification_manager,1,1,1,1
+access_az_car_make_user,az.car.make user,model_az_car_make,base.group_user,1,0,0,0
+access_az_car_make_manager,az.car.make manager,model_az_car_make,group_classification_manager,1,1,1,1
+access_az_car_model_user,az.car.model user,model_az_car_model,base.group_user,1,0,0,0
+access_az_car_model_manager,az.car.model manager,model_az_car_model,group_classification_manager,1,1,1,1

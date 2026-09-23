@@ -25,6 +25,11 @@ class AzApprovalType(models.Model):
         "access.role", string="Role ผู้อนุมัติ (role builder)",
         help="ผูกกับ role ของ Access Role Builder: คนใน role เหล่านี้จะได้กลุ่มผู้อนุมัติ"
              "อัตโนมัติ (ผ่าน implied group) ทุกครั้งที่กด Apply role")
+    free_field_prefixes = fields.Char(
+        string="ฟิลด์ที่แก้ได้โดยไม่ต้องอนุมัติ (คำนำหน้า)",
+        help="คำนำหน้าชื่อฟิลด์ คั่นด้วยจุลภาค เช่น az_ — ฟิลด์ที่ชื่อขึ้นต้นแบบนี้แก้ได้ทุกสถานะ "
+             "โดยไม่ล็อค (ยังมีประวัติการแก้ในแชท) ใช้กับข้อมูลจัดกลุ่มที่คลัง/จัดซื้อช่วยดูแล "
+             "เช่น แบรนด์ ชิ้นส่วน ขั้นตอนงาน และค่าที่ระบบคำนวณเอง เช่น ชั้น ABC")
     active = fields.Boolean(
         default=True, string="เปิดใช้งาน",
         help="ปิด = พัก workflow ทั้งประเภท (ไม่ล็อคการแก้ไข ไม่บล็อกทรานแซคชัน) "
@@ -42,6 +47,10 @@ class AzApprovalType(models.Model):
     def _get_for_model(self, model_name):
         """คืนประเภทการอนุมัติที่เปิดใช้ของโมเดลนั้น (empty recordset = workflow ปิด)"""
         return self.sudo().search([("model_name", "=", model_name)], limit=1)
+
+    def _free_prefixes(self):
+        self.ensure_one()
+        return tuple(p.strip() for p in (self.free_field_prefixes or "").split(",") if p.strip())
 
     def _user_is_approver(self, user):
         self.ensure_one()

@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ฟิลด์จัดกลุ่มสินค้าในรายงานวิเคราะห์ — จัดกลุ่ม 1 คลิก + พิมพ์ค้นหา -->
+    <record id="sale_report_search_view_classification" model="ir.ui.view">
+        <field name="name">sale.report.search.az.classification</field>
+        <field name="model">sale.report</field>
+        <field name="inherit_id" ref="sale.view_order_product_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='categ_id']" position="after">
+                <field name="az_brand_id"/>
+                <field name="az_owner_id"/>
+                <field name="az_part_id"/>
+                <field name="az_car_make_id"/>
+                <field name="az_subtype_id"/>
+            </xpath>
+            <xpath expr="//filter[@name='Category']" position="after">
+                <separator/>
+                <filter name="group_az_brand_id" string="แบรนด์" context="{'group_by': 'az_brand_id'}"/>
+                <filter name="group_az_subtype_id" string="ประเภทย่อย" context="{'group_by': 'az_subtype_id'}"/>
+                <filter name="group_az_owner_id" string="เจ้าของสินค้า" context="{'group_by': 'az_owner_id'}"/>
+                <filter name="group_az_part_id" string="ชิ้นส่วน" context="{'group_by': 'az_part_id'}"/>
+                <filter name="group_az_car_make_id" string="ยี่ห้อรถ" context="{'group_by': 'az_car_make_id'}"/>
+                <filter name="group_az_car_model_id" string="รุ่นรถ" context="{'group_by': 'az_car_model_id'}"/>
+                <filter name="group_az_tone" string="จำนวนโทนสี" context="{'group_by': 'az_tone'}"/>
+                <filter name="group_az_work_type" string="ประเภทงาน" context="{'group_by': 'az_work_type'}"/>
+                <filter name="group_az_work_stage" string="ขั้นตอนงาน" context="{'group_by': 'az_work_stage'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="purchase_report_search_view_classification" model="ir.ui.view">
+        <field name="name">purchase.report.search.az.classification</field>
+        <field name="model">purchase.report</field>
+        <field name="inherit_id" ref="purchase.view_purchase_order_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="az_brand_id"/>
+                <field name="az_owner_id"/>
+                <field name="az_part_id"/>
+                <field name="az_car_make_id"/>
+                <field name="az_subtype_id"/>
+            </xpath>
+            <xpath expr="//filter[@name='group_product_id']" position="after">
+                <separator/>
+                <filter name="group_az_brand_id" string="แบรนด์" context="{'group_by': 'az_brand_id'}"/>
+                <filter name="group_az_subtype_id" string="ประเภทย่อย" context="{'group_by': 'az_subtype_id'}"/>
+                <filter name="group_az_owner_id" string="เจ้าของสินค้า" context="{'group_by': 'az_owner_id'}"/>
+                <filter name="group_az_part_id" string="ชิ้นส่วน" context="{'group_by': 'az_part_id'}"/>
+                <filter name="group_az_car_make_id" string="ยี่ห้อรถ" context="{'group_by': 'az_car_make_id'}"/>
+                <filter name="group_az_car_model_id" string="รุ่นรถ" context="{'group_by': 'az_car_model_id'}"/>
+                <filter name="group_az_tone" string="จำนวนโทนสี" context="{'group_by': 'az_tone'}"/>
+                <filter name="group_az_work_type" string="ประเภทงาน" context="{'group_by': 'az_work_type'}"/>
+                <filter name="group_az_work_stage" string="ขั้นตอนงาน" context="{'group_by': 'az_work_stage'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="invoice_report_search_view_classification" model="ir.ui.view">
+        <field name="name">account.invoice.report.search.az.classification</field>
+        <field name="model">account.invoice.report</field>
+        <field name="inherit_id" ref="account.view_account_invoice_report_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="az_brand_id"/>
+                <field name="az_owner_id"/>
+                <field name="az_part_id"/>
+                <field name="az_car_make_id"/>
+                <field name="az_subtype_id"/>
+            </xpath>
+            <xpath expr="//filter[@name='category_product']" position="after">
+                <separator/>
+                <filter name="group_az_brand_id" string="แบรนด์" context="{'group_by': 'az_brand_id'}"/>
+                <filter name="group_az_subtype_id" string="ประเภทย่อย" context="{'group_by': 'az_subtype_id'}"/>
+                <filter name="group_az_owner_id" string="เจ้าของสินค้า" context="{'group_by': 'az_owner_id'}"/>
+                <filter name="group_az_part_id" string="ชิ้นส่วน" context="{'group_by': 'az_part_id'}"/>
+                <filter name="group_az_car_make_id" string="ยี่ห้อรถ" context="{'group_by': 'az_car_make_id'}"/>
+                <filter name="group_az_car_model_id" string="รุ่นรถ" context="{'group_by': 'az_car_model_id'}"/>
+                <filter name="group_az_tone" string="จำนวนโทนสี" context="{'group_by': 'az_tone'}"/>
+                <filter name="group_az_work_type" string="ประเภทงาน" context="{'group_by': 'az_work_type'}"/>
+                <filter name="group_az_work_stage" string="ขั้นตอนงาน" context="{'group_by': 'az_work_stage'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="stock_quant_search_view_classification" model="ir.ui.view">
+        <field name="name">stock.quant.search.az.classification</field>
+        <field name="model">stock.quant</field>
+        <field name="inherit_id" ref="stock.quant_search_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='product_id']" position="after">
+                <field name="az_brand_id"/>
+                <field name="az_owner_id"/>
+                <field name="az_part_id"/>
+                <field name="az_car_make_id"/>
+                <field name="az_subtype_id"/>
+            </xpath>
+            <xpath expr="//filter[@name='productcategorygroup']" position="after">
+                <separator/>
+                <filter name="group_az_brand_id" string="แบรนด์" context="{'group_by': 'az_brand_id'}"/>
+                <filter name="group_az_subtype_id" string="ประเภทย่อย" context="{'group_by': 'az_subtype_id'}"/>
+                <filter name="group_az_owner_id" string="เจ้าของสินค้า" context="{'group_by': 'az_owner_id'}"/>
+                <filter name="group_az_part_id" string="ชิ้นส่วน" context="{'group_by': 'az_part_id'}"/>
+                <filter name="group_az_car_make_id" string="ยี่ห้อรถ" context="{'group_by': 'az_car_make_id'}"/>
+                <filter name="group_az_car_model_id" string="รุ่นรถ" context="{'group_by': 'az_car_model_id'}"/>
+                <filter name="group_az_tone" string="จำนวนโทนสี" context="{'group_by': 'az_tone'}"/>
+                <filter name="group_az_work_type" string="ประเภทงาน" context="{'group_by': 'az_work_type'}"/>
+                <filter name="group_az_work_stage" string="ขั้นตอนงาน" context="{'group_by': 'az_work_stage'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="valuation_layer_search_view_classification" model="ir.ui.view">
+        <field name="name">stock.valuation.layer.search.az.classification</field>
+        <field name="model">stock.valuation.layer</field>
+        <field name="inherit_id" ref="stock_account.view_inventory_valuation_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='product_id']" position="after">
+                <field name="az_brand_id"/>
+                <field name="az_owner_id"/>
+                <field name="az_part_id"/>
+                <field name="az_car_make_id"/>
+                <field name="az_subtype_id"/>
+            </xpath>
+            <xpath expr="//filter[@name='group_by_categ_id']" position="after">
+                <separator/>
+                <filter name="group_az_brand_id" string="แบรนด์" context="{'group_by': 'az_brand_id'}"/>
+                <filter name="group_az_subtype_id" string="ประเภทย่อย" context="{'group_by': 'az_subtype_id'}"/>
+                <filter name="group_az_owner_id" string="เจ้าของสินค้า" context="{'group_by': 'az_owner_id'}"/>
+                <filter name="group_az_part_id" string="ชิ้นส่วน" context="{'group_by': 'az_part_id'}"/>
+                <filter name="group_az_car_make_id" string="ยี่ห้อรถ" context="{'group_by': 'az_car_make_id'}"/>
+                <filter name="group_az_car_model_id" string="รุ่นรถ" context="{'group_by': 'az_car_model_id'}"/>
+                <filter name="group_az_tone" string="จำนวนโทนสี" context="{'group_by': 'az_tone'}"/>
+                <filter name="group_az_work_type" string="ประเภทงาน" context="{'group_by': 'az_work_type'}"/>
+                <filter name="group_az_work_stage" string="ขั้นตอนงาน" context="{'group_by': 'az_work_stage'}"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

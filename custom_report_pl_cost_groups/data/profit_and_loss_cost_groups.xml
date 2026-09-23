@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- โครงตามไฟล์ที่ฝ่ายบัญชีกำหนด (other/profit_and_loss (39).xlsx, 18 ก.ย. 2026):
+         Less Costs of Revenue แยกเป็นกลุ่มย่อยตามช่วงรหัสบัญชี มีหัวกลุ่ม + ยอดรวมย่อย
+         ส่วน Revenue / Operating Expenses / Other Income / Other Expenses คงแบนเหมือนเดิม
+
+         กลไก: Odoo ห้ามบรรทัดเดียวมีทั้ง groupby และบรรทัดลูก จึงถอด groupby ออกจากบรรทัดแม่
+         (ยอดแม่ยังคำนวณจาก account_type = expense_direct_cost ทุกบัญชี - Gross Profit ไม่เปลี่ยน)
+         แล้วเพิ่มบรรทัดลูก 7 บรรทัด แต่ละบรรทัด groupby รายบัญชีในช่วงรหัสของตัว
+         (sequence ต้องอยู่ระหว่างแม่ COS=40 กับ Gross Profit=50 เพราะ Odoo เรียงทุกบรรทัดแบน)
+         บรรทัดสุดท้าย "ต้นทุนอื่น" จับบัญชี Cost of Revenue ที่รหัสไม่เข้าช่วงใดเลย (ซ่อนเมื่อ 0)
+         เพื่อให้ผลรวมลูก = ยอดแม่เสมอ -->
+    <record id="account_reports.account_financial_report_cost_sales0" model="account.report.line">
+        <field name="groupby"></field>
+        <field name="user_groupby"></field>
+    </record>
+
+    <record id="pl_cos_labor" model="account.report.line">
+        <field name="name">ค่าแรงงานทางตรง</field>
+        <field name="code">AZ_COS_LABOR</field>
+        <field name="parent_id" ref="account_reports.account_financial_report_cost_sales0"/>
+        <field name="sequence">41</field>
+        <field name="hierarchy_level">2</field>
+        <field name="groupby">account_id</field>
+        <field name="foldable" eval="True"/>
+        <field name="expression_ids">
+            <record id="pl_cos_labor_balance" model="account.report.expression">
+                <field name="label">balance</field>
+                <field name="engine">domain</field>
+                <field name="formula" eval="[('account_id.account_type', '=', 'expense_direct_cost'), ('account_id.code', '=like', '511%')]"/>
+                <field name="subformula">sum</field>
+                <field name="green_on_positive" eval="False"/>
+            </record>
+        </field>
+    </record>
+
+    <record id="pl_cos_welfare" model="account.report.line">
+        <field name="name">ค่าสวัสดิการอื่น</field>
+        <field name="code">AZ_COS_WELFARE</field>
+        <field name="parent_id" ref="account_reports.account_financial_report_cost_sales0"/>
+        <field name="sequence">42</field>
+        <field name="hierarchy_level">2</field>
+        <field name="groupby">account_id</field>
+        <field name="foldable" eval="True"/>
+        <field name="expression_ids">
+            <record id="pl_cos_welfare_balance" model="account.report.expression">
+                <field name="label">balance</field>
+                <field name="engine">domain</field>
+                <field name="formula" eval="[('account_id.account_type', '=', 'expense_direct_cost'), ('account_id.code', '=like', '512%')]"/>
+                <field name="subformula">sum</field>
+                <field name="green_on_positive" eval="False"/>
+            </record>
+        </field>
+    </record>
+
+    <record id="pl_cos_parts" model="account.report.line">
+        <field name="name">ค่าอะไหล่</field>
+        <field name="code">AZ_COS_PARTS</field>
+        <field name="parent_id" ref="account_reports.account_financial_report_cost_sales0"/>
+        <field name="sequence">43</field>
+        <field name="hierarchy_level">2</field>
+        <field name="groupby">account_id</field>
+        <field name="foldable" eval="True"/>
+        <field name="expression_ids">
+            <record id="pl_cos_parts_balance" model="account.report.expression">
+                <field name="label">balance</field>
+                <field name="engine">domain</field>
+                <field name="formula" eval="[('account_id.account_type', '=', 'expense_direct_cost'), ('account_id.code', '=like', '52%')]"/>
+                <field name="subformula">sum</field>
+                <field name="green_on_positive" eval="False"/>
+            </record>
+        </field>
+    </record>
+
+    <record id="pl_cos_paint" model="account.report.line">
+        <field name="name">ค่าสี</field>
+        <field name="code">AZ_COS_PAINT</field>
+        <field name="parent_id" ref="account_reports.account_financial_report_cost_sales0"/>
+        <field name="sequence">44</field>
+        <field name="hierarchy_level">2</field>
+        <field name="groupby">account_id</field>
+        <field name="foldable" eval="True"/>
+        <field name="expression_ids">
+            <record id="pl_cos_paint_balance" model="account.report.expression">
+                <field name="label">balance</field>
+                <field name="engine">domain</field>
+                <field name="formula" eval="[('account_id.account_type', '=', 'expense_direct_cost'), ('account_id.code', '=like', '531%')]"/>
+                <field name="subformula">sum</field>
+                <field name="green_on_positive" eval="False"/>
+            </record>
+        </field>
+    </record>
+
+    <record id="pl_cos_supply" model="account.report.line">
+        <field name="name">ค่าวัสดุสิ้นเปลืองโรงงาน</field>
+        <field name="code">AZ_COS_SUPPLY</field>
+        <field name="parent_id" ref="account_reports.account_financial_report_cost_sales0"/>
+        <field name="sequence">45</field>
+        <field name="hierarchy_level">2</field>
+        <field name="groupby">account_id</field>
+        <field name="foldable" eval="True"/>
+        <field name="expression_ids">
+            <record id="pl_cos_supply_balance" model="account.report.expression">
+                <field name="label">balance</field>
+                <field name="engine">domain</field>
+                <field name="formula" eval="[('account_id.account_type', '=', 'expense_direct_cost'), ('account_id.code', '=like', '532%')]"/>
+                <field name="subformula">sum</field>
+                <field name="green_on_positive" eval="False"/>
+            </record>
+        </field>
+    </record>
+
+    <record id="pl_cos_other_prod" model="account.report.line">
+        <field name="name">ค่าใช้จ่ายผลิตอื่น</field>
+        <field name="code">AZ_COS_OTHER_PROD</field>
+        <field name="parent_id" ref="account_reports.account_financial_report_cost_sales0"/>
+        <field name="sequence">46</field>
+        <field name="hierarchy_level">2</field>
+        <field name="groupby">account_id</field>
+        <field name="foldable" eval="True"/>
+        <field name="expression_ids">
+            <record id="pl_cos_other_prod_balance" model="account.report.expression">
+                <field name="label">balance</field>
+                <field name="engine">domain</field>
+                <field name="formula" eval="[('account_id.account_type', '=', 'expense_direct_cost'), '|', ('account_id.code', '=like', '54%'), ('account_id.code', '=like', '55%')]"/>
+                <field name="subformula">sum</field>
+                <field name="green_on_positive" eval="False"/>
+            </record>
+        </field>
+    </record>
+
+    <!-- ตาข่ายกันหล่น: บัญชี Cost of Revenue ที่รหัสไม่อยู่ในช่วง 511/512/52/531/532/54/55 -->
+    <record id="pl_cos_misc" model="account.report.line">
+        <field name="name">ต้นทุนอื่น (รหัสนอกช่วง)</field>
+        <field name="code">AZ_COS_MISC</field>
+        <field name="parent_id" ref="account_reports.account_financial_report_cost_sales0"/>
+        <field name="sequence">47</field>
+        <field name="hierarchy_level">2</field>
+        <field name="groupby">account_id</field>
+        <field name="foldable" eval="True"/>
+        <field name="hide_if_zero" eval="True"/>
+        <field name="expression_ids">
+            <record id="pl_cos_misc_balance" model="account.report.expression">
+                <field name="label">balance</field>
+                <field name="engine">domain</field>
+                <field name="formula" eval="[('account_id.account_type', '=', 'expense_direct_cost'), '!', ('account_id.code', '=like', '511%'), '!', ('account_id.code', '=like', '512%'), '!', ('account_id.code', '=like', '52%'), '!', ('account_id.code', '=like', '531%'), '!', ('account_id.code', '=like', '532%'), '!', ('account_id.code', '=like', '54%'), '!', ('account_id.code', '=like', '55%')]"/>
+                <field name="subformula">sum</field>
+                <field name="green_on_positive" eval="False"/>
+            </record>
+        </field>
+    </record>
+</odoo>

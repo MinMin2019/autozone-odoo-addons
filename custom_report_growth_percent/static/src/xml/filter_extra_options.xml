@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates>
+    <!-- ปุ่มเปิด/ปิดคอลัมน์ % ในเมนู Options ของรายงานการเงิน
+         โชว์เฉพาะเมื่อโครงรายงานตอนนี้แสดงคอลัมน์นั้นได้ (az_*_available จาก Python) -->
+    <t t-name="custom_report_growth_percent.AccountReportFilterExtraOptions"
+       t-inherit="account_reports.AccountReportFilterExtraOptions"
+       t-inherit-mode="extension">
+        <xpath expr="//t[@t-if='controller.filters.show_hierarchy']" position="after">
+            <t t-if="controller.options.az_growth_pct_available">
+                <DropdownItem
+                    class="{ 'selected': controller.options.az_growth_pct_enabled }"
+                    onSelected="() => this.filterClicked({ optionKey: 'az_growth_pct_enabled', reload: true})"
+                    closingMode="'none'"
+                >
+                    ±% เทียบงวดก่อน
+                </DropdownItem>
+            </t>
+            <t t-if="controller.options.az_common_size_available">
+                <DropdownItem
+                    class="{ 'selected': controller.options.az_common_size_enabled }"
+                    onSelected="() => this.filterClicked({ optionKey: 'az_common_size_enabled', reload: true})"
+                    closingMode="'none'"
+                >
+                    <t t-esc="controller.options.az_common_size_label"/>
+                </DropdownItem>
+            </t>
+        </xpath>
+    </t>
+</templates>

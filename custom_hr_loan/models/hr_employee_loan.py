@@ -20,8 +20,12 @@ class HrEmployeeLoan(models.Model):
     employee_id = fields.Many2one(
         'hr.employee', string='พนักงาน', required=True, tracking=True,
         domain="[('company_id', '=', company_id)]")
+    # ฟิลด์ต้นทาง (hr_payroll) ติด groups="hr.group_hr_user" และ related จะสืบทอด groups มา
+    # ทำให้ผู้ใช้ที่ไม่ใช่ HR Officer ไม่เห็นคอลัมน์นี้เลย (ถูกตัดออกจาก view)
+    # รหัสพนักงานไม่ใช่ข้อมูลอ่อนไหว จึงกำหนด groups เองให้ทุกคนที่เข้าทะเบียนเงินกู้ได้เห็น
     registration_number = fields.Char(
-        related='employee_id.registration_number', string='รหัสพนักงาน')
+        related='employee_id.registration_number', string='รหัสพนักงาน',
+        groups='base.group_user')
     department_id = fields.Many2one(
         related='employee_id.department_id', string='แผนก', store=True)
     company_id = fields.Many2one(

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ฟอร์มสินค้า: กล่อง "การจัดกลุ่มสินค้า" ใต้ข้อมูลทั่วไป -->
+    <record id="product_template_form_view_classification" model="ir.ui.view">
+        <field name="name">product.template.form.az.classification</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='general_information']/group" position="after">
+                <group name="az_classification" string="การจัดกลุ่มสินค้า">
+                    <group>
+                        <field name="az_brand_id" options="{'no_create': True}"/>
+                        <field name="az_subtype_id" options="{'no_create': True}"/>
+                        <field name="az_owner_id" options="{'no_create': True}"
+                               placeholder="ว่าง = ใช้ร่วมกันหลายลูกค้า"/>
+                        <field name="az_work_type"/>
+                        <field name="az_work_stage"/>
+                    </group>
+                    <group>
+                        <field name="az_part_id" options="{'no_create': True}"/>
+                        <field name="az_car_make_id" options="{'no_create': True}"/>
+                        <field name="az_car_model_id" options="{'no_create': True}"/>
+                        <field name="az_tone"/>
+                        <field name="az_old_categ_id" invisible="not az_old_categ_id"
+                               options="{'no_open': True}"/>
+                        <field name="az_old_categ_name"
+                               invisible="az_old_categ_id or not az_old_categ_name"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- รายการสินค้า: คอลัมน์ซ่อนไว้ เปิดได้จากปุ่มเลือกคอลัมน์ -->
+    <record id="product_template_list_view_classification" model="ir.ui.view">
+        <field name="name">product.template.list.az.classification</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view"/>
+        <field name="arch" type="xml">
+            <field name="categ_id" position="after">
+                <field name="az_brand_id" optional="hide"/>
+                <field name="az_subtype_id" optional="hide"/>
+                <field name="az_owner_id" optional="hide"/>
+                <field name="az_part_id" optional="hide"/>
+                <field name="az_car_make_id" optional="hide"/>
+                <field name="az_car_model_id" optional="hide"/>
+                <field name="az_tone" optional="hide"/>
+                <field name="az_work_type" optional="hide"/>
+                <field name="az_work_stage" optional="hide"/>
+                <field name="az_old_categ_id" optional="hide"/>
+                <field name="az_old_categ_name" optional="hide"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- ค้นหา: พิมพ์ค้น + จัดกลุ่ม 1 คลิก + แถบด้านซ้าย -->
+    <record id="product_template_search_view_classification" model="ir.ui.view">
+        <field name="name">product.template.search.az.classification</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_search_view"/>
+        <field name="arch" type="xml">
+            <field name="categ_id" position="after">
+                <field name="az_brand_id"/>
+                <field name="az_owner_id"/>
+                <field name="az_part_id"/>
+                <field name="az_car_make_id"/>
+                <field name="az_car_model_id"/>
+                <field name="az_subtype_id"/>
+                <field name="az_old_categ_id" filter_domain="[('az_old_categ_id', 'child_of', raw_value)]"/>
+                <field name="az_old_categ_name"/>
+            </field>
+            <filter name="inactive" position="before">
+                <filter name="az_no_owner" string="ไม่มีเจ้าของสินค้า" domain="[('az_owner_id', '=', False)]"/>
+                <filter name="az_no_stage" string="ยังไม่ระบุขั้นตอนงาน" domain="[('az_work_stage', '=', False)]"/>
+                <filter name="az_model_pending" string="รุ่นรถรอระบุ"
+                        domain="[('az_car_model_id.is_placeholder', '=', True), ('az_car_model_id.name', '=', 'รอระบุ')]"/>
+                <separator/>
+            </filter>
+            <filter name="categ_id" position="after">
+                <filter name="group_az_brand" string="แบรนด์" context="{'group_by': 'az_brand_id'}"/>
+                <filter name="group_az_subtype" string="ประเภทย่อย" context="{'group_by': 'az_subtype_id'}"/>
+                <filter name="group_az_owner" string="เจ้าของสินค้า" context="{'group_by': 'az_owner_id'}"/>
+                <filter name="group_az_part" string="ชิ้นส่วน" context="{'group_by': 'az_part_id'}"/>
+                <filter name="group_az_make" string="ยี่ห้อรถ" context="{'group_by': 'az_car_make_id'}"/>
+                <filter name="group_az_model" string="รุ่นรถ" context="{'group_by': 'az_car_model_id'}"/>
+                <filter name="group_az_tone" string="จำนวนโทนสี" context="{'group_by': 'az_tone'}"/>
+                <filter name="group_az_work_type" string="ประเภทงาน" context="{'group_by': 'az_work_type'}"/>
+                <filter name="group_az_stage" string="ขั้นตอนงาน" context="{'group_by': 'az_work_stage'}"/>
+            </filter>
+            <xpath expr="//search" position="inside">
+                <searchpanel view_types="kanban,list">
+                    <field name="az_work_stage" icon="fa-tasks" select="multi" enable_counters="1"/>
+                    <field name="az_owner_id" icon="fa-user" select="multi" enable_counters="1"/>
+                    <field name="az_part_id" icon="fa-puzzle-piece" select="multi" enable_counters="1"/>
+                    <field name="az_car_make_id" icon="fa-car" select="multi" enable_counters="1"/>
+                    <field name="az_brand_id" icon="fa-industry" select="multi" enable_counters="1"/>
+                </searchpanel>
+            </xpath>
+        </field>
+    </record>
+</odoo>

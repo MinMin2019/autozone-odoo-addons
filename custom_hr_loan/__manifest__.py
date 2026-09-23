@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Autozone Employee Loan',
-    'version': '18.0.1.2.0',
+    'version': '18.0.1.2.1',
     'category': 'Autozone/HR',
     'summary': 'ทะเบียนเงินกู้สวัสดิการพนักงาน + ส่งยอดหักงวดเข้า Payslip Batch',
     'description': """

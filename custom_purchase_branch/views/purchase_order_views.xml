@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ฟอร์ม PO: ช่องสาขาที่หัวใบ + คอลัมน์สาขาในบรรทัด -->
+    <record id="purchase_order_form_az_branch" model="ir.ui.view">
+        <field name="name">purchase.order.form.az.branch</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group/group/field[@name='partner_ref']" position="after">
+                <field name="az_branch_id" options="{'no_create': True}"
+                       readonly="state in ('cancel', 'done')"/>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/list/field[@name='name']" position="after">
+                <field name="az_branch_id" optional="show" options="{'no_create': True}"
+                       readonly="state in ('cancel', 'done')"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- list PO (2 ตัว): คอลัมน์สาขา -->
+    <record id="purchase_order_kpis_tree_az_branch" model="ir.ui.view">
+        <field name="name">purchase.order.kpis.list.az.branch</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_kpis_tree"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="az_branch_display" optional="show"/>
+            </field>
+        </field>
+    </record>
+    <record id="purchase_order_view_tree_az_branch" model="ir.ui.view">
+        <field name="name">purchase.order.list.az.branch</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_view_tree"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="az_branch_display" optional="show"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- ค้นหา/กรอง/จัดกลุ่ม -->
+    <record id="view_purchase_order_filter_az_branch" model="ir.ui.view">
+        <field name="name">purchase.order.search.az.branch</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.view_purchase_order_filter"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="az_branch_ids" string="สาขา"/>
+            </field>
+            <filter name="draft" position="before">
+                <filter name="az_no_branch" string="ยังไม่ระบุสาขา" domain="[('az_branch_ids', '=', False)]"/>
+                <separator/>
+            </filter>
+            <xpath expr="//group[1]" position="inside">
+                <filter name="group_az_branch" string="สาขา" context="{'group_by': 'az_branch_ids'}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

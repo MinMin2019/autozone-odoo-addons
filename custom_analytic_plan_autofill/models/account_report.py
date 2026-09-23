@@ -1,8 +1,29 @@
+import re
+
 from odoo import models
+
+
+def _natural_key(name):
+    """ คีย์เรียงแบบธรรมชาติ: "1 IKM" < "2 IKR" < "10 XXX" (ไม่ใช่ 1, 10, 2)
+    ตัวเลขในชื่อเทียบเป็นจำนวน ตัวอักษรเทียบแบบไม่สนพิมพ์เล็ก/ใหญ่ """
+    parts = re.split(r"(\d+)", (name or "").strip())
+    return tuple((0, int(part)) if part.isdigit() else (1, part.lower()) for part in parts)
 
 
 class AccountReport(models.AbstractModel):
     _inherit = "account.report"
+
+    def _az_analytic_header_sort_key(self, header):
+        """ คีย์เรียงหัวคอลัมน์สาขา: มีเลขนำหน้าในชื่อหรือรหัส -> เรียงตามเลขนั้น (natural),
+        ไม่มีเลข -> ต่อท้ายเรียงตามชื่อ """
+        account_ids = (header.get("forced_options") or {}).get("analytic_accounts_list") or ()
+        account = self.env["account.analytic.account"].browse(account_ids[0]) if len(account_ids) == 1 else None
+        if account is None:
+            return (2, _natural_key(header.get("name")))
+        for text in (account.name, account.code):
+            if text and re.match(r"\s*\d", text):
+                return (0, _natural_key(text))
+        return (1, _natural_key(account.name))
 
     def _create_column_analytic(self, options):
         # Enterprise เรียง slice เป็น "แผนทั้งหมดก่อน แล้วค่อยบัญชีทั้งหมด"
@@ -33,7 +54,14 @@ class AccountReport(models.AbstractModel):
                     plans.append(level[i])
                 else:
                     accounts.append(level[i])
+            # เรียงสาขาตามเลขลำดับที่บัญชีใส่นำหน้าไว้ (เช่น "1 IKM") แทนกฎ Odoo ที่เรียง
+            # ตามแผนก่อนแล้วค่อยชื่อ — อ่านจาก record ตรง ๆ ไม่ใช่หัวคอลัมน์ เพราะโมดูลอื่น
+            # (custom_analytic_code_tags) อาจแทนหัวด้วยรหัสไปแล้ว; เรียงทั้งกรณีเลือกโซนและไม่เลือก
+            accounts.sort(key=self._az_analytic_header_sort_key)
             if not plans or not accounts:
+                if accounts:
+                    for i, header in zip(positions, plans + accounts):
+                        level[i] = header
                 continue
             reordered, used = [], set()
             for plan_header in plans:

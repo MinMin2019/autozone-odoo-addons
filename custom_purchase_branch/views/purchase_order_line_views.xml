@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="purchase_order_line_tree_az_branch" model="ir.ui.view">
+        <field name="name">purchase.order.line.list.az.branch</field>
+        <field name="model">purchase.order.line</field>
+        <field name="inherit_id" ref="purchase.purchase_order_line_tree"/>
+        <field name="arch" type="xml">
+            <list position="attributes">
+                <attribute name="multi_edit">1</attribute>
+            </list>
+            <field name="order_id" position="after">
+                <field name="date_order" optional="show"/>
+                <field name="state" optional="hide"/>
+            </field>
+            <field name="product_id" position="after">
+                <field name="az_branch_id" optional="show" options="{'no_create': True}"
+                       readonly="state in ('cancel', 'done')"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="purchase_order_line_search_az_branch" model="ir.ui.view">
+        <field name="name">purchase.order.line.search.az.branch</field>
+        <field name="model">purchase.order.line</field>
+        <field name="inherit_id" ref="purchase.purchase_order_line_search"/>
+        <field name="arch" type="xml">
+            <field name="product_id" position="after">
+                <field name="az_branch_id" string="สาขา"/>
+            </field>
+            <filter name="hide_cancelled" position="before">
+                <filter name="az_no_branch" string="ยังไม่ระบุสาขา" domain="[('az_branch_id', '=', False), ('display_type', '=', False)]"/>
+                <filter name="az_confirmed" string="PO ที่ยืนยันแล้ว" domain="[('state', 'in', ('purchase', 'done'))]"/>
+                <separator/>
+            </filter>
+            <filter name="groupby_supplier" position="before">
+                <filter name="groupby_az_branch" string="สาขา" domain="[]" context="{'group_by': 'az_branch_id'}"/>
+            </filter>
+        </field>
+    </record>
+
+    <record id="purchase_order_line_pivot_az_branch" model="ir.ui.view">
+        <field name="name">purchase.order.line.pivot.az.branch</field>
+        <field name="model">purchase.order.line</field>
+        <field name="arch" type="xml">
+            <pivot string="ซื้อตามสาขา" sample="1">
+                <field name="product_id" type="row"/>
+                <field name="az_branch_id" type="col"/>
+                <field name="product_qty" type="measure"/>
+                <field name="price_subtotal" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="purchase_order_line_graph_az_branch" model="ir.ui.view">
+        <field name="name">purchase.order.line.graph.az.branch</field>
+        <field name="model">purchase.order.line</field>
+        <field name="arch" type="xml">
+            <graph string="ซื้อตามสาขา" type="bar" stacked="1" sample="1">
+                <field name="az_branch_id"/>
+                <field name="price_subtotal" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_purchase_by_branch" model="ir.actions.act_window">
+        <field name="name">ซื้อตามสาขา</field>
+        <field name="res_model">purchase.order.line</field>
+        <field name="view_mode">pivot,list,graph</field>
+        <field name="search_view_id" ref="purchase.purchase_order_line_search"/>
+        <field name="domain">[('display_type', '=', False)]</field>
+        <field name="context">{'search_default_az_confirmed': 1, 'search_default_filter_date_order': 1, 'create': False, 'edit': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">ยังไม่มีรายการซื้อในช่วงที่เลือก</p>
+            <p>ตาราง = สินค้า × สาขา (จากช่อง Analytic บนบรรทัด PO) กดตัวเลขเพื่อดูใบ PO ที่เกี่ยวข้อง</p>
+        </field>
+    </record>
+    <record id="action_purchase_by_branch_view_pivot" model="ir.actions.act_window.view">
+        <field name="sequence">1</field>
+        <field name="view_mode">pivot</field>
+        <field name="view_id" ref="purchase_order_line_pivot_az_branch"/>
+        <field name="act_window_id" ref="action_purchase_by_branch"/>
+    </record>
+    <record id="action_purchase_by_branch_view_list" model="ir.actions.act_window.view">
+        <field name="sequence">2</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="purchase.purchase_order_line_tree"/>
+        <field name="act_window_id" ref="action_purchase_by_branch"/>
+    </record>
+    <record id="action_purchase_by_branch_view_graph" model="ir.actions.act_window.view">
+        <field name="sequence">3</field>
+        <field name="view_mode">graph</field>
+        <field name="view_id" ref="purchase_order_line_graph_az_branch"/>
+        <field name="act_window_id" ref="action_purchase_by_branch"/>
+    </record>
+
+    <menuitem id="menu_purchase_by_branch" name="ซื้อตามสาขา" parent="purchase.purchase_report_main"
+              action="action_purchase_by_branch" sequence="50" groups="purchase.group_purchase_user"/>
+</odoo>

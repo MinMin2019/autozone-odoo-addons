@@ -7,10 +7,13 @@
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='order_line']/list/field[@name='price_subtotal']" position="after">
+                <!-- ไม่ล็อกเมื่อวางบิลแล้ว (ต่างจากช่อง Unit Price ของ Odoo) เพราะการแก้ช่องนี้
+                     ไม่ย้อนไปแก้ใบแจ้งหนี้ที่ออกไปแล้ว (ใบที่ออกแล้วเก็บ exact_subtotal ของตัวเอง)
+                     มีผลแค่กับยอดรวมบน SO และใบที่จะออกต่อไป — เดิมใช้ readonly="qty_invoiced > 0"
+                     แล้วเจอปัญหาจริง: SO ที่วางบิลไปบางส่วนแล้วจะล็อกถาวร แก้ให้ตรง PO ไม่ได้เลย -->
                 <field name="exact_subtotal"
                        string="ยอดรวมกำหนดเอง"
-                       optional="hide"
-                       readonly="qty_invoiced &gt; 0"/>
+                       optional="hide"/>
                 <field name="exact_price_unit"
                        string="ราคา/หน่วย (ละเอียด)"
                        optional="hide"
