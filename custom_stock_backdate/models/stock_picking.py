@@ -16,6 +16,25 @@ class StockPicking(models.Model):
         "และ JE ที่เกิดอัตโนมัติ แทนวันเวลาที่กด Validate",
     )
 
+    def _backdate_tz(self):
+        """ชื่อเขตเวลาที่ใช้ตีความ backdate: ของผู้ใช้ > ของบริษัท > ไทย"""
+        self.ensure_one()
+        return (
+            self.env.context.get("tz")
+            or self.env.user.tz
+            or self.company_id.partner_id.tz
+            or "Asia/Bangkok"
+        )
+
+    def _backdate_local_dt(self, dt):
+        return fields.Datetime.context_timestamp(self.with_context(tz=self._backdate_tz()), dt)
+
+    def _backdate_local_date(self, dt):
+        """แปลง datetime (เก็บเป็น UTC) เป็น "วันที่" ตามเขตเวลาผู้ใช้/บริษัท
+        ห้ามใช้ dt.date() ตรง ๆ เพราะ 22/09 00:00 เวลาไทย = 21/09 17:00 UTC
+        จะได้วันก่อนจริง 1 วัน (บั๊กที่เจอ 23 ก.ย. 2026)"""
+        return self._backdate_local_dt(dt).date()
+
     @api.constrains("backdate")
     def _check_backdate(self):
         for picking in self:
@@ -37,7 +56,9 @@ class StockPicking(models.Model):
         for picking in backdated:
             res = super(
                 StockPicking,
-                picking.with_context(force_period_date=picking.backdate.date()),
+                picking.with_context(
+                    force_period_date=picking._backdate_local_date(picking.backdate)
+                ),
             )._action_done()
         remaining = self - backdated
         if remaining:
@@ -106,7 +127,7 @@ class StockPicking(models.Model):
 
         old_date = self.date_done
         entries = self._backdate_journal_entries()
-        results = entries._backdate_stock_entry_to(new_date.date())
+        results = entries._backdate_stock_entry_to(self._backdate_local_date(new_date))
 
         self._stamp_backdate(new_date)
         self.backdate = new_date
@@ -129,7 +150,11 @@ class StockPicking(models.Model):
             Markup("<p><b>%s</b><br/>%s</p>")
             % (
                 _("แก้วันที่รับจริงย้อนหลัง"),
-                _("จาก %(old)s เป็น %(new)s", old=old_date, new=new_date),
+                _(
+                    "จาก %(old)s เป็น %(new)s",
+                    old=self._backdate_local_dt(old_date).strftime("%d/%m/%Y %H:%M"),
+                    new=self._backdate_local_dt(new_date).strftime("%d/%m/%Y %H:%M"),
+                ),
             )
         ]
         if results:

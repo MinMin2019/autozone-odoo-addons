@@ -31,7 +31,7 @@ class StockBackdateFix(models.TransientModel):
                     _("ใบโอนนี้ไม่มีใบสำคัญบัญชีผูกอยู่ — แก้เฉพาะฝั่งสต๊อกอย่างเดียว")
                 )
             elif wiz.new_date:
-                target = wiz.new_date.date()
+                target = wiz.picking_id._backdate_local_date(wiz.new_date)
                 crossing = wiz.entry_ids.filtered(
                     lambda m: (m.date.year, m.date.month) != (target.year, target.month)
                 )

@@ -1,6 +1,6 @@
 {
     "name": "Stock Backdate",
-    "version": "18.0.1.3.0",
+    "version": "18.0.1.3.1",
     "category": "Autozone/Inventory",
     "author": "Autozone",
     "summary": "Validate a transfer with a backdated actual date, and repair the date of transfers already validated with the wrong one.",

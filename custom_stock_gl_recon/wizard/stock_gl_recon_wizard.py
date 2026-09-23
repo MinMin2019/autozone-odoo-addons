@@ -2,7 +2,7 @@
 """กระทบยอดสต็อกกับบัญชี (Inventory to GL Reconciliation)
 
 ส่วน A (section = valuation) — ต่อบัญชีสินค้าคงเหลือ 141xxx
-  physical  = Σ (จำนวนคงเหลือ ณ วันที่ จาก stock.move.line) x standard_price ปัจจุบัน   [เฉพาะสินค้าเก็บสต็อก]
+  physical  = Σ (จำนวนคงเหลือ ณ วันที่ จาก stock.move.line ใน internal + transit ของบริษัท) x standard_price ปัจจุบัน   [เฉพาะสินค้าเก็บสต็อก]
   svl       = Σ stock.valuation.layer.value ที่ create_date <= วันที่
   gl        = Σ account.move.line.balance (posted, date <= วันที่) ของบัญชีนั้น
   gl - svl  = je_no_svl (บรรทัด GL ที่ JE ไม่ได้มาจาก SVL)
@@ -137,19 +137,29 @@ class StockGlReconWizard(models.TransientModel):
         )
         svl = {r[0]: {"value": r[1], "no_je": r[2], "qty": r[3], "count": r[4]} for r in cr.fetchall()}
 
-        # ---------- 4. จำนวนคงเหลือ ณ วันที่ ต่อสินค้า (internal locations) ----------
+        # ---------- 4. จำนวนคงเหลือ ณ วันที่ ต่อสินค้า (ตำแหน่งที่ตีมูลค่า) ----------
+        # ตำแหน่งที่ "ของยังเป็นสต็อกบริษัท" = internal + transit ที่มี company
+        # (ตาม stock.location._should_be_valued ของ Odoo) — ของที่ค้างในคลังพัก
+        # ระหว่างส่ง/รับของ Flow B (TOUT→TIN) ยังอยู่ใน SVL จึงต้องนับด้วย
+        # ไม่งั้นโชว์เป็น "สินค้าผี" หลอก (บั๊กที่เจอ 23 ก.ย. 2026)
         cr.execute(
-            """SELECT ml.product_id,
-                      COALESCE(SUM(CASE WHEN ld.usage = 'internal' THEN ml.quantity_product_uom ELSE 0 END), 0)
-                    - COALESCE(SUM(CASE WHEN ls.usage = 'internal' THEN ml.quantity_product_uom ELSE 0 END), 0)
-                 FROM stock_move_line ml
-                 JOIN stock_move m ON m.id = ml.move_id
-                 JOIN stock_location ls ON ls.id = ml.location_id
-                 JOIN stock_location ld ON ld.id = ml.location_dest_id
-                WHERE ml.state = 'done' AND m.company_id = %s AND ml.date < %s
-                  AND (ls.usage = 'internal' OR ld.usage = 'internal')
-                  AND NOT (ls.usage = 'internal' AND ld.usage = 'internal')
-             GROUP BY ml.product_id""",
+            """SELECT x.product_id,
+                      COALESCE(SUM(CASE WHEN x.dst_valued THEN x.qty ELSE 0 END), 0)
+                    - COALESCE(SUM(CASE WHEN x.src_valued THEN x.qty ELSE 0 END), 0)
+                 FROM (
+                    SELECT ml.product_id, ml.quantity_product_uom AS qty,
+                           (ls.usage = 'internal'
+                            OR (ls.usage = 'transit' AND ls.company_id IS NOT NULL)) AS src_valued,
+                           (ld.usage = 'internal'
+                            OR (ld.usage = 'transit' AND ld.company_id IS NOT NULL)) AS dst_valued
+                      FROM stock_move_line ml
+                      JOIN stock_move m ON m.id = ml.move_id
+                      JOIN stock_location ls ON ls.id = ml.location_id
+                      JOIN stock_location ld ON ld.id = ml.location_dest_id
+                     WHERE ml.state = 'done' AND m.company_id = %s AND ml.date < %s
+                 ) x
+                WHERE x.src_valued <> x.dst_valued
+             GROUP BY x.product_id""",
             (cid, end),
         )
         onhand = {r[0]: r[1] for r in cr.fetchall()}
