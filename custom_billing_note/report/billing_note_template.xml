@@ -14,15 +14,48 @@
             <field name="report_name">custom_billing_note.report_billing_note_template</field>
             <field name="report_file">custom_billing_note.report_billing_note_template</field>
             <field name="print_report_name">'Billing Note - %s' % (object.name)</field>
+            <field name="paperformat_id" ref="custom_billing_note.paperformat_billing_note" />
             <field name="binding_model_id" ref="model_customer_billing_note" /> <!-- แก้ ref ตาม
             model -->
             <field name="binding_type">report</field>
         </record>
 
         <!-- ========================================== -->
-        <!-- TEMPLATE โครงสร้างหลักของรายงาน -->
+        <!-- ACTION รูปแบบที่ 2: ตารางรายการมีคอลัมน์ เลขที่ PO / เลขที่ D/O -->
         <!-- ========================================== -->
+        <record id="action_report_billing_note_po" model="ir.actions.report">
+            <field name="name">ใบวางบิล (มี PO/DO)</field>
+            <field name="model">customer.billing.note</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">custom_billing_note.report_billing_note_po_template</field>
+            <field name="report_file">custom_billing_note.report_billing_note_po_template</field>
+            <field name="print_report_name">'Billing Note PO - %s' % (object.name)</field>
+            <field name="paperformat_id" ref="custom_billing_note.paperformat_billing_note" />
+            <field name="binding_model_id" ref="model_customer_billing_note" />
+            <field name="binding_type">report</field>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- TEMPLATE ทางเข้า 2 รูปแบบ → เรียก document เดียวกัน สลับด้วยตัวแปร fmt
+             fmt = 'std' : แบบเดิม  (ลำดับ / วันที่บิล / เลขที่ใบกำกับ / วันที่ครบกำหนด / จำนวนเงิน)
+             fmt = 'po'  : แบบใหม่  (+ เลขที่ PO + เลขที่ D/O, เรียงตาม PO → วันที่บิล)
+        ========================================== -->
         <template id="report_billing_note_template">
+            <t t-call="custom_billing_note.report_billing_note_document">
+                <t t-set="fmt" t-value="'std'" />
+            </t>
+        </template>
+        <template id="report_billing_note_po_template">
+            <t t-call="custom_billing_note.report_billing_note_document">
+                <t t-set="fmt" t-value="'po'" />
+            </t>
+        </template>
+
+        <!-- ========================================== -->
+        <!-- TEMPLATE โครงสร้างหลักของรายงาน (ใช้ร่วมกันทั้ง 2 รูปแบบ) -->
+        <!-- ========================================== -->
+        <template id="report_billing_note_document">
+            <t t-set="is_po" t-value="fmt == 'po'" />
             <t t-call="web.html_container">
                 <t t-foreach="docs" t-as="o">
                     <t t-foreach="['ต้นฉบับ (Original)', 'สำเนา (Copy)']" t-as="copy_name">
@@ -64,7 +97,8 @@
 
                             <!-- ==========================================================
                                  ค่าคงที่สำหรับคำนวณการแบ่งหน้า (หน่วย px) — ปรับจูนได้ที่นี่
-                                 วัดจากงานพิมพ์จริง: 1 หน้า ≈ 1280px, แถวละ ≈ 26px, ส่วนหัว ≈ 265px
+                                 วัดจากงานพิมพ์จริง: 1 หน้า ≈ 1280px, ส่วนหัว ≈ 265px
+                                 วัดซ้ำจาก PDF 23 ก.ย. 2026 (มาตราส่วน 0.6pt/px): แถวละ 28.2px จริง (เดิมตั้ง 26.5 → 29 แถวไหลทับยอดรวม ~20px)
                                  PAGE_H    = ความสูงพื้นที่ใช้งานของ 1 หน้า (ตั้งต่ำกว่าจริงเล็กน้อยกันเนื้อหาล้น)
                                  TOP_H     = ความสูงส่วนหัว (โลโก้ + ข้อมูลลูกค้า + หัวตาราง)
                                  ROW_H     = ความสูงรายการ 1 แถว
@@ -73,32 +107,43 @@
                                  RPP_FULL  = จำนวนรายการต่อหน้า (ปรับเลขนี้ตรงๆ ได้เลย)
                                  ROWS_LAST = จำนวนแถวมากสุดที่หน้าสุดท้ายรับได้ (คำนวณอัตโนมัติ
                                              เผื่อที่ให้ยอดรวม+ลายเซ็น) — ถ้ารายการหน้าสุดท้ายเกินค่านี้
-                                             จะเพิ่มหน้าท้ายให้อัตโนมัติ (มีแต่ตารางเปล่า+ยอดรวม+ลายเซ็น)
+                                             หน้านั้นเก็บไว้ ROWS_LAST แถว แล้วย้ายส่วนที่เกินไปหน้าท้ายใหม่
+                                             (หน้าท้ายจึงมีรายการอย่างน้อย 1 แถวเสมอ + ยอดรวม + ลายเซ็น)
                                  * ถ้าเนื้อหาล้นไปเกิดหน้าเปล่าแทรก → ลด RPP_FULL หรือเพิ่ม ROW_H / TOP_H
                                  * ถ้าท้ายกระดาษลอยสูงจากขอบล่าง → เพิ่ม PAGE_H
                                  ========================================================== -->
                             <t t-set="PAGE_H" t-value="1260" />
                             <t t-set="TOP_H" t-value="275" />
-                            <t t-set="ROW_H" t-value="26.5" />
+                            <t t-set="ROW_H" t-value="28.2" />
                             <t t-set="FOOTER_H" t-value="175" />
                             <t t-set="RESERVE" t-value="FOOTER_H + 30" />
                             <t t-set="RPP_FULL" t-value="36" />
+                            <!-- TOP_SLACK = ส่วนที่ TOP_H เผื่อเกินจริง (วัดจาก PDF 23 ก.ย. 2026: หัวลูกค้า 3 บรรทัด
+                                 ท้าย thead อยู่ที่ ~244px, 2 บรรทัด ~230px) ใช้เฉพาะตอนนับว่าหน้าสุดท้ายรับได้กี่แถว
+                                 → 28 แถว (ถ้า 29 แถว จะทับกล่องยอดรวม → ต้องแยกหน้าท้าย) -->
+                            <t t-set="TOP_SLACK" t-value="20" />
                             <t t-set="ROWS_LAST"
-                                t-value="max(1, int((PAGE_H - TOP_H - RESERVE) / ROW_H))" />
-                            <!-- เรียงรายการตามวันที่บิล เก่า→ใหม่ วันเดียวกันเรียงตามเลขที่เอกสาร (อยากได้ใหม่→เก่า เพิ่ม reverse=True) -->
+                                t-value="max(1, int((PAGE_H - TOP_H - RESERVE + TOP_SLACK) / ROW_H))" />
+                            <!-- เรียงรายการตามวันที่บิล เก่า→ใหม่ วันเดียวกันเรียงตามเลขที่เอกสาร (อยากได้ใหม่→เก่า เพิ่ม reverse=True)
+                                 แบบ PO/DO: จัดกลุ่มตามเลขที่ PO ก่อน แล้วค่อยเรียงวันที่บิลในแต่ละ PO -->
+                            <t t-set="sort_key"
+                                t-value="(lambda inv: (inv.x_po_reference or '', str(inv.invoice_date or ''), inv.name or '')) if is_po else (lambda inv: (str(inv.invoice_date or ''), inv.name or ''))" />
                             <t t-set="inv_lines"
-                                t-value="list(o.invoice_ids.sorted(key=lambda inv: (str(inv.invoice_date or ''), inv.name or '')))" />
+                                t-value="list(o.invoice_ids.sorted(key=sort_key))" />
                             <!-- แบ่งรายการเป็นหน้าๆ ละ RPP_FULL แถว (ถ้าไม่มีรายการเลย ให้มี 1 หน้าเปล่า) -->
                             <t t-set="page_chunks"
                                 t-value="[inv_lines[i:i + RPP_FULL] for i in range(0, len(inv_lines), RPP_FULL)] or [[]]" />
                             <!-- ถ้าหน้าสุดท้ายมีรายการเยอะจนไม่เหลือที่ให้ยอดรวม+ลายเซ็น
-                                 → เพิ่มหน้าท้ายว่างอีก 1 หน้าไว้วางยอดรวม+ลายเซ็นโดยเฉพาะ -->
+                                 → หน้านั้นเก็บ ROWS_LAST แถว ส่วนที่เกินย้ายไปหน้าท้ายใหม่ (ตกลงกับผู้ใช้: หน้าท้ายต้องมีรายการ ไม่เอาตารางเปล่า) -->
                             <t t-set="page_chunks"
-                                t-value="page_chunks + [[]] if len(page_chunks[-1]) > ROWS_LAST else page_chunks" />
+                                t-value="page_chunks[:-1] + [page_chunks[-1][:ROWS_LAST], page_chunks[-1][ROWS_LAST:]] if len(page_chunks[-1]) > ROWS_LAST else page_chunks" />
 
                             <t t-foreach="page_chunks" t-as="chunk">
                                 <t t-set="is_last_page"
                                     t-value="chunk_index == len(page_chunks) - 1" />
+                                <!-- เลขลำดับเริ่มต้นของหน้านี้ = จำนวนรายการทุกหน้าก่อนหน้า (หน้าท้ายอาจไม่เต็ม RPP_FULL) -->
+                                <t t-set="row_offset"
+                                    t-value="sum(len(c) for c in page_chunks[:chunk_index])" />
                                 <!-- ความสูงที่ใช้ไปแล้วเหนือช่องว่างท้ายตาราง -->
                                 <t t-set="used_h"
                                     t-value="TOP_H + len(chunk) * ROW_H" />
@@ -216,7 +261,32 @@
                                                 style="width: 100%; border: 1px solid #000; margin-bottom: 0px; border-collapse: collapse;">
                                                 <thead
                                                     style="background-color: #f1f1f1; border-bottom: 1px solid #000;">
-                                                    <tr>
+                                                    <!-- แบบ PO/DO: 7 คอลัมน์ (ลำดับ/วันที่/เลขที่ใบกำกับ/ครบกำหนด/PO/DO/จำนวนเงิน) -->
+                                                    <tr t-if="is_po">
+                                                        <th
+                                                            style="width: 6%; border: 1px solid #000; text-align: center;">
+                                                            ลำดับ</th>
+                                                        <th
+                                                            style="width: 13%; border: 1px solid #000; text-align: center;">
+                                                            วันที่บิล</th>
+                                                        <th
+                                                            style="width: 17%; border: 1px solid #000; text-align: center;">
+                                                            เลขที่ใบกำกับ</th>
+                                                        <th
+                                                            style="width: 13%; border: 1px solid #000; text-align: center;">
+                                                            วันที่ครบกำหนด</th>
+                                                        <th
+                                                            style="width: 17%; border: 1px solid #000; text-align: center;">
+                                                            เลขที่ PO</th>
+                                                        <th
+                                                            style="width: 17%; border: 1px solid #000; text-align: center;">
+                                                            เลขที่ D/O</th>
+                                                        <th
+                                                            style="width: 17%; border: 1px solid #000; text-align: center;">
+                                                            จำนวนเงิน</th>
+                                                    </tr>
+                                                    <!-- แบบเดิม: 5 คอลัมน์ -->
+                                                    <tr t-else="">
                                                         <th
                                                             style="width: 5%; border: 1px solid #000; text-align: center;">
                                                             ลำดับ</th>
@@ -240,7 +310,7 @@
                                                             <td
                                                                 style="text-align: center; border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid transparent; border-top: none;">
                                                                 <span
-                                                                    t-esc="chunk_index * RPP_FULL + inv_index + 1" />
+                                                                    t-esc="row_offset + inv_index + 1" />
                                                             </td>
                                                             <td
                                                                 style="text-align: center; border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid transparent; border-top: none;">
@@ -256,6 +326,15 @@
                                                                 <span t-field="inv.invoice_date_due"
                                                                     t-options='{"widget": "date", "format": "dd/MM/yyyy"}' />
                                                             </td>
+                                                            <!-- คอลัมน์เพิ่มเฉพาะแบบ PO/DO (ฟิลด์จาก custom_invoice_print) -->
+                                                            <td t-if="is_po"
+                                                                style="text-align: center; border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid transparent; border-top: none;">
+                                                                <span t-esc="inv.x_po_reference or ''" />
+                                                            </td>
+                                                            <td t-if="is_po"
+                                                                style="text-align: center; border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid transparent; border-top: none;">
+                                                                <span t-esc="inv.x_do_reference or ''" />
+                                                            </td>
                                                             <td
                                                                 style="text-align: right; border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid transparent; border-top: none; padding-right: 10px;">
                                                                 <span t-field="inv.amount_total"
@@ -264,18 +343,15 @@
                                                         </tr>
                                                     </t>
                                                     <!-- แถวเปล่า: ยืดตารางลงไปให้เต็มพื้นที่
-                                                         (ความสูงคำนวณอัตโนมัติจากจำนวนรายการ) -->
+                                                         (ความสูงคำนวณอัตโนมัติจากจำนวนรายการ)
+                                                         จำนวนช่อง = 7 (แบบ PO/DO) หรือ 5 (แบบเดิม) -->
                                                     <tr>
                                                         <td
                                                             t-attf-style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid #000; border-top: none; height: {{filler_h}}px;"></td>
-                                                        <td
-                                                            style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid #000; border-top: none;"></td>
-                                                        <td
-                                                            style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid #000; border-top: none;"></td>
-                                                        <td
-                                                            style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid #000; border-top: none;"></td>
-                                                        <td
-                                                            style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid #000; border-top: none;"></td>
+                                                        <t t-foreach="range(6 if is_po else 4)" t-as="fc">
+                                                            <td
+                                                                style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid #000; border-top: none;"></td>
+                                                        </t>
                                                     </tr>
                                                 </tbody>
                                             </table>

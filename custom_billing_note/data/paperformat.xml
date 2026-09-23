@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <!-- Paperformat ของใบวางบิล (ค่าเดียวกับ "A4 For Custom Report" id 15 ใน DB ซึ่งไม่มี xmlid)
+             โมดูลพกเองเพื่อให้ action ทั้ง 2 รูปแบบใช้ค่าเดียวกันทุกเครื่อง (local / Dev / prod)
+             ⚠️ ค่าคงที่ PAGE_H/TOP_H/ROW_H ใน template จูนกับขอบกระดาษชุดนี้ ห้ามเปลี่ยนขอบโดยไม่จูนใหม่ -->
+        <record id="paperformat_billing_note" model="report.paperformat">
+            <field name="name">A4 Billing Note</field>
+            <field name="default" eval="False" />
+            <field name="format">A4</field>
+            <field name="orientation">Portrait</field>
+            <field name="margin_top">10</field>
+            <field name="margin_bottom">10</field>
+            <field name="margin_left">5</field>
+            <field name="margin_right">5</field>
+            <field name="header_line" eval="False" />
+            <field name="header_spacing">35</field>
+            <field name="dpi">90</field>
+        </record>
+    </data>
+</odoo>
