@@ -1,6 +1,6 @@
 {
     "name": "Stock vs GL Reconciliation (กระทบยอดสต็อกกับบัญชี)",
-    "version": "18.0.1.0.1",
+    "version": "18.0.1.0.2",
     "category": "Autozone/Inventory",
     "author": "Autozone",
     "summary": "กระทบยอด มูลค่าของในคลัง / ระบบสต็อก (valuation layer) / ยอดบัญชี 141xxx ณ วันที่ พร้อมแยกสาเหตุผลต่าง + บัญชีพักสินค้าขาเข้า-ขาออก",

@@ -1,86 +1,325 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="action_report_az_branch_transfer" model="ir.actions.report">
-        <field name="name">ใบโอนสินค้าไปสาขา</field>
-        <field name="model">az.branch.transfer</field>
-        <field name="report_type">qweb-pdf</field>
-        <field name="report_name">custom_branch_transfer.report_az_branch_transfer</field>
-        <field name="report_file">custom_branch_transfer.report_az_branch_transfer</field>
-        <field name="print_report_name">'%s' % object.name</field>
-        <field name="paperformat_id" ref="paperformat_az_branch_transfer"/>
-        <field name="binding_model_id" ref="model_az_branch_transfer"/>
-        <field name="binding_type">report</field>
-    </record>
+    <data>
+        <!-- ==========================================
+             ACTION พิมพ์ "ใบโอนสินค้าไปสาขา"
+             ========================================== -->
+        <record id="action_report_az_branch_transfer" model="ir.actions.report">
+            <field name="name">ใบโอนสินค้าไปสาขา</field>
+            <field name="model">az.branch.transfer</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">custom_branch_transfer.report_az_branch_transfer</field>
+            <field name="report_file">custom_branch_transfer.report_az_branch_transfer</field>
+            <field name="print_report_name">'Branch Transfer - %s' % (object.name)</field>
+            <field name="paperformat_id" ref="paperformat_az_branch_transfer"/>
+            <field name="binding_model_id" ref="model_az_branch_transfer"/>
+            <field name="binding_type">report</field>
+        </record>
 
-    <template id="report_az_branch_transfer">
-        <t t-call="web.html_container">
-            <t t-foreach="docs" t-as="doc">
-                <t t-call="web.basic_layout">
-                    <div class="page" style="font-size:13px;">
-                        <table style="width:100%;border-collapse:collapse;">
-                            <tr>
-                                <td style="width:60%;vertical-align:top;">
-                                    <div style="font-size:16px;font-weight:bold;"><t t-esc="doc.company_id.name"/></div>
-                                    <div t-esc="doc.company_id.partner_id.get_thai_address()"/>
-                                </td>
-                                <td style="width:40%;vertical-align:top;text-align:right;">
-                                    <div style="font-size:20px;font-weight:bold;">ใบโอนสินค้าไปสาขา</div>
-                                    <div>เลขที่ <b><t t-esc="doc.name"/></b></div>
-                                    <div>วันที่ <t t-esc="doc.date" t-options="{'widget': 'date'}"/></div>
-                                </td>
-                            </tr>
-                        </table>
-                        <table style="width:100%;border-collapse:collapse;margin-top:8px;border:1px solid #444;">
-                            <tr>
-                                <td style="width:50%;padding:6px;border-right:1px solid #444;">
-                                    <b>จาก:</b> <t t-esc="doc.source_warehouse_id.name"/><br/>
-                                    <span>ใบส่ง: <t t-esc="doc.tout_picking_id.name or '-'"/></span>
-                                </td>
-                                <td style="width:50%;padding:6px;">
-                                    <b>ถึงสาขา:</b> <t t-esc="doc.warehouse_id.name"/><br/>
-                                    <span>ใบรับ: <t t-esc="', '.join(doc.tin_picking_ids.mapped('name')) or '-'"/></span>
-                                </td>
-                            </tr>
-                        </table>
-                        <table class="table table-sm" style="width:100%;border-collapse:collapse;margin-top:10px;">
-                            <thead>
-                                <tr style="background:#eee;">
-                                    <th style="border:1px solid #444;padding:4px;width:5%;text-align:center;">#</th>
-                                    <th style="border:1px solid #444;padding:4px;width:15%;">รหัส</th>
-                                    <th style="border:1px solid #444;padding:4px;">รายการ</th>
-                                    <th style="border:1px solid #444;padding:4px;width:10%;">หน่วย</th>
-                                    <th style="border:1px solid #444;padding:4px;width:12%;text-align:right;">จำนวนส่ง</th>
-                                    <th style="border:1px solid #444;padding:4px;width:12%;text-align:right;">รับจริง</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <t t-set="i" t-value="0"/>
-                                <tr t-foreach="doc.line_ids" t-as="l">
-                                    <t t-set="i" t-value="i + 1"/>
-                                    <td style="border:1px solid #444;padding:4px;text-align:center;"><t t-esc="i"/></td>
-                                    <td style="border:1px solid #444;padding:4px;"><t t-esc="l.product_id.default_code or ''"/></td>
-                                    <td style="border:1px solid #444;padding:4px;"><t t-esc="l.product_id.name"/></td>
-                                    <td style="border:1px solid #444;padding:4px;"><t t-esc="l.product_uom_id.name"/></td>
-                                    <td style="border:1px solid #444;padding:4px;text-align:right;">
-                                        <t t-esc="l.qty_sent if doc.state != 'confirmed' else l.product_uom_qty" t-options="{'widget': 'float', 'precision': 2}"/>
-                                    </td>
-                                    <td style="border:1px solid #444;padding:4px;text-align:right;">
-                                        <t t-if="doc.state in ('partial', 'done')" t-esc="l.qty_received" t-options="{'widget': 'float', 'precision': 2}"/>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div t-if="doc.note" style="margin-top:6px;"><b>หมายเหตุ:</b> <t t-esc="doc.note"/></div>
-                        <table style="width:100%;margin-top:40px;text-align:center;">
-                            <tr>
-                                <td style="width:33%;">______________________<br/>ผู้จัดส่ง (ส่วนกลาง)<br/>วันที่ ________</td>
-                                <td style="width:33%;">______________________<br/>ผู้ขนส่ง<br/>วันที่ ________</td>
-                                <td style="width:33%;">______________________<br/>ผู้รับ (สาขา)<br/>วันที่ ________</td>
-                            </tr>
-                        </table>
-                    </div>
+        <!-- ==========================================
+             TEMPLATE — โครงเดียวกับ custom_billing_note /
+             custom_vendor_payment_report: คุมความสูงต่อหน้าเป็น px เอง
+             (wkhtmltopdf วางท้ายกระดาษ absolute ข้ามหลายหน้าไม่ได้)
+             ทุกหน้า: หัวบริษัท + กล่องสาขา/เลขที่ + ตาราง (เส้นปิดล่างทุกหน้า)
+             หน้าสุดท้าย: ตาราง → หมายเหตุ/ยอดรวม → ลายเซ็น 3 ช่องชิดล่าง
+             พิมพ์ 2 ชุด: ต้นฉบับ (ไปกับของให้สาขา) + สำเนา (ส่วนกลางเก็บ)
+             ========================================== -->
+        <template id="report_az_branch_transfer">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="o">
+                    <t t-foreach="['ต้นฉบับ (สาขา)', 'สำเนา (ส่วนกลาง)']" t-as="copy_name">
+                        <t t-call="web.basic_layout">
+                            <style>
+                                /* ปิด Header/Footer ระบบ */
+                                .header, .footer { display: none !important; }
+
+                                .page {
+                                font-family: Sarabun, sans-serif;
+                                font-size: 13px;
+                                color: #000;
+                                position: relative;
+                                }
+
+                                .page-footer {
+                                position: absolute;
+                                bottom: 0;
+                                left: 0;
+                                width: 100%;
+                                }
+
+                                /* ตารางรายการ: ตัดข้อความยาวด้วย … ให้แถวสูงคงที่
+                                   ⚠️ ห้ามใช้ table-layout: fixed — wkhtmltopdf จะแทรกช่องว่าง 1 บรรทัดที่แถว ~26
+                                   ของทุกหน้า (ไม่ขึ้นกับข้อมูล, ทดสอบ 23 ก.ย. 2026) ใช้ td { max-width: 0 } แทน
+                                   เพื่อให้ % ความกว้างคอลัมน์บน th เป็นตัวคุม แล้วครอบข้อความด้วย div.cut ความสูงคงที่ */
+                                table.bt-lines td { max-width: 0; }
+                                .cut {
+                                display: block;
+                                height: 18px;
+                                line-height: 18px;
+                                overflow: hidden;
+                                white-space: nowrap;
+                                text-overflow: ellipsis;
+                                }
+                            </style>
+
+                            <!-- ==========================================================
+                                 ค่าคงที่แบ่งหน้า (px) — ฐานเดียวกับ BN/Payment Report:
+                                 PAGE_H=1260, ROW_H=26.5
+                                 TOP_H: กล่องขวามี 4 แถว (วันที่/เลขที่/ใบส่ง/ใบรับ) → 330
+                                 FOOTER_H: หมายเหตุ 1 บรรทัด + ยอดรวม 2 แถว + ลายเซ็น 3 ช่อง → 230
+                                 * ถ้าพิมพ์จริงแล้วท้ายกระดาษหลุด/ช่องว่างเพี้ยน จูนที่นี่ที่เดียว
+                                 ========================================================== -->
+                            <t t-set="PAGE_H" t-value="1260"/>
+                            <t t-set="TOP_H" t-value="330"/>
+                            <t t-set="ROW_H" t-value="26.5"/>
+                            <t t-set="FOOTER_H" t-value="230"/>
+                            <t t-set="RESERVE" t-value="FOOTER_H + 30"/>
+                            <t t-set="RPP_FULL" t-value="32"/>
+                            <t t-set="ROWS_LAST"
+                                t-value="max(1, int((PAGE_H - TOP_H - RESERVE) / ROW_H))"/>
+
+                            <!-- จำนวน "ส่ง" ที่พิมพ์: ก่อนส่งของ = ตามใบ, หลังส่ง = ที่ส่งจริง (TOUT done) -->
+                            <t t-set="show_sent" t-value="o.state in ('sent', 'partial', 'done')"/>
+                            <t t-set="show_received" t-value="o.state in ('partial', 'done')"/>
+                            <t t-set="report_lines" t-value="o.line_ids.sorted(lambda l: (l.sequence, l.id))"/>
+                            <t t-set="page_chunks"
+                                t-value="[report_lines[i:i + RPP_FULL] for i in range(0, len(report_lines), RPP_FULL)] or [[]]"/>
+                            <!-- หน้าสุดท้ายแถวเยอะจนไม่พอวางยอดรวม+ลายเซ็น → ตัดแถวท้ายสุดขึ้นหน้าใหม่ไปพร้อมท้ายกระดาษ -->
+                            <t t-set="page_chunks"
+                                t-value="page_chunks[:-1] + [page_chunks[-1][:-1], page_chunks[-1][-1:]] if len(page_chunks[-1]) > ROWS_LAST else page_chunks"/>
+                            <!-- ลำดับเริ่มต้นแต่ละหน้า นับสะสมจริง (แต่ละหน้าแถวไม่เท่ากันได้) -->
+                            <t t-set="chunk_starts"
+                                t-value="[sum(len(c) for c in page_chunks[:i]) for i in range(len(page_chunks))]"/>
+
+                            <t t-foreach="page_chunks" t-as="chunk">
+                                <t t-set="is_last_page" t-value="chunk_index == len(page_chunks) - 1"/>
+                                <t t-set="used_h" t-value="TOP_H + len(chunk) * ROW_H"/>
+                                <t t-set="filler_h"
+                                    t-value="max(0, PAGE_H - used_h - (RESERVE if is_last_page else 4))"/>
+
+                                <div class="page"
+                                    t-attf-style="height: {{PAGE_H}}px; {{'page-break-before: always;' if chunk_index != 0 else ''}}">
+
+                                    <!-- ==================== ส่วนที่ 1: หัวบริษัท ==================== -->
+                                    <div class="row" style="margin-bottom: 15px;">
+                                        <div class="col-8">
+                                            <table class="table table-bordered"
+                                                style="margin-bottom: 15px; border: 1px solid #ffffff;">
+                                                <tr>
+                                                    <td style="width: 15%; padding-right: 15px;">
+                                                        <img t-if="o.company_id.logo"
+                                                            t-att-src="image_data_uri(o.company_id.logo)"
+                                                            style="max-height: 70px; width: auto;"
+                                                            alt="Logo"/>
+                                                    </td>
+                                                    <td>
+                                                        <div style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">
+                                                            <span t-esc="o.company_id.name"/>
+                                                        </div>
+                                                        <div style="font-size: 13px; line-height: 1.4; padding-left: 2px;">
+                                                            <span t-esc="o.company_id.partner_id.get_thai_address()"/>
+                                                            <br/>
+                                                            <t t-if="o.company_id.phone">โทร: <span t-esc="o.company_id.phone"/></t>
+                                                            <t t-if="o.company_id.vat">
+                                                                เลขประจำตัวผู้เสียภาษี: <span t-esc="o.company_id.vat"/></t>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                        <div class="col-4"
+                                            style="text-align: center; vertical-align: middle; margin-top: 10px;">
+                                            <div style="font-size: 22px; font-weight: bold;">
+                                                <span>ใบโอนสินค้าไปสาขา</span>
+                                            </div>
+                                            <div style="font-size: 15px; font-weight: bold;">
+                                                <span>Branch Transfer Note</span>
+                                            </div>
+                                            <div style="font-size: 13px; margin-top: 3px;">
+                                                <span t-esc="copy_name"/>
+                                                <t t-if="len(page_chunks) > 1">
+                                                    &#160;&#160;·&#160;&#160;หน้า <span t-esc="chunk_index + 1"/> / <span t-esc="len(page_chunks)"/>
+                                                </t>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- ==================== ส่วนที่ 2: สาขาปลายทาง + ข้อมูลเอกสาร ==================== -->
+                                    <div style="margin-bottom: 15px;">
+                                        <table style="width: 100%; border-collapse: separate; border-spacing: 5px 0;">
+                                            <tr>
+                                                <td style="width: 60%; vertical-align: top; border: 1px solid #000; padding: 10px;">
+                                                    <div style="font-size: 12px; color: #444;">ส่งถึงสาขา / Deliver To</div>
+                                                    <div style="font-weight: bold; margin-bottom: 4px; font-size: 15px;">
+                                                        <span t-esc="o.warehouse_id.name"/>
+                                                        <t t-if="o.warehouse_id.code"> (<span t-esc="o.warehouse_id.code"/>)</t>
+                                                    </div>
+                                                    <div t-if="o.warehouse_id.partner_id">
+                                                        <span t-esc="o.warehouse_id.partner_id.get_thai_address()"/>
+                                                    </div>
+                                                    <div style="margin-top: 6px;">
+                                                        <span style="color: #444;">จาก / From:</span>
+                                                        <b><span t-esc="o.source_warehouse_id.name"/></b>
+                                                        <t t-if="o.source_warehouse_id.code"> (<span t-esc="o.source_warehouse_id.code"/>)</t>
+                                                    </div>
+                                                </td>
+                                                <td style="width: 40%; vertical-align: top; padding: 0;">
+                                                    <table class="table table-bordered table-sm"
+                                                        style="width: 100%; border: 1px solid #000; margin-bottom: 0; height: 100%;">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td style="width: 40%; font-weight: bold; background-color: #f8f9fa; border: 1px solid #000;">
+                                                                    วันที่</td>
+                                                                <td style="border: 1px solid #000;">
+                                                                    <span t-field="o.date"
+                                                                        t-options='{"widget": "date", "format": "dd/MM/yyyy"}'/>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td style="font-weight: bold; background-color: #f8f9fa; border: 1px solid #000;">
+                                                                    เลขที่</td>
+                                                                <td style="border: 1px solid #000; font-weight: bold;">
+                                                                    <span t-field="o.name"/>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td style="font-weight: bold; background-color: #f8f9fa; border: 1px solid #000;">
+                                                                    ใบส่ง (TOUT)</td>
+                                                                <td style="border: 1px solid #000;">
+                                                                    <span t-esc="o.tout_picking_id.name or '-'"/>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td style="font-weight: bold; background-color: #f8f9fa; border: 1px solid #000;">
+                                                                    ใบรับ (TIN)</td>
+                                                                <td style="border: 1px solid #000; max-width: 0;">
+                                                                    <div class="cut"><span t-esc="', '.join(o.tin_picking_ids.mapped('name')) or '-'"/></div>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+
+                                    <!-- ==================== ส่วนที่ 3: ตารางรายการสินค้า ==================== -->
+                                    <div class="row" style="margin-bottom: 0px;">
+                                        <div class="col-12">
+                                            <table class="table table-sm bt-lines"
+                                                style="width: 100%; border: 1px solid #000; margin-bottom: 0px; border-collapse: collapse;">
+                                                <thead style="background-color: #f1f1f1; border-bottom: 1px solid #000;">
+                                                    <tr>
+                                                        <th style="width: 6%; border: 1px solid #000; text-align: center;">ลำดับ</th>
+                                                        <th style="width: 16%; border: 1px solid #000; text-align: center;">รหัสสินค้า</th>
+                                                        <th style="width: 41%; border: 1px solid #000; text-align: center;">รายการสินค้า</th>
+                                                        <th style="width: 9%; border: 1px solid #000; text-align: center;">หน่วย</th>
+                                                        <th style="width: 14%; border: 1px solid #000; text-align: center;">จำนวนส่ง</th>
+                                                        <th style="width: 14%; border: 1px solid #000; text-align: center;">รับจริง</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <t t-foreach="chunk" t-as="line">
+                                                        <t t-set="qty_show"
+                                                            t-value="line.qty_sent if show_sent else line.product_uom_qty"/>
+                                                        <tr t-attf-style="height: {{ROW_H}}px;">
+                                                            <td style="text-align: center; border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid transparent; border-top: none;">
+                                                                <span t-esc="chunk_starts[chunk_index] + line_index + 1"/>
+                                                            </td>
+                                                            <td
+                                                                style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid transparent; border-top: none; padding-left: 8px;">
+                                                                <div class="cut"><span t-esc="line.product_id.default_code or ''"/></div>
+                                                            </td>
+                                                            <td
+                                                                style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid transparent; border-top: none; padding-left: 8px;">
+                                                                <div class="cut"><span t-esc="line.product_id.name"/></div>
+                                                            </td>
+                                                            <td
+                                                                style="text-align: center; border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid transparent; border-top: none;">
+                                                                <div class="cut"><span t-esc="line.product_uom_id.name"/></div>
+                                                            </td>
+                                                            <td style="text-align: right; border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid transparent; border-top: none; padding-right: 10px;">
+                                                                <span t-esc="'{:,.2f}'.format(qty_show)"/>
+                                                            </td>
+                                                            <td style="text-align: right; border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid transparent; border-top: none; padding-right: 10px;">
+                                                                <span t-if="show_received" t-esc="'{:,.2f}'.format(line.qty_received)"/>
+                                                            </td>
+                                                        </tr>
+                                                    </t>
+                                                    <!-- แถวเปล่า: ยืดตารางลงไปให้เต็มพื้นที่ + เส้นปิดล่างทุกหน้า -->
+                                                    <tr>
+                                                        <td t-attf-style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid #000; border-top: none; height: {{filler_h}}px;"></td>
+                                                        <td style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid #000; border-top: none;"></td>
+                                                        <td style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid #000; border-top: none;"></td>
+                                                        <td style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid #000; border-top: none;"></td>
+                                                        <td style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid #000; border-top: none;"></td>
+                                                        <td style="border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid #000; border-top: none;"></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- ==================== ส่วนที่ 4+5: หมายเหตุ + ยอดรวม + ลายเซ็น
+                                         (เฉพาะหน้าสุดท้าย) ==================== -->
+                                    <div class="page-footer" t-if="is_last_page">
+                                        <div class="row">
+                                            <div class="col-7" style="padding-top: 4px;">
+                                                <div style="height: 26px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
+                                                    <t t-if="o.note"><b>หมายเหตุ:</b> <span t-esc="o.note"/></t>
+                                                </div>
+                                            </div>
+                                            <div class="col-5">
+                                                <table class="table table-sm"
+                                                    style="width: 100%; border: 1px solid #000; margin-bottom: 0px;">
+                                                    <tbody>
+                                                        <tr>
+                                                            <td style="width: 50%; font-weight: bold; text-align: right; border-right: 1px solid #000; background-color: #f1f1f1; padding: 5px 10px;">
+                                                                จำนวนรายการ (Items)</td>
+                                                            <td style="text-align: right; padding: 5px 10px; vertical-align: middle;">
+                                                                <span t-esc="len(report_lines)"/>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="font-weight: bold; text-align: right; border-right: 1px solid #000; border-top: 1px solid #000; background-color: #f1f1f1; padding: 5px 10px;">
+                                                                รวมจำนวนส่ง (Total Qty)</td>
+                                                            <td style="text-align: right; font-weight: bold; border-top: 1px solid #000; padding: 5px 10px; font-size: 15px; vertical-align: middle;">
+                                                                <span t-esc="'{:,.2f}'.format(o.qty_sent_total if show_sent else o.qty_total)"/>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <div style="margin-top: 30px;">
+                                            <div style="border: 1px solid #000; padding: 25px 10px 15px 10px; width: 96%; margin: 0 auto; background-color: white;">
+                                                <div class="row">
+                                                    <div class="col-4" style="text-align: center;">
+                                                        <div style="border-bottom: 1px solid #000; width: 70%; margin: 0 auto 5px auto;"></div>
+                                                        <div>ผู้จัดส่ง (ส่วนกลาง) / Sent By</div>
+                                                        <div style="margin-top: 5px;">วันที่ _______/_______/_______</div>
+                                                    </div>
+                                                    <div class="col-4" style="text-align: center;">
+                                                        <div style="border-bottom: 1px solid #000; width: 70%; margin: 0 auto 5px auto;"></div>
+                                                        <div>ผู้ขนส่ง / Carrier</div>
+                                                        <div style="margin-top: 5px;">วันที่ _______/_______/_______</div>
+                                                    </div>
+                                                    <div class="col-4" style="text-align: center;">
+                                                        <div style="border-bottom: 1px solid #000; width: 70%; margin: 0 auto 5px auto;"></div>
+                                                        <div>ผู้รับสินค้า (สาขา) / Received By</div>
+                                                        <div style="margin-top: 5px;">วันที่ _______/_______/_______</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </t>
+                        </t>
+                    </t>
                 </t>
             </t>
-        </t>
-    </template>
+        </template>
+    </data>
 </odoo>

@@ -13,6 +13,7 @@
             <xpath expr="//field[@name='order_line']/list/field[@name='name']" position="after">
                 <field name="az_branch_id" optional="show" options="{'no_create': True}"
                        readonly="state in ('cancel', 'done')"/>
+                <field name="az_branch_multi" optional="hide" string="หลายสาขา"/>
             </xpath>
         </field>
     </record>

@@ -27,6 +27,16 @@ def _main_account_id(distribution):
     return best_id
 
 
+def _all_account_ids(distribution):
+    ids = []
+    for key in (distribution or {}):
+        for part in str(key).split(","):
+            part = part.strip()
+            if part.isdigit() and int(part) not in ids:
+                ids.append(int(part))
+    return ids
+
+
 class PurchaseOrder(models.Model):
     _inherit = "purchase.order"
 
@@ -40,12 +50,18 @@ class PurchaseOrder(models.Model):
         "account.analytic.account", "az_purchase_order_branch_rel", "order_id", "account_id",
         string="สาขา (จากบรรทัด)", compute="_compute_az_branch_ids", store=True,
     )
-    az_branch_display = fields.Char("สาขา", compute="_compute_az_branch_ids", store=True)
+    az_branch_display = fields.Char("สาขา (ทุกบรรทัด)", compute="_compute_az_branch_ids", store=True)
 
-    @api.depends("order_line.az_branch_id")
+    @api.depends("order_line.analytic_distribution", "order_line.az_branch_id")
     def _compute_az_branch_ids(self):
+        Account = self.env["account.analytic.account"]
         for order in self:
-            branches = order.order_line.filtered(lambda l: not l.display_type).mapped("az_branch_id")
+            ids = []
+            for line in order.order_line.filtered(lambda l: not l.display_type):
+                for i in _all_account_ids(line.analytic_distribution):
+                    if i not in ids:
+                        ids.append(i)
+            branches = Account.browse(ids).exists()
             order.az_branch_ids = [(6, 0, branches.ids)]
             order.az_branch_display = ", ".join(branches.mapped("name"))
 
@@ -103,6 +119,10 @@ class PurchaseOrderLine(models.Model):
         domain="[('company_id', 'in', (company_id, False))]",
         help="สาขาที่รับผิดชอบค่าใช้จ่ายบรรทัดนี้ (= Analytic ที่มีสัดส่วนมากสุด)",
     )
+    az_branch_multi = fields.Boolean(
+        "หลายสาขา", compute="_compute_az_branch_id", store=True,
+        help="บรรทัดนี้กระจายให้มากกว่า 1 สาขา/แผน (ช่องสาขาแสดงตัวแรก ดูรายละเอียดที่ Analytic)",
+    )
 
     @api.depends("analytic_distribution")
     def _compute_az_branch_id(self):
@@ -110,6 +130,7 @@ class PurchaseOrderLine(models.Model):
         for line in self:
             acc_id = _main_account_id(line.analytic_distribution)
             line.az_branch_id = Account.browse(acc_id).exists() if acc_id else False
+            line.az_branch_multi = len(_all_account_ids(line.analytic_distribution)) > 1
 
     def _inverse_az_branch_id(self):
         for line in self:

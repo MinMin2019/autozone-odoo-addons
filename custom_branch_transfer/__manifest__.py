@@ -1,6 +1,6 @@
 {
     "name": "Autozone Branch Transfer (H.O. -> Branch)",
-    "version": "18.0.1.0.0",
+    "version": "18.0.1.1.0",
     "category": "Autozone/Inventory",
     "author": "Autozone",
     "summary": "ใบโอนสินค้าไปสาขา: ส่วนกลางสร้าง/ส่ง สาขากดรับ — ครอบ Flow B (TOUT/TIN) ให้จบในจอเดียว "

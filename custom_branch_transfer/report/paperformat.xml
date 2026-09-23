@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- Paperformat ขอบแคบ สเปคเดียวกับรายงาน BN / Payment Report (10/10/5/5, dpi 90)
+         โครง px-based ของ template ผูกกับค่านี้ ห้ามใช้ A4 default (ขอบบน 52mm ทำท้ายกระดาษหลุด) -->
     <record id="paperformat_az_branch_transfer" model="report.paperformat">
-        <field name="name">Autozone Branch Transfer A4</field>
+        <field name="name">A4 Branch Transfer</field>
         <field name="format">A4</field>
         <field name="orientation">Portrait</field>
-        <field name="margin_top">12</field>
-        <field name="margin_bottom">12</field>
-        <field name="margin_left">10</field>
-        <field name="margin_right">10</field>
-        <field name="header_spacing">0</field>
+        <field name="margin_top">10</field>
+        <field name="margin_bottom">10</field>
+        <field name="margin_left">5</field>
+        <field name="margin_right">5</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">35</field>
         <field name="dpi">90</field>
     </record>
 </odoo>

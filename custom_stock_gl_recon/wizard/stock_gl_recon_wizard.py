@@ -343,7 +343,9 @@ class StockGlReconWizard(models.TransientModel):
             "name": self.name,
             "res_model": "stock.gl.recon.line",
             "view_mode": "list,form",
-            "domain": [("wizard_id", "=", self.id)],
+            # ไม่เอาแถว "รวม" ขึ้น list เพราะหัวกลุ่ม (group by section) รวมยอดให้อยู่แล้ว
+            # ถ้าใส่มาด้วยหัวกลุ่มจะโชว์เบิ้ล 2 เท่า (เจอ 23 ก.ย. 2026) — PDF/Excel ยังใช้แถวรวมตามเดิม
+            "domain": [("wizard_id", "=", self.id), ("is_total", "=", False)],
             "context": {"group_by": ["section"], "create": False, "edit": False, "delete": False},
         }
 
