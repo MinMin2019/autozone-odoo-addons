@@ -16,6 +16,7 @@
 | `custom_asset_report_class` | เพิ่มตัวเลือก "จัดกลุ่มตามคลาส" (ฟิลด์ Class → Analytic Account) + คอลัมน์ Analytic Distribution ในรายงาน Depreciation Schedule |
 | `custom_asset_report_code` | เพิ่มคอลัมน์ Asset Code (ฟิลด์ Studio) เป็นคอลัมน์แรกในรายงาน Depreciation Schedule |
 | `custom_billing_note` | ระบบใบวางบิลลูกค้า (Billing Note) + รายงาน PDF |
+| `custom_ar_due_forecast` | รายงานคาดรับเงินลูกหนี้รายวัน เมนู Accounting › Customers: หน้าจอแบบ P&L (เลือกเดือน, คลิกตัวเลขดูใบ) + PDF + Excel แบบฟอร์มบัญชี — ลูกค้า × วันครบกำหนด + ค้างยกมา + รับแล้ว/คงค้าง, แถวลูกค้าเงินสด = ยอดรับจริงจากใบเสร็จ CT/SR |
 | `custom_branch_consumption` | Operation Type "เบิกใช้วัสดุ" (CONS) ทุกคลัง ตัดวัสดุเบิกใช้เข้าบัญชีค่าใช้จ่ายตามหมวดสินค้า + analytic สาขา แทนการเปิด SO ราคา 0 |
 | `custom_company_registry_warning` | แจ้งเตือน Company ID ซ้ำเฉพาะเมื่อ Tax ID ซ้ำด้วย (รองรับการเก็บรหัสสาขาใน Company ID) |
 | `custom_due_date_display` | แสดง Due Date คู่กับ Payment Terms บนฟอร์มบิล + list view แสดงเป็นวันที่จริงแทน "In X days" |

@@ -1,0 +1,89 @@
+.o_ar_forecast {
+    .o_ar_month {
+        width: 11rem;
+    }
+
+    .o_content {
+        overflow: auto;
+        background-color: $o-webclient-background-color;
+    }
+
+    // กระดาษรายงานแบบ P&L
+    .o_ar_sheet {
+        background-color: $o-view-background-color;
+        margin: 1rem auto;
+        padding: 1.5rem 1.5rem 1rem;
+        // กว้างตามตาราง ให้ .o_content เลื่อนเอง (หัวตาราง/ชื่อลูกค้าค้างได้)
+        width: max-content;
+        min-width: calc(100% - 2rem);
+        box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.12);
+    }
+
+    .o_ar_head {
+        text-align: center;
+        margin-bottom: 0.75rem;
+        .o_ar_co { font-size: 1.15rem; font-weight: bold; }
+        .o_ar_title { font-size: 1rem; font-weight: bold; }
+        .o_ar_period { color: $text-muted; }
+    }
+
+    .o_ar_empty {
+        text-align: center;
+        padding: 3rem 0;
+        color: $text-muted;
+    }
+
+
+    .o_ar_table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 0.85rem;
+
+        th, td {
+            border: 1px solid $border-color;
+            padding: 0.2rem 0.4rem;
+            white-space: nowrap;
+        }
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background-color: #d9e1f2;
+            color: #000;
+            text-align: center;
+            vertical-align: middle;
+            font-weight: bold;
+        }
+        .o_ar_seq { text-align: center; width: 3rem; min-width: 3rem; }
+        .o_ar_name { text-align: left; min-width: 14rem; }
+
+        // ลำดับ + ชื่อลูกค้า ค้างซ้ายเวลาเลื่อนแนวนอน
+        .o_ar_seq, .o_ar_name {
+            position: sticky;
+            z-index: 1;
+        }
+        .o_ar_seq { left: 0; }
+        .o_ar_name { left: 3rem; }
+        tbody td.o_ar_seq, tbody td.o_ar_name { background-color: $o-view-background-color; }
+        thead th.o_ar_seq, thead th.o_ar_name { z-index: 3; }
+        .o_ar_num { text-align: right; font-variant-numeric: tabular-nums; }
+        td.o_ar_sum { background-color: rgba(217, 225, 242, 0.35); font-weight: bold; }
+        .o_ar_neg, .o_ar_neg a { color: $danger; }
+        tbody tr:hover td { background-color: rgba(0, 0, 0, 0.04); }
+
+        a {
+            color: inherit;
+            &:hover { color: $link-color; text-decoration: underline; }
+        }
+
+        .o_ar_total td { background-color: #e2efda; color: #000; font-weight: bold; }
+        tbody tr.o_ar_section td { background-color: #fff2cc; color: #000; font-weight: bold; }
+        .o_ar_grand td { background-color: #bdd7ee; color: #000; font-weight: bold; }
+    }
+
+    .o_ar_foot {
+        margin-top: 0.5rem;
+        font-size: 0.8rem;
+        color: $text-muted;
+    }
+}

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="custom_ar_due_forecast.ArDueForecastReport">
+        <div class="o_action o_ar_forecast" t-ref="root">
+            <ControlPanel>
+                <t t-set-slot="control-panel-create-button">
+                    <button class="btn btn-primary" t-on-click="printPdf" t-att-disabled="!state.data">PDF</button>
+                    <button class="btn btn-secondary" t-on-click="exportXlsx" t-att-disabled="!state.data">Excel</button>
+                </t>
+                <t t-set-slot="layout-actions">
+                    <div class="d-flex align-items-center gap-1">
+                        <button class="btn btn-secondary" title="เดือนก่อน" t-on-click="prevMonth">
+                            <i class="fa fa-chevron-left"/>
+                        </button>
+                        <input type="month" class="form-control o_ar_month"
+                               t-att-value="state.month" t-on-change="onMonthChange"/>
+                        <button class="btn btn-secondary" title="เดือนถัดไป" t-on-click="nextMonth">
+                            <i class="fa fa-chevron-right"/>
+                        </button>
+                        <span t-if="state.loading" class="ms-2 text-muted"><i class="fa fa-spinner fa-spin"/></span>
+                    </div>
+                </t>
+            </ControlPanel>
+
+            <div class="o_content">
+                <t t-set="d" t-value="state.data"/>
+                <div t-if="d" class="o_ar_sheet">
+                    <div class="o_ar_head">
+                        <div class="o_ar_co" t-esc="d.company"/>
+                        <div class="o_ar_title" t-esc="d.title"/>
+                        <div class="o_ar_period" t-esc="d.period"/>
+                    </div>
+
+                    <div t-if="!d.rows.length and !d.cash" class="o_ar_empty">
+                        ไม่มียอดเงินสดรับ ลูกหนี้ครบกำหนด หรือค้างชำระในเดือนนี้
+                    </div>
+                    <div t-else="" class="o_ar_table_wrap">
+                        <table class="o_ar_table">
+                            <thead>
+                                <tr>
+                                    <th class="o_ar_seq">ลำดับ</th>
+                                    <th class="o_ar_name">ลูกค้า</th>
+                                    <th t-if="d.show_due">Due</th>
+                                    <th t-if="d.show_carry">ค้างยกมา<br/>(เลยกำหนด)</th>
+                                    <t t-foreach="d.days" t-as="day" t-key="day_index">
+                                        <th t-esc="day"/>
+                                    </t>
+                                    <th class="o_ar_sum">รวม<br/>เดือนนี้</th>
+                                    <th t-if="d.show_paydate">วันที่<br/>รับเงิน</th>
+                                    <th t-if="d.show_recv">รับแล้ว</th>
+                                    <th t-if="d.show_recv">คงค้าง</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- หมวด 1 เงินสด: ยอดรับจริงจากใบเสร็จ (แสดงเฉพาะเมื่อมียอด) -->
+                                <t t-if="d.cash">
+                                    <tr class="o_ar_section">
+                                        <td class="o_ar_seq"/>
+                                        <td class="o_ar_name">1. รายได้ - เงินสด</td>
+                                        <td t-att-colspan="d.ncols - 2"/>
+                                    </tr>
+                                    <tr>
+                                        <td class="o_ar_seq">1</td>
+                                        <td class="o_ar_name" t-att-title="'ใบเสร็จเงินสด ' + d.cash.count + ' ใบ'">ลูกค้าเงินสด</td>
+                                        <td t-if="d.show_due"/>
+                                        <td t-if="d.show_carry"/>
+                                        <t t-foreach="d.cash.days" t-as="v" t-key="v_index">
+                                            <td class="o_ar_num">
+                                                <a t-if="v" href="#" t-on-click.prevent="() => this.openMoves('cash', false, d.day_nums[v_index])" t-esc="v"/>
+                                            </td>
+                                        </t>
+                                        <td class="o_ar_num o_ar_sum">
+                                            <a href="#" t-on-click.prevent="() => this.openMoves('cash')" t-esc="d.cash.month"/>
+                                        </td>
+                                        <td t-if="d.show_paydate" class="text-center" t-esc="d.cash.pay_date"/>
+                                        <td t-if="d.show_recv" class="o_ar_num" t-esc="d.cash.recv"/>
+                                        <td t-if="d.show_recv"/>
+                                    </tr>
+                                    <tr t-if="d.has_ar" class="o_ar_section">
+                                        <td class="o_ar_seq"/>
+                                        <td class="o_ar_name">2. รายได้ - ลูกหนี้การค้า (เงินโอน)</td>
+                                        <td t-att-colspan="d.ncols - 2"/>
+                                    </tr>
+                                </t>
+                                <tr t-foreach="d.rows" t-as="r" t-key="r.partner_id">
+                                    <td class="o_ar_seq" t-esc="r.seq"/>
+                                    <td class="o_ar_name" t-att-title="r.full_name" t-esc="r.name"/>
+                                    <td t-if="d.show_due" class="text-center" t-esc="r.due"/>
+                                    <td t-if="d.show_carry" class="o_ar_num" t-att-class="{'o_ar_neg': r.carry_neg}">
+                                        <a t-if="r.carry" href="#" t-on-click.prevent="() => this.openMoves('carry', r.partner_id)" t-esc="r.carry"/>
+                                    </td>
+                                    <t t-foreach="r.days" t-as="v" t-key="v_index">
+                                        <td class="o_ar_num">
+                                            <a t-if="v" href="#" t-on-click.prevent="() => this.openMoves('day', r.partner_id, d.day_nums[v_index])" t-esc="v"/>
+                                        </td>
+                                    </t>
+                                    <td class="o_ar_num o_ar_sum">
+                                        <a t-if="r.month" href="#" t-on-click.prevent="() => this.openMoves('month', r.partner_id)" t-esc="r.month"/>
+                                    </td>
+                                    <td t-if="d.show_paydate" class="text-center" t-esc="r.pay_date"/>
+                                    <td t-if="d.show_recv" class="o_ar_num" t-esc="r.recv"/>
+                                    <td t-if="d.show_recv" class="o_ar_num" t-att-class="{'o_ar_neg': r.out_neg}" t-esc="r.out"/>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr t-if="d.has_ar" class="o_ar_total">
+                                    <td class="o_ar_seq"/>
+                                    <td class="o_ar_name" t-esc="d.cash ? 'รวมลูกหนี้การค้า (2)' : 'รวมลูกหนี้การค้า'"/>
+                                    <td t-if="d.show_due"/>
+                                    <td t-if="d.show_carry" class="o_ar_num">
+                                        <a href="#" t-on-click.prevent="() => this.openMoves('carry')" t-esc="d.tot.carry"/>
+                                    </td>
+                                    <t t-foreach="d.tot_days" t-as="v" t-key="v_index">
+                                        <td class="o_ar_num">
+                                            <a href="#" t-on-click.prevent="() => this.openMoves('day', false, d.day_nums[v_index])" t-esc="v"/>
+                                        </td>
+                                    </t>
+                                    <td class="o_ar_num">
+                                        <a href="#" t-on-click.prevent="() => this.openMoves('month')" t-esc="d.tot.month"/>
+                                    </td>
+                                    <td t-if="d.show_paydate"/>
+                                    <td t-if="d.show_recv" class="o_ar_num" t-esc="d.tot.recv"/>
+                                    <td t-if="d.show_recv" class="o_ar_num" t-esc="d.tot.out"/>
+                                </tr>
+                                <tr t-if="d.grand" class="o_ar_grand">
+                                    <td class="o_ar_seq"/>
+                                    <td class="o_ar_name">รวมรายได้ทั้งสิ้น (1-2)</td>
+                                    <td t-if="d.show_due"/>
+                                    <td t-if="d.show_carry" class="o_ar_num" t-esc="d.grand.carry"/>
+                                    <t t-foreach="d.grand.days" t-as="v" t-key="v_index">
+                                        <td class="o_ar_num" t-esc="v"/>
+                                    </t>
+                                    <td class="o_ar_num" t-esc="d.grand.month"/>
+                                    <td t-if="d.show_paydate"/>
+                                    <td t-if="d.show_recv" class="o_ar_num" t-esc="d.grand.recv"/>
+                                    <td t-if="d.show_recv" class="o_ar_num" t-esc="d.grand.out"/>
+                                </tr>
+                                <tr t-if="d.show_carry" class="o_ar_grand">
+                                    <td class="o_ar_seq"/>
+                                    <td class="o_ar_name">รวมค้างยกมา + ยอดเดือนนี้</td>
+                                    <td t-if="d.show_due"/>
+                                    <td t-att-colspan="d.days.length + 2" class="o_ar_num" t-esc="d.tot_all"/>
+                                    <td t-if="d.show_paydate"/>
+                                    <td t-if="d.show_recv"/>
+                                    <td t-if="d.show_recv"/>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <div class="o_ar_foot">
+                        Due = จำนวนวันเครดิต · ลูกค้าเงินสด = ยอดรับจริงจากใบเสร็จตามวันที่รับเงิน ·
+                        ลูกหนี้ลงช่องตามวันครบกำหนดของใบแจ้งหนี้ (ใบลดหนี้หักออก) ·
+                        แสดงเฉพาะลูกค้าและวันที่ที่มียอด · คลิกตัวเลขเพื่อดูใบแจ้งหนี้
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

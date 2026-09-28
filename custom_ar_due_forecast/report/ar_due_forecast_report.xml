@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_ar_due_forecast" model="report.paperformat">
+        <field name="name">A4 Landscape AR Due Forecast</field>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">8</field>
+        <field name="margin_bottom">8</field>
+        <field name="margin_left">6</field>
+        <field name="margin_right">6</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_ar_due_forecast" model="ir.actions.report">
+        <field name="name">คาดรับเงินลูกหนี้รายวัน</field>
+        <field name="model">ar.due.forecast.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">custom_ar_due_forecast.report_ar_due_forecast_template</field>
+        <field name="report_file">custom_ar_due_forecast.report_ar_due_forecast_template</field>
+        <field name="print_report_name">'AR_Forecast_%s' % object.month_date.strftime('%Y-%m')</field>
+        <field name="paperformat_id" ref="paperformat_ar_due_forecast"/>
+    </record>
+
+    <template id="report_ar_due_forecast_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <style>
+                        .header, .footer { display: none !important; }
+                        .page { font-family: Sarabun, sans-serif; font-size: 10px; color: #000; }
+                        .ar-co { font-size: 15px; font-weight: bold; text-align: center; }
+                        .ar-title { font-size: 13px; font-weight: bold; text-align: center; }
+                        .ar-period { font-size: 12px; text-align: center; margin-bottom: 6px; }
+                        table.ar { width: 100%; border-collapse: collapse; }
+                        table.ar th, table.ar td { border: 1px solid #555; padding: 2px 3px; }
+                        table.ar th { background: #d9e1f2; text-align: center; font-weight: bold; }
+                        table.ar thead { display: table-header-group; }
+                        table.ar tr { page-break-inside: avoid; }
+                        table.ar td.num { text-align: right; white-space: nowrap; }
+                        table.ar td.ctr { text-align: center; white-space: nowrap; }
+                        table.ar td.sum, table.ar th.sum { background: #eef3fa; font-weight: bold; }
+                        table.ar tr.tot td { background: #e2efda; font-weight: bold; }
+                        table.ar tr.grand td { background: #bdd7ee; font-weight: bold; }
+                        table.ar tr.sec td { background: #fff2cc; font-weight: bold; }
+                        .page.dense { font-size: 9px; }
+                        .page.dense table.ar th, .page.dense table.ar td { padding: 2px 2px; }
+                        table.ar td.name { min-width: 150px; }
+                        .neg { color: #b00000; }
+                        .ar-foot { margin-top: 4px; font-size: 9px; color: #444; }
+                    </style>
+                    <t t-set="d" t-value="o._report_data()"/>
+                    <div t-attf-class="page #{'dense' if d['dense'] else ''}">
+                        <div class="ar-co"><t t-esc="o.company_id.name"/></div>
+                        <div class="ar-title"><t t-esc="d['title']"/></div>
+                        <div class="ar-period"><t t-esc="d['period']"/></div>
+
+                        <p t-if="not d['rows'] and not d['cash']" style="text-align:center; margin-top: 30px;">
+                            ไม่มียอดเงินสดรับ ลูกหนี้ครบกำหนด หรือค้างชำระในเดือนนี้
+                        </p>
+                        <table t-else="" class="ar">
+                            <thead>
+                                <tr>
+                                    <th style="width: 3%;">ลำดับ</th>
+                                    <th>ลูกค้า</th>
+                                    <th t-if="d['show_due']" style="width: 3%;">Due</th>
+                                    <th t-if="d['show_carry']">ค้างยกมา<br/>(เลยกำหนด)</th>
+                                    <th t-foreach="d['days']" t-as="day"><t t-esc="day"/></th>
+                                    <th class="sum">รวม<br/>เดือนนี้</th>
+                                    <th t-if="d['show_paydate']">วันที่<br/>รับเงิน</th>
+                                    <th t-if="d['show_recv']">รับแล้ว</th>
+                                    <th t-if="d['show_recv']">คงค้าง</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- หมวด 1 เงินสด (แสดงเฉพาะเมื่อมีใบเสร็จ) -->
+                                <t t-if="d['cash']">
+                                    <tr class="sec"><td t-att-colspan="d['ncols']">1. รายได้ - เงินสด</td></tr>
+                                    <tr>
+                                        <td class="ctr">1</td>
+                                        <td class="name">ลูกค้าเงินสด</td>
+                                        <td t-if="d['show_due']"/>
+                                        <td t-if="d['show_carry']"/>
+                                        <td t-foreach="d['cash']['days']" t-as="v" class="num"><t t-esc="v"/></td>
+                                        <td class="num sum"><t t-esc="d['cash']['month']"/></td>
+                                        <td t-if="d['show_paydate']" class="ctr"><t t-esc="d['cash']['pay_date']"/></td>
+                                        <td t-if="d['show_recv']" class="num"><t t-esc="d['cash']['recv']"/></td>
+                                        <td t-if="d['show_recv']"/>
+                                    </tr>
+                                    <tr t-if="d['has_ar']" class="sec"><td t-att-colspan="d['ncols']">2. รายได้ - ลูกหนี้การค้า (เงินโอน)</td></tr>
+                                </t>
+                                <tr t-foreach="d['rows']" t-as="r">
+                                    <td class="ctr"><t t-esc="r['seq']"/></td>
+                                    <td class="name"><t t-esc="r['name']"/></td>
+                                    <td t-if="d['show_due']" class="ctr"><t t-esc="r['due']"/></td>
+                                    <td t-if="d['show_carry']" t-attf-class="num #{'neg' if r['carry_neg'] else ''}"><t t-esc="r['carry']"/></td>
+                                    <td t-foreach="r['days']" t-as="v" class="num"><t t-esc="v"/></td>
+                                    <td class="num sum"><t t-esc="r['month']"/></td>
+                                    <td t-if="d['show_paydate']" class="ctr"><t t-esc="r['pay_date']"/></td>
+                                    <td t-if="d['show_recv']" class="num"><t t-esc="r['recv']"/></td>
+                                    <td t-if="d['show_recv']" t-attf-class="num #{'neg' if r['out_neg'] else ''}"><t t-esc="r['out']"/></td>
+                                </tr>
+                                <tr t-if="d['has_ar']" class="tot">
+                                    <td/>
+                                    <td><t t-if="d['cash']">รวมลูกหนี้การค้า (2)</t><t t-else="">รวมลูกหนี้การค้า</t></td>
+                                    <td t-if="d['show_due']"/>
+                                    <td t-if="d['show_carry']" class="num"><t t-esc="d['tot']['carry']"/></td>
+                                    <td t-foreach="d['tot_days']" t-as="v" class="num"><t t-esc="v"/></td>
+                                    <td class="num"><t t-esc="d['tot']['month']"/></td>
+                                    <td t-if="d['show_paydate']"/>
+                                    <td t-if="d['show_recv']" class="num"><t t-esc="d['tot']['recv']"/></td>
+                                    <td t-if="d['show_recv']" class="num"><t t-esc="d['tot']['out']"/></td>
+                                </tr>
+                                <tr t-if="d['grand']" class="grand">
+                                    <td/>
+                                    <td>รวมรายได้ทั้งสิ้น (1-2)</td>
+                                    <td t-if="d['show_due']"/>
+                                    <td t-if="d['show_carry']" class="num"><t t-esc="d['grand']['carry']"/></td>
+                                    <td t-foreach="d['grand']['days']" t-as="v" class="num"><t t-esc="v"/></td>
+                                    <td class="num"><t t-esc="d['grand']['month']"/></td>
+                                    <td t-if="d['show_paydate']"/>
+                                    <td t-if="d['show_recv']" class="num"><t t-esc="d['grand']['recv']"/></td>
+                                    <td t-if="d['show_recv']" class="num"><t t-esc="d['grand']['out']"/></td>
+                                </tr>
+                                <tr t-if="d['show_carry']" class="grand">
+                                    <td/>
+                                    <td>รวมค้างยกมา + ยอดเดือนนี้</td>
+                                    <td t-if="d['show_due']"/>
+                                    <td t-att-colspan="len(d['days']) + 2" class="num"><t t-esc="d['tot_all']"/></td>
+                                    <td t-if="d['show_paydate']"/>
+                                    <td t-if="d['show_recv']"/>
+                                    <td t-if="d['show_recv']"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="ar-foot">
+                            Due = จำนวนวันเครดิต · ลูกค้าเงินสด = ยอดรับจริงจากใบเสร็จตามวันที่รับเงิน · ลูกหนี้ลงช่องตามวันครบกำหนดของใบแจ้งหนี้ (ใบลดหนี้หักออก) · แสดงเฉพาะลูกค้าและวันที่ที่มียอด · พิมพ์วันที่ <t t-esc="d['printed']"/>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

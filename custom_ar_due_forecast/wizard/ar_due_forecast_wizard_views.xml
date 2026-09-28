@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- หน้ารายงานบนจอ แบบเดียวกับ P&L (OWL client action) -->
+    <record id="action_ar_due_forecast_screen" model="ir.actions.client">
+        <field name="name">คาดรับเงินลูกหนี้รายวัน</field>
+        <field name="tag">custom_ar_due_forecast.report</field>
+    </record>
+
+    <menuitem id="menu_ar_due_forecast"
+              name="คาดรับเงินลูกหนี้รายวัน"
+              parent="account.menu_finance_receivables"
+              action="action_ar_due_forecast_screen"
+              sequence="60"/>
+</odoo>
