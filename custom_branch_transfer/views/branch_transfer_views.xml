@@ -20,6 +20,8 @@
                             invisible="not can_receive"/>
                     <button name="action_print" string="พิมพ์ใบโอน" type="object"
                             invisible="state in ('draft', 'cancel')"/>
+                    <button name="action_export_xlsx" string="Export Excel" type="object"
+                            icon="fa-file-excel-o"/>
                     <button name="action_cancel" string="ยกเลิก" type="object"
                             invisible="state not in ('draft', 'confirmed')"
                             confirm="ยกเลิกใบโอนนี้?"/>
@@ -159,6 +161,16 @@
             <p class="o_view_nocontent_smiling_face">ยังไม่มีของส่งมาจากส่วนกลาง</p>
             <p>เมื่อส่วนกลางกด "ส่งของ" ใบโอนจะมาแสดงที่นี่ ตรวจของแล้วกด "รับของทั้งหมด"</p>
         </field>
+    </record>
+
+    <!-- เลือกหลายใบในหน้า list > Action > Export Excel (1 ใบ = 1 ชีท) -->
+    <record id="action_server_az_branch_transfer_xlsx" model="ir.actions.server">
+        <field name="name">Export Excel</field>
+        <field name="model_id" ref="model_az_branch_transfer"/>
+        <field name="binding_model_id" ref="model_az_branch_transfer"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_export_xlsx()</field>
     </record>
 
     <menuitem id="menu_az_branch_transfer" name="โอนสินค้าไปสาขา"
