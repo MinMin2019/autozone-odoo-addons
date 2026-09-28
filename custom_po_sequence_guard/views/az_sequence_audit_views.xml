@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="az_sequence_audit_list" model="ir.ui.view">
+        <field name="name">az.sequence.audit.list</field>
+        <field name="model">az.sequence.audit</field>
+        <field name="arch" type="xml">
+            <list create="0" edit="0" delete="0" decoration-danger="backwards">
+                <field name="at"/>
+                <field name="sequence_code"/>
+                <field name="old_next"/>
+                <field name="new_next"/>
+                <field name="backwards"/>
+                <field name="app_name"/>
+                <field name="client_addr"/>
+                <field name="backend_pid" optional="hide"/>
+                <field name="db_user" optional="hide"/>
+                <field name="query"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="az_sequence_audit_search" model="ir.ui.view">
+        <field name="name">az.sequence.audit.search</field>
+        <field name="model">az.sequence.audit</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="sequence_code"/>
+                <field name="app_name"/>
+                <filter name="backwards" string="ถอยหลัง" domain="[('backwards', '=', True)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="az_sequence_audit_action" model="ir.actions.act_window">
+        <field name="name">Sequence Audit</field>
+        <field name="res_model">az.sequence.audit</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <menuitem id="az_sequence_audit_menu" action="az_sequence_audit_action"
+              parent="base.next_id_5" sequence="50"/>
+</odoo>

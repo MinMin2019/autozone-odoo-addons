@@ -53,6 +53,7 @@
 | `custom_purchase_recreate_receipt` | ปุ่ม "สร้างใบรับใหม่" บน PO เมื่อใบรับสินค้าถูกยกเลิกไปหมดแล้วแต่ยังมีของค้างรับ (Odoo นับใบรับที่ยกเลิก = รับครบ ปุ่ม Receive Products จึงหายไป) |
 | `custom_purchase_vendor_only` | ช่อง Vendor ในใบสั่งซื้อแสดงเฉพาะผู้ขาย + checkbox "Is a Vendor" กำหนดเองบนฟอร์ม Contact (แท็บ Sales & Purchase) |
 | `custom_purchase_branch` | ช่อง "สาขา" (analytic) บนหัว PO เติมให้ทุกบรรทัดอัตโนมัติ + บังคับระบุสาขาก่อนยืนยัน PO + คอลัมน์/ตัวกรอง/จัดกลุ่ม "สาขา" บน list PO และบรรทัด PO (multi-edit ได้) + รายงาน Purchase > Reporting > "ซื้อตามสาขา" pivot สินค้า×สาขา + มิติสาขาใน Purchase Analysis |
+| `custom_po_sequence_guard` | กันเลข PO ซ้ำ: ตัวนับออกเลขที่ถูกใช้แล้วจะข้ามไปเลขถัดไป + ห้ามบันทึกเลข PO ซ้ำ + trigger บันทึกการเปลี่ยนตัวนับเลข PO / ตัวนับใดๆ ที่ถอยหลัง (Settings > Technical > Sequence Audit) |
 
 ## Autozone/Inventory
 

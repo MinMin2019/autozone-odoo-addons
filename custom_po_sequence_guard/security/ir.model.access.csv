@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_az_sequence_audit_admin,az.sequence.audit admin,model_az_sequence_audit,base.group_system,1,0,0,0
