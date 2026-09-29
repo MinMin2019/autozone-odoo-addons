@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ใบวางบิลบริษัทประกัน (v18.0.1.6.0): ช่อง/คอลัมน์/ยอดรวม เพิ่มบนฟอร์มใบวางบิลเดิม
+         แสดงเฉพาะเมื่อติ๊ก "ใบวางบิลประกัน" (is_insurance) ใบวางบิลลูกค้าทั่วไปหน้าตาเหมือนเดิม -->
+    <record id="view_customer_billing_note_form_insurance" model="ir.ui.view">
+        <field name="name">customer.billing.note.form.insurance</field>
+        <field name="model">customer.billing.note</field>
+        <field name="inherit_id" ref="custom_billing_note.view_customer_billing_note_form" />
+        <field name="arch" type="xml">
+
+            <xpath expr="//header/button[@name='action_cancel']" position="after">
+                <button name="action_export_insurance_xlsx" string="Export Excel (ประกัน)"
+                    type="object" icon="fa-file-excel-o" invisible="not is_insurance" />
+            </xpath>
+
+            <!-- ติ๊ก "ใบวางบิลประกัน" ก่อน → ช่องลูกค้าเหลือเฉพาะลูกค้าที่ตั้งค่า "เป็นบริษัทประกัน" -->
+            <xpath expr="//field[@name='partner_id']" position="before">
+                <field name="is_insurance" readonly="state != 'draft'" />
+            </xpath>
+            <xpath expr="//field[@name='partner_id']" position="attributes">
+                <attribute name="domain">[('is_company', '=', True), ('az_is_insurer', 'in', [True] if is_insurance else [True, False])]</attribute>
+            </xpath>
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="insurance_branch" invisible="not is_insurance"
+                    readonly="state in ('done', 'cancel')" placeholder="เช่น กรุงเทพฯ" />
+                <field name="wht_percent" invisible="not is_insurance"
+                    readonly="state in ('done', 'cancel')" />
+            </xpath>
+
+            <!-- ตารางใบแจ้งหนี้: แก้ในแถวได้เฉพาะช่อง Excess (คอลัมน์อื่นอ่านอย่างเดียว) -->
+            <xpath expr="//field[@name='invoice_ids']/list" position="attributes">
+                <attribute name="editable">bottom</attribute>
+            </xpath>
+            <xpath expr="//field[@name='invoice_ids']/list/field[@name='invoice_date']" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='invoice_ids']/list/field[@name='name']" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='invoice_ids']/list/field[@name='invoice_date_due']" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='invoice_ids']/list/field[@name='payment_state']" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='invoice_ids']/list/field[@name='ref']" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='invoice_ids']/list/field[@name='amount_total']" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='invoice_ids']/list/field[@name='ref']" position="after">
+                <field name="x_claim_reference" string="เลขเคลม" readonly="1"
+                    column_invisible="not parent.is_insurance" />
+                <field name="x_car_reg_reference" string="ทะเบียนรถ" readonly="1"
+                    column_invisible="not parent.is_insurance" />
+                <field name="bn_parts_amount" string="ค่าอะไหล่" readonly="1" sum="รวมค่าอะไหล่"
+                    column_invisible="not parent.is_insurance" />
+                <field name="bn_labor_amount" string="ค่าแรง" readonly="1" sum="รวมค่าแรง"
+                    column_invisible="not parent.is_insurance" />
+                <field name="amount_untaxed" string="รวมก่อน VAT" readonly="1" sum="รวมก่อน VAT"
+                    column_invisible="not parent.is_insurance" />
+                <field name="bn_excess_amount" string="Excess (กรอก)" sum="รวม Excess"
+                    column_invisible="not parent.is_insurance" />
+            </xpath>
+
+            <!-- สรุปยอดแบบประกัน ใต้ยอดรวมวางบิลเดิม -->
+            <xpath expr="//page[@name='invoices']" position="inside">
+                <group invisible="not is_insurance">
+                    <group string="สรุปยอดใบวางบิลประกัน">
+                        <field name="ins_amount_untaxed" />
+                        <field name="ins_amount_tax" />
+                        <field name="ins_amount_total" />
+                        <field name="ins_amount_wht" />
+                        <field name="ins_amount_excess" />
+                        <field name="ins_amount_net" class="fw-bold" />
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ช่อง "เป็นบริษัทประกัน" บนหน้าลูกค้า (เฉพาะนิติบุคคล) + ตัวกรองในหน้ารายชื่อ -->
+    <record id="view_partner_form_inherit_az_insurer" model="ir.ui.view">
+        <field name="name">res.partner.form.inherit.az.insurer</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='category_id']" position="after">
+                <field name="az_is_insurer" invisible="not is_company" />
+            </xpath>
+        </field>
+    </record>
+    <record id="view_res_partner_filter_inherit_az_insurer" model="ir.ui.view">
+        <field name="name">res.partner.search.inherit.az.insurer</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_res_partner_filter" />
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='type_company']" position="after">
+                <filter string="บริษัทประกัน" name="az_insurer"
+                    domain="[('az_is_insurer', '=', True)]" />
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ช่อง Excess บนใบแจ้งหนี้ลูกค้า (แสดงเมื่อมีเลขเคลม = งานประกัน) -->
+    <record id="view_move_form_inherit_bn_excess" model="ir.ui.view">
+        <field name="name">account.move.form.inherit.bn.excess</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="custom_invoice_print.view_move_form_inherit_custom_po" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='x_policy_reference']" position="after">
+                <field name="bn_excess_amount"
+                    invisible="not x_claim_reference or move_type != 'out_invoice'" />
+            </xpath>
+        </field>
+    </record>
+</odoo>

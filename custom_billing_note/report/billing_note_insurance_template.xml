@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- ==========================================
+             รูปแบบที่ 3: ใบวางบิลบริษัทประกัน (v18.0.1.6.0)
+             หัวฟอร์ม/กล่องลูกค้า/ลายเซ็น ยึดฟอร์มเดิม ตารางรายการตามแบบ "ใบวางบิล-รายการตั้งเบิก"
+             ตารางไหลตามธรรมชาติ (หัวตารางซ้ำทุกหน้า) ไม่ใช้ค่าคงที่ px แบบ 2 รูปแบบแรก
+             เพราะท้ายกระดาษมียอดสรุป 6 บรรทัด ความสูงไม่เท่าแบบเดิม
+        ========================================== -->
+        <record id="action_report_billing_note_ins" model="ir.actions.report">
+            <field name="name">ใบวางบิล (ประกัน)</field>
+            <field name="model">customer.billing.note</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">custom_billing_note.report_billing_note_ins_template</field>
+            <field name="report_file">custom_billing_note.report_billing_note_ins_template</field>
+            <field name="print_report_name">'Billing Note Insurance - %s' % (object.name)</field>
+            <field name="paperformat_id" ref="custom_billing_note.paperformat_billing_note" />
+            <field name="binding_model_id" ref="model_customer_billing_note" />
+            <field name="binding_type">report</field>
+        </record>
+
+        <template id="report_billing_note_ins_template">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="o">
+                    <t t-set="rows" t-value="o.ins_rows()" />
+                    <t t-foreach="['ต้นฉบับ (Original)', 'สำเนา (Copy)']" t-as="copy_name">
+                        <t t-call="web.basic_layout">
+                            <style>
+                                .header, .footer { display: none !important; }
+                                .page { font-family: Sarabun, sans-serif; font-size: 12px; color: #000; }
+                                table.ins { width: 100%; border-collapse: collapse; margin-bottom: 0; }
+                                table.ins thead { display: table-header-group; }
+                                table.ins tr { page-break-inside: avoid; }
+                                table.ins th { border: 1px solid #000; background-color: #f1f1f1;
+                                    text-align: center; vertical-align: middle; padding: 3px 2px;
+                                    font-weight: bold; }
+                                table.ins td { border-left: 1px solid #000; border-right: 1px solid #000;
+                                    padding: 4px 4px; white-space: nowrap; }
+                                table.ins td.c { text-align: center; }
+                                table.ins td.n { text-align: right; }
+                                table.ins tr.last td { border-bottom: 1px solid #000; }
+                                table.ins tr.sum td { border: 1px solid #000; font-weight: bold;
+                                    background-color: #f8f9fa; }
+                                .nobreak { page-break-inside: avoid; }
+                                table.tot { width: 100%; border-collapse: collapse; border: 1px solid #000; }
+                                table.tot td { padding: 4px 8px; border-bottom: 1px solid #ccc; }
+                                table.tot td.n { text-align: right; }
+                                table.tot tr.net td { font-weight: bold; font-size: 14px;
+                                    border-top: 1px solid #000; border-bottom: none;
+                                    background-color: #f1f1f1; }
+                            </style>
+
+                            <div class="page"
+                                t-attf-style="{{'page-break-before: always;' if copy_name_index else ''}}">
+
+                                <!-- ==================== Header (ฟอร์มเดิม) ==================== -->
+                                <div class="row" style="margin-bottom: 10px;">
+                                    <div class="col-8">
+                                        <table class="table table-bordered"
+                                            style="margin-bottom: 10px; border: 1px solid #ffffff;">
+                                            <tr>
+                                                <td style="width: 15%; padding-right: 15px;">
+                                                    <img t-if="o.company_id.logo"
+                                                        t-att-src="image_data_uri(o.company_id.logo)"
+                                                        style="max-height: 70px; width: auto;" alt="Logo" />
+                                                </td>
+                                                <td>
+                                                    <div style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">
+                                                        <span t-esc="o.company_id.name" />
+                                                    </div>
+                                                    <div style="font-size: 13px; line-height: 1.4; padding-left: 2px;">
+                                                        <span t-esc="o.company_id.partner_id.get_thai_address()" />
+                                                        <br />
+                                                        <t t-if="o.company_id.phone">โทร: <span t-esc="o.company_id.phone" /></t>
+                                                        <t t-if="o.company_id.vat"> เลขประจำตัวผู้เสียภาษี: <span
+                                                                t-esc="o.company_id.vat" /></t>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-4" style="text-align: center; margin-top: 10px;">
+                                        <div style="font-size: 24px; font-weight: bold; color: #333; margin-bottom: 5px;">
+                                            <span t-esc="copy_name" />
+                                        </div>
+                                        <div style="font-size: 18px; font-weight: bold;">ใบวางบิล / Billing Note</div>
+                                        <div style="font-size: 13px;">รายการตั้งเบิก (ประกันภัย)</div>
+                                    </div>
+                                </div>
+
+                                <!-- ==================== ข้อมูลบริษัทประกัน ==================== -->
+                                <div style="margin-bottom: 12px;">
+                                    <table style="width: 100%; border-collapse: separate; border-spacing: 5px 0;">
+                                        <tr>
+                                            <td style="width: 60%; vertical-align: top; border: 1px solid #000; padding: 10px; font-size: 13px;">
+                                                <div style="font-weight: bold; margin-bottom: 4px; font-size: 15px;">
+                                                    <span t-field="o.partner_id.name" />
+                                                </div>
+                                                <div><span t-esc="o.partner_id.get_thai_address()" /></div>
+                                                <div t-if="o.partner_id.vat">เลขผู้เสียภาษี: <span t-esc="o.partner_id.vat" /></div>
+                                            </td>
+                                            <td style="width: 40%; vertical-align: top; padding: 0;">
+                                                <table class="table table-bordered table-sm"
+                                                    style="width: 100%; border: 1px solid #000; margin-bottom: 0; font-size: 13px;">
+                                                    <tbody>
+                                                        <tr>
+                                                            <td style="width: 40%; font-weight: bold; background-color: #f8f9fa; border: 1px solid #000;">วันที่</td>
+                                                            <td style="border: 1px solid #000;"><span t-esc="o.ins_thai_date()" /></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="font-weight: bold; background-color: #f8f9fa; border: 1px solid #000;">เลขที่</td>
+                                                            <td style="border: 1px solid #000;"><span t-field="o.name" /></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="font-weight: bold; background-color: #f8f9fa; border: 1px solid #000;">สาขา</td>
+                                                            <td style="border: 1px solid #000;"><span t-esc="o.insurance_branch or ''" /></td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+
+                                <!-- ==================== ตารางรายการ ==================== -->
+                                <table class="ins">
+                                    <thead>
+                                        <tr>
+                                            <th rowspan="2" style="width: 4%;">ลำดับ</th>
+                                            <th rowspan="2" style="width: 10%;">เลขที่เอกสาร</th>
+                                            <th rowspan="2" style="width: 14%;">เลขเคลม</th>
+                                            <th rowspan="2" style="width: 10%;">เลขที่<br />เสนอราคา</th>
+                                            <th rowspan="2" style="width: 14%;">เลขที่กรมธรรม์</th>
+                                            <th colspan="2">รายละเอียดรถ</th>
+                                            <th style="width: 8%;">ค่าอะไหล่</th>
+                                            <th style="width: 8%;">ค่าแรง</th>
+                                            <th rowspan="2" style="width: 9%;">รวม</th>
+                                            <th style="width: 8%; background-color: #f8cbad;">Excess เก็บ</th>
+                                        </tr>
+                                        <tr>
+                                            <th style="width: 7%;">ยี่ห้อ</th>
+                                            <th style="width: 10%;">ทะเบียนรถ</th>
+                                            <th>อนุมัติ</th>
+                                            <th>อนุมัติ</th>
+                                            <th style="background-color: #f8cbad;">จากลูกค้า</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="rows" t-as="r">
+                                            <tr t-att-class="'last' if r_last else ''">
+                                                <td class="c"><span t-esc="r['seq']" /></td>
+                                                <td><span t-esc="r['name']" /></td>
+                                                <td><span t-esc="r['claim']" /></td>
+                                                <td class="c"><span t-esc="r['job']" /></td>
+                                                <td class="c"><span t-esc="r['policy']" /></td>
+                                                <td class="c"><span t-esc="r['brand']" /></td>
+                                                <td class="c"><span t-esc="r['car_reg']" /></td>
+                                                <td class="n"><span t-esc="'{:,.2f}'.format(r['parts']) if r['parts'] else '-'" /></td>
+                                                <td class="n"><span t-esc="'{:,.2f}'.format(r['labor'])" /></td>
+                                                <td class="n"><span t-esc="'{:,.2f}'.format(r['total'])" /></td>
+                                                <td class="n"><span t-esc="'{:,.2f}'.format(r['excess'])" /></td>
+                                            </tr>
+                                        </t>
+                                        <tr t-if="not rows" class="last">
+                                            <td colspan="11" class="c">- ไม่มีรายการ -</td>
+                                        </tr>
+                                        <tr class="sum">
+                                            <td colspan="9" class="n">รวม</td>
+                                            <td class="n"><span t-esc="'{:,.2f}'.format(o.ins_amount_untaxed)" /></td>
+                                            <td class="n"><span t-esc="'{:,.2f}'.format(o.ins_amount_excess)" /></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                <!-- ==================== ยอดสรุป + ลายเซ็น (ไม่ให้ขาดข้ามหน้า) ==================== -->
+                                <div class="nobreak">
+                                    <div class="row" style="margin-top: 15px;">
+                                        <div class="col-6"></div>
+                                        <div class="col-6">
+                                            <table class="tot">
+                                                <tr>
+                                                    <td><span t-esc="o.ins_tax_label()" /></td>
+                                                    <td class="n"><span t-esc="'{:,.2f}'.format(o.ins_amount_tax)" /></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>จำนวนเงินรวม VAT</td>
+                                                    <td class="n"><span t-esc="'{:,.2f}'.format(o.ins_amount_total)" /></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><span t-esc="o.ins_wht_label()" /></td>
+                                                    <td class="n"><span t-esc="'{:,.2f}'.format(o.ins_amount_wht)" /></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Excess:</td>
+                                                    <td class="n"><span t-esc="'{:,.2f}'.format(o.ins_amount_excess)" /></td>
+                                                </tr>
+                                                <tr class="net">
+                                                    <td>จำนวนเงินที่ได้รับ</td>
+                                                    <td class="n"><span t-esc="'{:,.2f}'.format(o.ins_amount_net)" /></td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div style="margin-top: 30px;">
+                                        <div style="border: 1px solid #000; padding: 25px 10px 15px 10px; width: 96%; margin: 0 auto; background-color: white; font-size: 13px;">
+                                            <div class="row">
+                                                <div class="col-6" style="text-align: center;">
+                                                    <div style="border-bottom: 1px solid #000; width: 60%; margin: 0 auto 5px auto;"></div>
+                                                    <div>ผู้รับวางบิล / Received By</div>
+                                                    <div style="margin-top: 5px;">วันที่ _______/_______/_______</div>
+                                                </div>
+                                                <div class="col-6" style="text-align: center;">
+                                                    <div style="border-bottom: 1px solid #000; width: 60%; margin: 0 auto 5px auto;"></div>
+                                                    <div>ผู้วางบิล / Delivered By</div>
+                                                    <div style="margin-top: 5px;">วันที่ _______/_______/_______</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </t>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>
