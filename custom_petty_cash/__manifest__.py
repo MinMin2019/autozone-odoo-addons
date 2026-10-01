@@ -1,6 +1,6 @@
 {
     "name": "Petty Cash",
-    "version": "18.0.1.9.0",
+    "version": "18.0.1.10.1",
     "category": "Autozone/Accounting",
     "author": "Autozone",
     "summary": "ทะเบียนคุมเงินสดย่อยรายสาขา: ใบเบิก/ใบเคลียร์/ขอเติมเงิน "

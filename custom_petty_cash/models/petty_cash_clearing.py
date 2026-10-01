@@ -28,6 +28,7 @@ class PettyCashClearing(models.Model):
         " ('payment_state', 'in', ('not_paid', 'partial')),"
         " ('petty_clearing_id', '=', False),"
         " ('petty_existing_clearing_ids', '=', False),"
+        " ('invoice_date', '<=', date),"
         " ('company_id', '=', company_id)]",
         help="บิลที่ตั้งหนี้ไว้แล้วในระบบ (รวมบิลจาก PO) ซึ่งสาขาจ่ายด้วยเงินสดย่อย — "
         "ยอดจะนับเข้าทะเบียนกองและใบสรุปขอเติมเงิน\n"
@@ -118,7 +119,29 @@ class PettyCashClearing(models.Model):
                 sum(rec.line_ids.mapped("amount_total")) + rec.amount_existing)
             rec.amount_return = rec.amount_advance - rec.amount_spent
 
-    @api.constrains("existing_bill_ids")
+    existing_bills_locked = fields.Boolean(
+        compute="_compute_existing_bills_locked",
+        help="ใบเคลียร์จ่ายบิลไปแล้ว (หรือเติมเงินแล้ว) — ห้ามเพิ่มบิลตั้งหนี้ใบใหม่")
+
+    @api.depends("state", "existing_bill_ids.payment_state", "bill_ids.state")
+    def _compute_existing_bills_locked(self):
+        for rec in self:
+            rec.existing_bills_locked = rec._existing_bills_locked()
+
+    def _existing_bills_locked(self):
+        """ใบเคลียร์ที่กด Post + จ่ายทั้งชุดไปแล้ว ถือว่าปิดงวดของมันแล้ว
+        แม้จะกลับมาเป็น "สร้างบิลแล้ว" เพราะยกเลิกใบขอเติมเงิน ก็ห้ามดึงบิลใหม่เข้า
+        (เคส PCC2026/0058 1 ต.ค. 69: ยกเลิก PCP แล้วมีคนเอาบิลเดือน 9 มาใส่ใบเดือน 8)"""
+        self.ensure_one()
+        if self.state == "replenished":
+            return True
+        if self.state != "billed":
+            return False
+        return bool(
+            self.existing_bill_ids.filtered(lambda m: m.payment_state != "not_paid")
+            or self.bill_ids.filtered(lambda m: m.state == "posted"))
+
+    @api.constrains("existing_bill_ids", "date")
     def _check_existing_bills(self):
         for rec in self:
             bad = rec.existing_bill_ids.filtered(
@@ -129,7 +152,63 @@ class PettyCashClearing(models.Model):
                     "บิลต่อไปนี้ใช้ไม่ได้ (ต้องเป็นบิลซื้อหรือใบลดหนี้ผู้ขายที่ post แล้ว "
                     "และไม่ใช่บิลที่เกิดจากใบเคลียร์): "
                     + ", ".join(bad.mapped("name")))
+            # จ่ายบิลจากกองลงวันที่ใบเคลียร์ (payment_date = date) — บิลที่ออกหลังวันนั้น
+            # ยังไม่มีตัวตนตอนเคลียร์ แปลว่าดึงผิดใบ ต้องไปเปิดใบเคลียร์ของงวดนั้น
+            future = rec.existing_bill_ids.filtered(
+                lambda m: m.invoice_date and m.invoice_date > rec.date)
+            if future:
+                raise UserError(
+                    "บิลต่อไปนี้ลงวันที่หลังวันที่เคลียร์ (%s) ดึงเข้าใบเคลียร์นี้ไม่ได้: %s\n\n"
+                    "→ บิลงวดใหม่ให้เปิดใบเคลียร์ใบใหม่ของงวดนั้น" % (
+                        rec.date.strftime("%d/%m/%Y"),
+                        ", ".join(future.mapped(
+                            lambda m: "%s (%s)" % (
+                                m.name, m.invoice_date.strftime("%d/%m/%Y"))))))
             rec._check_bills_not_used_elsewhere()
+
+    def write(self, vals):
+        if "existing_bill_ids" not in vals:
+            return super().write(vals)
+        before = {rec.id: (rec.existing_bill_ids, rec._existing_bills_locked())
+                  for rec in self}
+        res = super().write(vals)
+        for rec in self:
+            old_bills, locked = before[rec.id]
+            added = rec.existing_bill_ids - old_bills
+            removed = old_bills - rec.existing_bill_ids
+            # เอาบิลที่ยังไม่จ่ายออกได้เสมอ (ทางแก้เมื่อดึงผิด) แต่บิลที่กองจ่ายไปแล้ว
+            # ถ้าเอาออก ยอดกอง/ใบขอเติมเงินจะไม่ตรงกับเงินที่ออกไปจริง
+            paid_removed = removed.filtered(lambda m: m.payment_state != "not_paid")
+            if locked and (added or paid_removed):
+                raise UserError(
+                    "ใบเคลียร์ %s จ่ายบิลไปแล้ว — เพิ่มบิลใหม่หรือเอาบิลที่จ่ายแล้วออกไม่ได้%s\n\n"
+                    "→ บิลงวดใหม่ให้เปิดใบเคลียร์ใบใหม่\n"
+                    "→ ถ้าต้องแก้บิลที่จ่ายแล้วจริง ให้ฝ่ายบัญชียกเลิก payment ก่อน" % (
+                        rec.name,
+                        (": " + ", ".join((added | paid_removed).mapped("name")))))
+            rec._log_existing_bill_change(added, removed)
+        return res
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        for rec in records:
+            rec._log_existing_bill_change(rec.existing_bill_ids, rec.browse())
+        return records
+
+    def _log_existing_bill_change(self, added, removed):
+        # Many2many ไม่ขึ้น tracking ใน chatter — บันทึกเองให้รู้ว่าใครดึง/เอาออกเมื่อไหร่
+        def fmt(bills):
+            return ", ".join(
+                "%s (%s)" % (m.name, f"{self._bill_sign(m) * m.amount_total:,.2f}")
+                for m in bills)
+        parts = []
+        if added:
+            parts.append("ดึงบิลตั้งหนี้เข้า %d ใบ: %s" % (len(added), fmt(added)))
+        if removed:
+            parts.append("เอาบิลตั้งหนี้ออก %d ใบ: %s" % (len(removed), fmt(removed)))
+        if parts:
+            self.message_post(body=" | ".join(parts))
 
     def _check_bills_not_used_elsewhere(self):
         """บิลใบเดียวห้ามอยู่ในใบเคลียร์มากกว่าหนึ่งใบ — ไม่งั้นทะเบียนกองนับยอดซ้ำ

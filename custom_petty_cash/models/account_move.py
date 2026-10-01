@@ -10,6 +10,10 @@ class AccountMove(models.Model):
     petty_existing_clearing_ids = fields.Many2many(
         "petty.cash.clearing", "petty_clearing_existing_bill_rel",
         "move_id", "clearing_id", string="ถูกดึงเข้าใบเคลียร์",
+        # Many2many ค่าเริ่มต้น copy=True — กด Duplicate บิลเดือนก่อนมาทำบิลเดือนใหม่
+        # บิลใหม่จะติดใบเคลียร์เดิมไปด้วยเงียบ ๆ (เคส PCC2026/0058: บิล ก.ย. 10 ใบ
+        # โผล่ในใบเคลียร์เดือน 8 ทั้งที่ไม่มีใครดึง)
+        copy=False,
         help="ใบเคลียร์เงินสดย่อยที่ดึงบิลใบนี้ไปจ่ายแล้ว — "
         "ใช้กรองไม่ให้ดึงบิลเดียวกันซ้ำหลายใบ (ยอดกองจะถูกนับสองครั้ง)")
     petty_wht_amount = fields.Monetary(
