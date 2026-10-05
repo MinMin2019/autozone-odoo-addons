@@ -14,20 +14,14 @@
 - กดกางบัญชี View ที่ยังไม่มีลูก จะแจ้งเตือนแทนที่จะเงียบ
 - กลุ่มสิทธิ์ "Account Hierarchy Viewer" คุมเมนู Chart of Accounts Hierarchy
   (ผู้ใช้กลุ่มบัญชีเดิมได้รับสิทธิ์อัตโนมัติ ไม่มีใครเสียเมนูที่เคยเห็น)
-- ตัวช่วย "Account Groups จากผังแม่": แปลงผังแม่ (บัญชี Type View) เป็น
-  account.group ให้รายงานมาตรฐาน (P&L / งบดุล / งบทดลอง) แสดงเป็นชั้น
-  พร้อมยอดรวมย่อยเมื่อเปิด Options -> Hierarchy and Subtotals
-  มีปุ่มตรวจก่อน (dry-run) รายงานเคสที่แปลงไม่ได้ให้ตัดสินใจ
 """,
     "author": "Autozone",
     "category": "Autozone/Accounting",
-    "version": "18.0.1.2.0",
+    "version": "18.0.1.0.0",
     "license": "LGPL-3",
-    "depends": ["sh_account_parent", "account_reports"],
+    "depends": ["sh_account_parent"],
     "data": [
         "security/security.xml",
-        "security/ir.model.access.csv",
-        "views/account_group_sync_views.xml",
     ],
     "assets": {
         "web.assets_backend": [
