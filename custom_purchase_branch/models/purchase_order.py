@@ -7,6 +7,8 @@
   + inverse: ตั้งค่าจาก list/multi-edit แล้วเขียนกลับเป็น analytic_distribution {id: 100}
 * หัว PO: az_branch_ids (stored) = สาขาทั้งหมดที่ปรากฏบนบรรทัด -> คอลัมน์/ตัวกรอง/จัดกลุ่มบน list
 * บังคับ: ยืนยัน PO ไม่ได้ถ้ามีบรรทัดสินค้าที่ยังไม่ระบุสาขา
+* อัตโนมัติ: เลือก Deliver To (คลังสาขา) -> สาขา = analytic ที่ผูกกับคลังนั้น
+  (จาก operation type "เบิกใช้วัสดุ" ของ custom_branch_consumption; ไม่มีก็จับคู่ code = รหัสคลัง)
 """
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
@@ -65,6 +67,31 @@ class PurchaseOrder(models.Model):
             order.az_branch_ids = [(6, 0, branches.ids)]
             order.az_branch_display = ", ".join(branches.mapped("name"))
 
+    @api.model
+    def _az_branch_for_warehouse(self, warehouse):
+        """analytic สาขาของคลัง: ใช้ที่ตั้งไว้บน operation type เบิกใช้วัสดุ (CONS) ก่อน
+        ไม่มีค่อยจับคู่ analytic.code == warehouse.code"""
+        if not warehouse:
+            return self.env["account.analytic.account"]
+        PickingType = self.env["stock.picking.type"].sudo()
+        if "consumption_analytic_account_id" in PickingType._fields:
+            cons = PickingType.search(
+                [("warehouse_id", "=", warehouse.id), ("sequence_code", "=", "CONS")], limit=1
+            )
+            if cons.consumption_analytic_account_id:
+                return cons.consumption_analytic_account_id
+        return self.env["account.analytic.account"].search(
+            [("code", "=", warehouse.code), ("company_id", "in", (warehouse.company_id.id, False))],
+            limit=1,
+        )
+
+    @api.onchange("picking_type_id")
+    def _onchange_picking_type_az_branch(self):
+        branch = self._az_branch_for_warehouse(self.picking_type_id.warehouse_id)
+        if branch:
+            self.az_branch_id = branch
+            self._apply_branch_to_lines()
+
     @api.onchange("az_branch_id")
     def _onchange_az_branch_id(self):
         self._apply_branch_to_lines()
@@ -88,6 +115,13 @@ class PurchaseOrder(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        PickingType = self.env["stock.picking.type"]
+        for vals in vals_list:
+            if not vals.get("az_branch_id") and vals.get("picking_type_id"):
+                wh = PickingType.browse(vals["picking_type_id"]).warehouse_id
+                branch = self._az_branch_for_warehouse(wh)
+                if branch:
+                    vals["az_branch_id"] = branch.id
         orders = super().create(vals_list)
         orders.filtered("az_branch_id")._apply_branch_to_lines()
         return orders
