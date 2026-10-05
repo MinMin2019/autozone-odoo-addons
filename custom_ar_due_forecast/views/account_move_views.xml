@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- หน้ารายการใบแจ้งหนี้ที่เปิดจากการคลิกตัวเลขในรายงานคาดรับเงินลูกหนี้ -->
+    <record id="view_ar_forecast_move_list" model="ir.ui.view">
+        <field name="name">account.move.list.ar.forecast</field>
+        <field name="model">account.move</field>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <list string="ใบแจ้งหนี้" create="false"
+                  decoration-warning="not ar_billing_note">
+                <field name="currency_id" column_invisible="1"/>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="invoice_date"/>
+                <field name="invoice_date_due" string="วันครบกำหนด"/>
+                <field name="ar_billing_note" string="เลขใบวางบิล"
+                       placeholder="ยังไม่วางบิล"/>
+                <field name="ar_billing_date"/>
+                <field name="ar_promise_date"/>
+                <field name="ar_expected_date" decoration-bf="1"/>
+                <field name="amount_total_signed" string="ยอดใบ" sum="รวม"/>
+                <field name="amount_residual_signed" string="คงค้าง" sum="รวม"/>
+                <field name="payment_state" widget="badge"
+                       decoration-danger="payment_state == 'not_paid'"
+                       decoration-warning="payment_state in ('partial', 'in_payment')"
+                       decoration-success="payment_state in ('paid', 'reversed')"/>
+            </list>
+        </field>
+    </record>
+</odoo>

@@ -88,29 +88,82 @@ class ArDueForecastWizard(models.TransientModel):
             return str(days) if days > 0 else ""
         return ""
 
-    def _fetch_data(self):
-        """คืน dict partner_id → ข้อมูลแถว + list ใบรายละเอียด"""
-        self.ensure_one()
-        start, end = self._month_range()
-        Move = self.env["account.move"]
-        base_domain = [
+    def _billing_map(self):
+        """move_id → ใบวางบิลล่าสุดที่ไม่ถูกยกเลิก {name, date, promise}"""
+        # อ่านด้วย SQL → เขียนค่าที่ค้างใน cache ลงฐานก่อน (เช่น เพิ่งแก้วันนัด)
+        self.env["customer.billing.note"].flush_model()
+        self.env.cr.execute(
+            """
+            SELECT DISTINCT ON (r.move_id) r.move_id, b.name, b.date, b.promise_date
+              FROM billing_note_move_rel r
+              JOIN customer_billing_note b ON b.id = r.billing_id
+             WHERE b.state != 'cancel'
+             ORDER BY r.move_id, b.date DESC, b.id DESC
+            """
+        )
+        return {
+            mid: {"name": name, "date": bdate, "promise": promise}
+            for mid, name, bdate, promise in self.env.cr.fetchall()
+        }
+
+    @staticmethod
+    def _expected_date(move, bn):
+        """วันที่คาดว่าจะได้รับเงิน = วันนัดรับชำระในใบวางบิล ถ้ามี ไม่งั้นวันครบกำหนดของใบแจ้งหนี้"""
+        return (bn and bn["promise"]) or move.invoice_date_due
+
+    def _base_domain(self):
+        domain = [
             ("company_id", "=", self.company_id.id),
             ("move_type", "in", ("out_invoice", "out_refund")),
             ("state", "=", "posted"),
         ]
         if self.partner_ids:
-            base_domain.append(("partner_id", "in", self.partner_ids.ids))
+            domain.append(("partner_id", "in", self.partner_ids.ids))
+        return domain
 
-        # 1) ใบที่ครบกำหนดในเดือน (ทุก payment_state)
+    def _collect_moves(self):
+        """คืน (month_list, open_list, bn_map)
+        month_list = [(move, วันคาดรับ)] ที่วันคาดรับอยู่ในเดือน (ทุก payment_state)
+        open_list  = [(move, วันคาดรับ)] ใบที่ยังค้างรับทั้งหมด (ใช้หาค้างยกมา / เดือนถัดไป)"""
+        self.ensure_one()
+        start, end = self._month_range()
+        Move = self.env["account.move"]
+        base_domain = self._base_domain()
+        bn_map = self._billing_map()
+        # ใบที่วันนัดในใบวางบิลตกในเดือนนี้ (อาจครบกำหนดเดิมคนละเดือน)
+        promised_in_month = [mid for mid, bn in bn_map.items()
+                             if bn["promise"] and start <= bn["promise"] <= end]
         # ใบ 0 บาท (ขายราคา 0 ใช้เบิกของ) ไม่ใช่รายได้ → ตัดออก
-        month_moves = Move.search(
-            base_domain + [("invoice_date_due", ">=", start), ("invoice_date_due", "<=", end),
-                           ("amount_total", "!=", 0)]
+        candidates = Move.search(
+            base_domain + [("amount_total", "!=", 0), "|",
+                           "&", ("invoice_date_due", ">=", start), ("invoice_date_due", "<=", end),
+                           ("id", "in", promised_in_month)]
         )
-        # 2) ใบเปิดอยู่ทั้งหมด (ค้างยกมา + ครบกำหนดหลังเดือน)
+        month_list = []
+        for m in candidates:
+            eff = self._expected_date(m, bn_map.get(m.id))
+            if eff and start <= eff <= end:
+                month_list.append((m, eff))
         open_moves = Move.search(
             base_domain + [("payment_state", "in", ("not_paid", "partial"))]
         )
+        open_list = []
+        for m in open_moves:
+            eff = self._expected_date(m, bn_map.get(m.id))
+            if eff:
+                open_list.append((m, eff))
+        return month_list, open_list, bn_map
+
+    def _fetch_data(self):
+        """คืน dict partner_id → ข้อมูลแถว + list ใบรายละเอียด"""
+        self.ensure_one()
+        start, end = self._month_range()
+        Move = self.env["account.move"]
+        base_domain = self._base_domain()
+
+        # 1) ใบที่คาดรับในเดือน  2) ใบเปิดอยู่ทั้งหมด (ค้างยกมา + เดือนถัดไป)
+        month_list, open_list, bn_map = self._collect_moves()
+        month_moves = Move.browse([m.id for m, _e in month_list])
         # 3) ลูกค้าที่ออกใบใน N เดือนล่าสุด (แถวว่าง)
         recent_partner_ids = set()
         if self.recent_months > 0:
@@ -165,6 +218,8 @@ class ArDueForecastWizard(models.TransientModel):
                 rows[partner.id] = {
                     "partner": partner,
                     "days": defaultdict(float),   # day → amount
+                    "days_unbilled": set(),       # วันที่มียอดที่ยังไม่วางบิล
+                    "carry_unbilled": False,
                     "carry": 0.0,
                     "carry_count": 0,
                     "carry_oldest": None,
@@ -177,31 +232,33 @@ class ArDueForecastWizard(models.TransientModel):
                 }
             return rows[partner.id]
 
-        for m in month_moves:
+        for m, eff in month_list:
             r = row(m.partner_id)
-            r["days"][m.invoice_date_due.day] += m.amount_total_signed
+            bn = bn_map.get(m.id)
+            r["days"][eff.day] += m.amount_total_signed
+            if not bn:
+                r["days_unbilled"].add(eff.day)
             r["received"] += m.amount_total_signed - m.amount_residual_signed
             r["count"] += 1
             pd = pay_date.get(m.id)
             if pd and (not r["pay_date"] or pd > r["pay_date"]):
                 r["pay_date"] = pd
-            r["invoices"].append(
-                ("เดือนนี้", m, pd)
-            )
-        for m in open_moves:
-            if not m.invoice_date_due:
-                continue
+            r["invoices"].append(("เดือนนี้", m, pd, eff, bn))
+        for m, eff in open_list:
             r = row(m.partner_id)
-            if m.invoice_date_due < start:
+            bn = bn_map.get(m.id)
+            if eff < start:
                 r["carry"] += m.amount_residual_signed
                 r["carry_count"] += 1
-                if not r["carry_oldest"] or m.invoice_date_due < r["carry_oldest"]:
-                    r["carry_oldest"] = m.invoice_date_due
-                r["invoices"].append(("ค้างยกมา", m, None))
-            elif m.invoice_date_due > end:
+                if not bn:
+                    r["carry_unbilled"] = True
+                if not r["carry_oldest"] or eff < r["carry_oldest"]:
+                    r["carry_oldest"] = eff
+                r["invoices"].append(("ค้างยกมา", m, None, eff, bn))
+            elif eff > end:
                 r["future"] += m.amount_residual_signed
                 r["future_count"] += 1
-                r["invoices"].append(("ครบกำหนดหลังเดือนนี้", m, None))
+                r["invoices"].append(("คาดรับหลังเดือนนี้", m, None, eff, bn))
         if recent_partner_ids:
             for p in self.env["res.partner"].browse(list(recent_partner_ids - set(rows))):
                 row(p)
@@ -210,6 +267,7 @@ class ArDueForecastWizard(models.TransientModel):
             p = r["partner"]
             r["due"] = self._partner_due_days(p, sample_days.get(p.id))
             r["days"] = {d: round(v, 2) for d, v in r["days"].items() if round(v, 2)}
+            r["days_unbilled"] = {d for d in r["days_unbilled"] if d in r["days"]}
             r["carry"] = round(r["carry"], 2)
             r["future"] = round(r["future"], 2)
             r["received"] = round(r["received"], 2)
@@ -219,10 +277,10 @@ class ArDueForecastWizard(models.TransientModel):
                 note.append("%d ใบ" % r["count"])
             if r["carry_count"]:
                 note.append(
-                    "ค้างยกมา %d ใบ (เก่าสุดครบ %s)" % (r["carry_count"], _be(r["carry_oldest"]))
+                    "ค้างยกมา %d ใบ (เก่าสุดคาดรับ %s)" % (r["carry_count"], _be(r["carry_oldest"]))
                 )
             if r["future_count"]:
-                note.append("ครบกำหนดเดือนถัดไป %s บาท (%d ใบ)"
+                note.append("คาดรับเดือนถัดไป %s บาท (%d ใบ)"
                             % ("{:,.2f}".format(r["future"]), r["future_count"]))
             r["note"] = ", ".join(note)
 
@@ -285,7 +343,7 @@ class ArDueForecastWizard(models.TransientModel):
     @api.model
     def action_open_moves(self, month, kind, partner_id=False, day=False):
         """คลิกตัวเลขบนจอ → รายการใบแจ้งหนี้ที่อยู่เบื้องหลัง
-        kind: carry (ค้างยกมา) / day (ครบกำหนดวันนั้น) / month (ครบกำหนดทั้งเดือน)"""
+        kind: carry (ค้างยกมา) / day (คาดรับวันนั้น) / month (คาดรับทั้งเดือน) / cash (ใบเสร็จเงินสด)"""
         y, m = month.split("-")[:2]
         start = date(int(y), int(m), 1)
         end = (start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
@@ -314,34 +372,31 @@ class ArDueForecastWizard(models.TransientModel):
                 "domain": domain,
                 "context": {"create": False, "default_move_type": "out_receipt"},
             }
-        domain = [
-            ("company_id", "=", self.env.company.id),
-            ("move_type", "in", ("out_invoice", "out_refund")),
-            ("state", "=", "posted"),
-        ]
+        # ใช้ชุดใบเดียวกับตาราง (วันคาดรับ = วันนัดในใบวางบิล หรือวันครบกำหนด)
+        vals = {"month_date": start}
         if partner_id:
-            domain.append(("partner_id", "=", partner_id))
+            vals["partner_ids"] = [(6, 0, [partner_id])]
+        wiz = self.create(vals)
+        month_list, open_list, _bn = wiz._collect_moves()
         if kind == "carry":
-            domain += [("invoice_date_due", "<", start),
-                       ("payment_state", "in", ("not_paid", "partial"))]
-            title = "ค้างยกมา (เลยกำหนดก่อน %s)" % _be(start)
+            ids = [mv.id for mv, eff in open_list if eff < start]
+            title = "ค้างยกมา (เลยวันคาดรับก่อน %s)" % _be(start)
         elif kind == "day" and day:
             d = date(start.year, start.month, int(day))
-            domain += [("invoice_date_due", "=", d), ("amount_total", "!=", 0)]
-            title = "ครบกำหนด %s" % _be(d)
+            ids = [mv.id for mv, eff in month_list if eff == d]
+            title = "คาดรับ %s" % _be(d)
         else:
-            domain += [("invoice_date_due", ">=", start), ("invoice_date_due", "<=", end),
-                       ("amount_total", "!=", 0)]
-            title = "ครบกำหนดเดือน %s %d" % (THAI_MONTHS[start.month], start.year + 543)
+            ids = [mv.id for mv, _eff in month_list]
+            title = "คาดรับเดือน %s %d" % (THAI_MONTHS[start.month], start.year + 543)
         if partner_id:
             title = "%s: %s" % (self.env["res.partner"].browse(partner_id).name, title)
         return {
             "type": "ir.actions.act_window",
             "name": title,
             "res_model": "account.move",
-            "views": [(self.env.ref("account.view_out_invoice_tree").id, "list"),
+            "views": [(self.env.ref("custom_ar_due_forecast.view_ar_forecast_move_list").id, "list"),
                       (False, "form")],
-            "domain": domain,
+            "domain": [("id", "in", ids)],
             "context": {"create": False, "default_move_type": "out_invoice"},
         }
 
@@ -412,6 +467,9 @@ class ArDueForecastWizard(models.TransientModel):
                 "due": r["due"],
                 "carry": fmt(r["carry"]),
                 "days": [fmt(r["days"].get(d)) for d in days],
+                # True = ช่องนี้มียอดที่ยังไม่อยู่ในใบวางบิล (แสดงสีส้ม)
+                "days_unbilled": [d in r["days_unbilled"] for d in days],
+                "carry_unbilled": r["carry_unbilled"],
                 "month": fmt(r["month_total"]),
                 "pay_date": _be(r["pay_date"]) if r["pay_date"] else "",
                 "recv": fmt(r["received"]),
@@ -505,6 +563,11 @@ class ArDueForecastWizard(models.TransientModel):
         f_grand_num = wb.add_format(dict(base, border=1, bold=True, bg_color="#BDD7EE",
                                          num_format="#,##0.00;[Red]-#,##0.00;"))
         f_note = wb.add_format(dict(base, border=1, text_wrap=False))
+        # ยอดที่ยังไม่อยู่ในใบวางบิล = พื้นส้ม
+        f_num_unb = wb.add_format(dict(base, border=1, bg_color="#FCE4D6", font_color="#C65911",
+                                       num_format="#,##0.00;[Red]-#,##0.00;"))
+        f_legend = wb.add_format(dict(base, italic=True, font_color="#595959"))
+        f_legend_unb = wb.add_format(dict(base, border=1, bg_color="#FCE4D6", font_color="#C65911"))
 
         # คอลัมน์
         C_SEQ, C_NAME, C_DUE, C_CARRY = 0, 1, 2, 3
@@ -557,19 +620,21 @@ class ArDueForecastWizard(models.TransientModel):
             return xl_rowcol_to_cell(r, c)
 
         def write_data_row(r, seq, name, due="", days=None, carry=None, received=None,
-                           pay_date=None, note="", fmt_txt=f_txt, fmt_num=f_num):
+                           pay_date=None, note="", fmt_txt=f_txt, fmt_num=f_num,
+                           unbilled_days=(), carry_unbilled=False):
             ws.write(r, C_SEQ, seq if seq else "", f_ctr)
             ws.write(r, C_NAME, name, fmt_txt)
             ws.write(r, C_DUE, due, f_ctr)
             if carry:
-                ws.write_number(r, C_CARRY, carry, fmt_num)
+                ws.write_number(r, C_CARRY, carry, f_num_unb if carry_unbilled else fmt_num)
             else:
                 ws.write_blank(r, C_CARRY, None, fmt_num)
             total = 0.0
             for d in range(1, ndays + 1):
                 v = (days or {}).get(d)
                 if v:
-                    ws.write_number(r, C_DAY0 + d - 1, v, fmt_num)
+                    ws.write_number(r, C_DAY0 + d - 1, v,
+                                    f_num_unb if d in unbilled_days else fmt_num)
                     total += v
                 else:
                     ws.write_blank(r, C_DAY0 + d - 1, None, fmt_num)
@@ -635,6 +700,7 @@ class ArDueForecastWizard(models.TransientModel):
             write_data_row(
                 r, i, self._partner_label(row["partner"]), row["due"], row["days"],
                 row["carry"], row["received"], row["pay_date"], row["note"],
+                unbilled_days=row["days_unbilled"], carry_unbilled=row["carry_unbilled"],
             )
             r += 1
         if not rows:
@@ -644,7 +710,14 @@ class ArDueForecastWizard(models.TransientModel):
         write_sum_row(r, "รวมรายได้ - ลูกหนี้การค้า (2)", ar_first, r - 1)
         r += 1
         write_add_row(r, "รวมรายได้ทั้งสิ้น (1-2)", [cash_row, ar_total])
+        r += 2
+        # คำอธิบาย
+        ws.write(r, C_NAME, "ยังไม่วางบิล", f_legend_unb)
+        ws.write(r, C_DUE, "", f_legend)
+        ws.write(r, C_CARRY, "= ช่องนี้มียอดของใบแจ้งหนี้ที่ยังไม่อยู่ในใบวางบิล", f_legend)
         r += 1
+        ws.write(r, C_CARRY, "ลูกหนี้ลงช่องตาม \"วันนัดรับชำระ\" ในใบวางบิล ถ้าไม่ได้ใส่ ใช้วันครบกำหนดของใบแจ้งหนี้"
+                 " · ลูกค้าเงินสด = ยอดรับจริงจากใบเสร็จ", f_legend)
 
         ws.set_landscape()
         ws.set_paper(9)
@@ -654,8 +727,26 @@ class ArDueForecastWizard(models.TransientModel):
         # ---------- ชีทรายละเอียด ----------
         ws2 = wb.add_worksheet("รายละเอียดใบแจ้งหนี้")
         heads = ["ลูกค้า", "กลุ่ม", "เลขที่", "วันที่ใบ", "วันครบกำหนด", "ยอดใบ",
-                 "รับแล้ว", "คงค้าง", "วันที่รับเงินล่าสุด", "สถานะจ่าย", "อ้างอิง"]
-        widths = [38, 18, 14, 11, 11, 13, 13, 13, 13, 10, 20]
+                 "รับแล้ว", "คงค้าง", "วันที่รับเงินล่าสุด", "สถานะจ่าย", "อ้างอิง",
+                 "เลขใบวางบิล", "วันที่วางบิล", "วันนัดรับชำระ", "วันคาดรับ (ใช้ในรายงาน)"]
+        widths = [38, 18, 14, 11, 11, 13, 13, 13, 13, 10, 20, 13, 11, 12, 13]
+
+        def write_bn_cols(rr, bn, eff):
+            if bn:
+                ws2.write(rr, 11, bn["name"] or "", f_txt)
+                ws2.write_datetime(rr, 12, bn["date"], f_date)
+                if bn["promise"]:
+                    ws2.write_datetime(rr, 13, bn["promise"], f_date)
+                else:
+                    ws2.write_blank(rr, 13, None, f_date)
+            else:
+                ws2.write(rr, 11, "ยังไม่วางบิล", f_legend_unb)
+                ws2.write_blank(rr, 12, None, f_date)
+                ws2.write_blank(rr, 13, None, f_date)
+            if eff:
+                ws2.write_datetime(rr, 14, eff, f_date)
+            else:
+                ws2.write_blank(rr, 14, None, f_date)
         for c, (h, w) in enumerate(zip(heads, widths)):
             ws2.write(0, c, h, f_head)
             ws2.set_column(c, c, w)
@@ -678,10 +769,11 @@ class ArDueForecastWizard(models.TransientModel):
             ws2.write_datetime(rr, 8, m.invoice_date, f_date)
             ws2.write(rr, 9, state_lbl.get(m.payment_state, m.payment_state or ""), f_txt)
             ws2.write(rr, 10, m.ref or m.invoice_origin or "", f_txt)
+            ws2.write_datetime(rr, 14, m.invoice_date, f_date)
             rr += 1
         for row in rows:
             label = self._partner_label(row["partner"])
-            for grp, m, pd in sorted(row["invoices"], key=lambda t: (t[1].invoice_date_due, t[1].name)):
+            for grp, m, pd, eff, bn in sorted(row["invoices"], key=lambda t: (t[3], t[1].name)):
                 ws2.write(rr, 0, label, f_txt)
                 ws2.write(rr, 1, grp, f_txt)
                 ws2.write(rr, 2, m.name, f_txt)
@@ -699,6 +791,7 @@ class ArDueForecastWizard(models.TransientModel):
                     ws2.write_blank(rr, 8, None, f_date)
                 ws2.write(rr, 9, state_lbl.get(m.payment_state, m.payment_state or ""), f_txt)
                 ws2.write(rr, 10, m.ref or m.invoice_origin or "", f_txt)
+                write_bn_cols(rr, bn, eff)
                 rr += 1
         ws2.autofilter(0, 0, max(rr - 1, 1), len(heads) - 1)
 

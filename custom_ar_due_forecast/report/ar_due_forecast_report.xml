@@ -44,6 +44,8 @@
                         table.ar tr.tot td { background: #e2efda; font-weight: bold; }
                         table.ar tr.grand td { background: #bdd7ee; font-weight: bold; }
                         table.ar tr.sec td { background: #fff2cc; font-weight: bold; }
+                        table.ar td.unb { background: #fce4d6; color: #c65911; }
+                        .unb-key { background: #fce4d6; color: #c65911; border: 1px solid #f4b183; padding: 0 3px; }
                         .page.dense { font-size: 9px; }
                         .page.dense table.ar th, .page.dense table.ar td { padding: 2px 2px; }
                         table.ar td.name { min-width: 150px; }
@@ -94,8 +96,8 @@
                                     <td class="ctr"><t t-esc="r['seq']"/></td>
                                     <td class="name"><t t-esc="r['name']"/></td>
                                     <td t-if="d['show_due']" class="ctr"><t t-esc="r['due']"/></td>
-                                    <td t-if="d['show_carry']" t-attf-class="num #{'neg' if r['carry_neg'] else ''}"><t t-esc="r['carry']"/></td>
-                                    <td t-foreach="r['days']" t-as="v" class="num"><t t-esc="v"/></td>
+                                    <td t-if="d['show_carry']" t-attf-class="num #{'neg' if r['carry_neg'] else ''} #{'unb' if r['carry'] and r['carry_unbilled'] else ''}"><t t-esc="r['carry']"/></td>
+                                    <td t-foreach="r['days']" t-as="v" t-attf-class="num #{'unb' if r['days_unbilled'][v_index] else ''}"><t t-esc="v"/></td>
                                     <td class="num sum"><t t-esc="r['month']"/></td>
                                     <td t-if="d['show_paydate']" class="ctr"><t t-esc="r['pay_date']"/></td>
                                     <td t-if="d['show_recv']" class="num"><t t-esc="r['recv']"/></td>
@@ -135,7 +137,7 @@
                             </tbody>
                         </table>
                         <div class="ar-foot">
-                            Due = จำนวนวันเครดิต · ลูกค้าเงินสด = ยอดรับจริงจากใบเสร็จตามวันที่รับเงิน · ลูกหนี้ลงช่องตามวันครบกำหนดของใบแจ้งหนี้ (ใบลดหนี้หักออก) · แสดงเฉพาะลูกค้าและวันที่ที่มียอด · พิมพ์วันที่ <t t-esc="d['printed']"/>
+                            <span class="unb-key">ช่องสีส้ม</span> = มียอดที่ยังไม่วางบิล · ลูกหนี้ลงช่องตามวันนัดรับชำระในใบวางบิล ถ้าไม่ได้ใส่ ใช้วันครบกำหนดของใบแจ้งหนี้ (ใบลดหนี้หักออก) · ลูกค้าเงินสด = ยอดรับจริงจากใบเสร็จ · Due = จำนวนวันเครดิต · แสดงเฉพาะลูกค้าและวันที่ที่มียอด · พิมพ์วันที่ <t t-esc="d['printed']"/>
                         </div>
                     </div>
                 </t>

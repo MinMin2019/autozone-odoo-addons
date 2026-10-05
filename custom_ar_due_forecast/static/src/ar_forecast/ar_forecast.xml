@@ -86,11 +86,11 @@
                                     <td class="o_ar_seq" t-esc="r.seq"/>
                                     <td class="o_ar_name" t-att-title="r.full_name" t-esc="r.name"/>
                                     <td t-if="d.show_due" class="text-center" t-esc="r.due"/>
-                                    <td t-if="d.show_carry" class="o_ar_num" t-att-class="{'o_ar_neg': r.carry_neg}">
+                                    <td t-if="d.show_carry" class="o_ar_num" t-att-class="{'o_ar_neg': r.carry_neg, 'o_ar_unbilled': r.carry and r.carry_unbilled}">
                                         <a t-if="r.carry" href="#" t-on-click.prevent="() => this.openMoves('carry', r.partner_id)" t-esc="r.carry"/>
                                     </td>
                                     <t t-foreach="r.days" t-as="v" t-key="v_index">
-                                        <td class="o_ar_num">
+                                        <td class="o_ar_num" t-att-class="{'o_ar_unbilled': r.days_unbilled[v_index]}">
                                             <a t-if="v" href="#" t-on-click.prevent="() => this.openMoves('day', r.partner_id, d.day_nums[v_index])" t-esc="v"/>
                                         </td>
                                     </t>
@@ -148,8 +148,9 @@
                         </table>
                     </div>
                     <div class="o_ar_foot">
-                        Due = จำนวนวันเครดิต · ลูกค้าเงินสด = ยอดรับจริงจากใบเสร็จตามวันที่รับเงิน ·
-                        ลูกหนี้ลงช่องตามวันครบกำหนดของใบแจ้งหนี้ (ใบลดหนี้หักออก) ·
+                        <span class="o_ar_legend_unbilled">ช่องสีส้ม</span> = มียอดที่ยังไม่วางบิล ·
+                        ลูกหนี้ลงช่องตามวันนัดรับชำระในใบวางบิล ถ้าไม่ได้ใส่ ใช้วันครบกำหนดของใบแจ้งหนี้ (ใบลดหนี้หักออก) ·
+                        ลูกค้าเงินสด = ยอดรับจริงจากใบเสร็จ · Due = จำนวนวันเครดิต ·
                         แสดงเฉพาะลูกค้าและวันที่ที่มียอด · คลิกตัวเลขเพื่อดูใบแจ้งหนี้
                     </div>
                 </div>
