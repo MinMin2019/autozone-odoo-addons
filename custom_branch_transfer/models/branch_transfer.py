@@ -7,6 +7,10 @@
   * ปุ่ม "ส่งของ" (validate TOUT) / "รับของ" (validate TIN) บนใบเดียวกัน
   * สถานะไล่ตามใบจริง: ร่าง -> รอส่ง -> ส่งแล้ว รอสาขารับ -> รับบางส่วน -> รับครบ
 """
+from datetime import datetime, time
+
+import pytz
+
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools import float_compare, float_is_zero
@@ -239,10 +243,33 @@ class BranchTransfer(models.Model):
             pickings = self.env["stock.picking"].sudo().search([("group_id", "=", group.id)])
             if not pickings:
                 raise UserError(_("Odoo ไม่ได้สร้างใบโอน — ตรวจสอบเส้นทาง (route) ของสาขา"))
-            pickings.write({"az_transfer_id": rec.id, "origin": rec.name})
+            vals = {"az_transfer_id": rec.id, "origin": rec.name}
+            backdate = rec._backdate_value()
+            if backdate:
+                vals["backdate"] = backdate
+            pickings.write(vals)
             rec.invalidate_recordset(["picking_ids"])
             rec.message_post(body=_("สร้างใบโอนแล้ว: %s") % ", ".join(pickings.mapped("name")))
         return True
+
+    def _backdate_value(self):
+        """วันที่ใบโอนย้อนหลัง -> backdate (เที่ยงวันตามเขตเวลา) ให้ custom_stock_backdate ประทับวันส่ง/รับ
+        คืน False ถ้าเป็นวันนี้ หรือไม่ได้ติดตั้ง custom_stock_backdate"""
+        self.ensure_one()
+        if "backdate" not in self.env["stock.picking"]._fields:
+            return False
+        if self.date >= fields.Date.context_today(self):
+            return False
+        tz = pytz.timezone(self.env.context.get("tz") or self.env.user.tz
+                           or self.company_id.partner_id.tz or "Asia/Bangkok")
+        local_noon = tz.localize(datetime.combine(self.date, time(12, 0)))
+        return local_noon.astimezone(pytz.utc).replace(tzinfo=None)
+
+    @api.constrains("date")
+    def _check_date_not_future(self):
+        for rec in self:
+            if rec.date and rec.date > fields.Date.context_today(rec):
+                raise UserError(_("วันที่ใบโอนเป็นอนาคตไม่ได้"))
 
     def action_send(self):
         """ส่วนกลางกดส่งของ = validate ใบ TOUT (ถ้าของไม่ครบ Odoo จะถาม backorder)"""
