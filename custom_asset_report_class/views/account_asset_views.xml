@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- รายงานจัดกลุ่มตาม Analytic Distribution แล้ว ช่อง Class (x_class_id) ไม่ได้ใช้ ซ่อนไว้ (ข้อมูลเดิมยังอยู่) -->
+    <record id="view_account_asset_form_hide_class" model="ir.ui.view">
+        <field name="name">account.asset.form.hide.class</field>
+        <field name="model">account.asset</field>
+        <field name="inherit_id" ref="asset_module.view_account_asset_form_inherit_image"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='x_class_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

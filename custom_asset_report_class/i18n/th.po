@@ -15,10 +15,10 @@ msgstr ""
 
 #. module: custom_asset_report_class
 #: code:addons/custom_asset_report_class/models/assets_report.py:0
-msgid "(No Class)"
-msgstr "(ไม่ระบุคลาส)"
+msgid "(No Analytic)"
+msgstr "(ไม่ระบุ Analytic)"
 
 #. module: custom_asset_report_class
 #: code:addons/custom_asset_report_class/static/src/components/depreciation_schedule/groupby.xml:0
-msgid "Group by Class"
-msgstr "จัดกลุ่มตามคลาส"
+msgid "Group by Analytic"
+msgstr "จัดกลุ่มตาม Analytic"
