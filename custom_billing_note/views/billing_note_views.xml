@@ -15,6 +15,8 @@
                 <field name="name" string="เลขที่ใบวางบิล" decoration-bf="1" />
                 <field name="partner_id" string="ลูกค้า" />
                 <field name="date" string="วันที่วางบิล" />
+                <field name="promise_date" optional="show"
+                    decoration-danger="promise_date and promise_date &lt; current_date and state == 'confirmed'" />
 
                 <!-- วันครบกำหนด: ถ้ายังไม่จ่ายและเลยกำหนด (due_date < วันนี้) ให้แสดงสีแดงเตือน! -->
                 <!-- <field name="due_date" string="วันครบกำหนด"
@@ -50,6 +52,11 @@
                 <filter string="บิลรอเก็บเงิน (ยืนยันแล้ว)" name="filter_confirmed"
                     domain="[('state', '=', 'confirmed')]" />
                 <filter string="บิลที่ชำระแล้ว" name="filter_done" domain="[('state', '=', 'done')]" />
+                <separator />
+                <filter string="เลยวันนัดรับชำระ" name="filter_promise_overdue"
+                    domain="[('state', '=', 'confirmed'), ('promise_date', '&lt;', context_today().strftime('%Y-%m-%d'))]" />
+                <filter string="ยังไม่ใส่วันนัด" name="filter_no_promise"
+                    domain="[('state', '=', 'confirmed'), ('promise_date', '=', False)]" />
                 <separator />
                 <!-- ตัวกรองค้นหาบิลที่ 'เกินกำหนดชำระ' (เฉพาะใบที่ยังไม่ได้จ่าย) -->
                 <!-- <filter string="เกินกำหนดชำระ" name="filter_overdue"
@@ -99,6 +106,7 @@
                         <group>
                             <field name="date" readonly="state != 'draft'" />
                             <!-- <field name="due_date" readonly="state != 'draft'" /> -->
+                            <field name="promise_date" readonly="state in ('done', 'cancel')" />
                             <field name="currency_id" invisible="1" />
                             <field name="company_id" invisible="1" />
 

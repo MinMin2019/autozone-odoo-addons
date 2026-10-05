@@ -1,6 +1,6 @@
 {
     'name': 'Custom Billing Note',
-    'version': '18.0.1.7.0',
+    'version': '18.0.1.8.3',
     'category': 'Autozone/Accounting',
     'summary': 'ระบบจัดการใบวางบิลสำหรับลูกค้า (Customer Billing Note)',
     'description': """
@@ -14,6 +14,7 @@
         'data/paperformat.xml',
         'views/billing_note_views.xml',
         'views/billing_note_insurance_views.xml',
+        'views/billing_note_payment_views.xml',
         'views/billing_note_menus.xml',
         'report/billing_note_report.xml', 
         'report/billing_note_template.xml',

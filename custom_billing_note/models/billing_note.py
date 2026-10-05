@@ -16,6 +16,11 @@ class CustomerBillingNote(models.Model):
     
     date = fields.Date(string='วันที่วางบิล', default=fields.Date.context_today, required=True)
     # due_date = fields.Date(string='วันครบกำหนดชำระ', tracking=True)
+    # วันที่ลูกค้านัดจ่ายจริง (ไม่บังคับ) — รายงานคาดรับเงินลูกหนี้ (custom_ar_due_forecast)
+    # ใช้วันนี้แทนวันครบกำหนดของใบแจ้งหนี้ ถ้าใส่ไว้; แก้ได้หลังยืนยันเพราะลูกค้ามักนัดทีหลัง
+    promise_date = fields.Date(string='วันนัดรับชำระ', tracking=True, copy=False,
+                               help='วันที่ลูกค้านัดจ่ายเงินของใบวางบิลนี้ (ไม่บังคับ) '
+                                    'รายงานคาดรับเงินลูกหนี้จะลงยอดตามวันนี้แทนวันครบกำหนดของใบแจ้งหนี้')
 
     company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
     currency_id = fields.Many2one('res.currency', related='company_id.currency_id')

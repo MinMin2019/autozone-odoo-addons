@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ปุ่มรับชำระเงิน (v18.0.1.8.0): เห็นเฉพาะใบที่ Confirm แล้วและยังมีใบแจ้งหนี้ค้าง
+         สิทธิ์เท่ากับการรับเงินจากใบแจ้งหนี้ (Billing / Invoicing) -->
+    <record id="view_customer_billing_note_form_payment" model="ir.ui.view">
+        <field name="name">customer.billing.note.form.payment</field>
+        <field name="model">customer.billing.note</field>
+        <field name="inherit_id" ref="custom_billing_note.view_customer_billing_note_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='action_confirm']" position="after">
+                <field name="bn_has_unpaid" invisible="1" />
+                <button name="action_bn_register_payment" string="รับชำระเงิน" type="object"
+                    class="oe_highlight" groups="account.group_account_invoice"
+                    invisible="state != 'confirmed' or not bn_has_unpaid" />
+            </xpath>
+            <xpath expr="//sheet/*[1]" position="before">
+                <div class="oe_button_box" name="button_box">
+                    <button name="action_bn_view_payments" type="object" class="oe_stat_button"
+                        icon="fa-money" invisible="not bn_payment_count">
+                        <field name="bn_payment_count" widget="statinfo" string="ใบรับเงิน" />
+                    </button>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- v18.0.1.8.1: หน้ารายการ ติ๊กหลายใบวางบิล (ลูกค้าเดียวกัน) → การดำเนินการ → รับชำระเงิน -->
+    <record id="action_bn_register_payment_multi" model="ir.actions.server">
+        <field name="name">รับชำระเงิน</field>
+        <field name="model_id" ref="custom_billing_note.model_customer_billing_note" />
+        <field name="binding_model_id" ref="custom_billing_note.model_customer_billing_note" />
+        <field name="binding_view_types">list</field>
+        <field name="groups_id" eval="[(4, ref('account.group_account_invoice'))]" />
+        <field name="state">code</field>
+        <field name="code">action = records.action_bn_register_payment()</field>
+    </record>
+</odoo>
