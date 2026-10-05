@@ -69,9 +69,9 @@
         .o_ar_num { text-align: right; font-variant-numeric: tabular-nums; }
         td.o_ar_sum { background-color: rgba(217, 225, 242, 0.35); font-weight: bold; }
         .o_ar_neg, .o_ar_neg a { color: $danger; }
-        // ยอดที่ยังไม่อยู่ในใบวางบิล
-        td.o_ar_unbilled { background-color: #fce4d6; }
-        td.o_ar_unbilled, td.o_ar_unbilled a { color: #c65911; }
+        // ใบแจ้งหนี้ทุกใบในช่องอยู่ในใบวางบิลแล้ว
+        td.o_ar_billed { background-color: #c6efce; }
+        td.o_ar_billed, td.o_ar_billed a { color: #006100; }
         tbody tr:hover td { background-color: rgba(0, 0, 0, 0.04); }
 
         a {
@@ -88,11 +88,11 @@
         margin-top: 0.5rem;
         font-size: 0.8rem;
         color: $text-muted;
-        .o_ar_legend_unbilled {
-            background-color: #fce4d6;
-            color: #c65911;
+        .o_ar_legend_billed {
+            background-color: #c6efce;
+            color: #006100;
             padding: 0 0.35rem;
-            border: 1px solid #f4b183;
+            border: 1px solid #a9d08e;
         }
     }
 }
