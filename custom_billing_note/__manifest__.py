@@ -1,6 +1,6 @@
 {
     'name': 'Custom Billing Note',
-    'version': '18.0.1.8.3',
+    'version': '18.0.1.8.6',
     'category': 'Autozone/Accounting',
     'summary': 'ระบบจัดการใบวางบิลสำหรับลูกค้า (Customer Billing Note)',
     'description': """
