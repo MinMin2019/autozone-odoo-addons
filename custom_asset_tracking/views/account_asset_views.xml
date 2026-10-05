@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_account_asset_form_custodian" model="ir.ui.view">
+        <field name="name">account.asset.form.custodian</field>
+        <field name="model">account.asset</field>
+        <field name="inherit_id" ref="asset_module.view_account_asset_form_inherit_image"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='x_asset_repository']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='x_asset_repository']" position="after">
+                <field name="custodian_id" invisible="state == 'model'"
+                       options="{'no_create': True}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_account_asset_tree_custodian" model="ir.ui.view">
+        <field name="name">account.asset.list.custodian</field>
+        <field name="model">account.asset</field>
+        <field name="inherit_id" ref="account_asset.view_account_asset_tree"/>
+        <field name="arch" type="xml">
+            <field name="name" position="before">
+                <field name="image_128" widget="image" string="Image" optional="show"
+                       options="{'size': [32, 32]}"/>
+            </field>
+            <field name="parent_id" position="after">
+                <field name="custodian_id" optional="show"/>
+            </field>
+            <field name="value_residual" position="after">
+                <field name="x_asset_description" optional="show"/>
+                <field name="analytic_distribution" widget="analytic_distribution"
+                       groups="analytic.group_analytic_accounting" optional="show"
+                       readonly="1"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_account_asset_search_custodian" model="ir.ui.view">
+        <field name="name">account.asset.search.custodian</field>
+        <field name="model">account.asset</field>
+        <field name="inherit_id" ref="account_asset.view_account_asset_search"/>
+        <field name="arch" type="xml">
+            <field name="model_id" position="after">
+                <field name="custodian_id"/>
+            </field>
+            <filter name="closed" position="after">
+                <separator/>
+                <filter string="No Custodian" name="no_custodian"
+                        domain="[('custodian_id', '=', False)]"/>
+                <filter string="Custodian Archived (Resigned)" name="custodian_archived"
+                        domain="[('custodian_id', '!=', False), ('custodian_id.active', '=', False)]"/>
+            </filter>
+            <filter name="model" position="after">
+                <filter string="Custodian" name="group_custodian" context="{'group_by': 'custodian_id'}"/>
+            </filter>
+        </field>
+    </record>
+</odoo>
