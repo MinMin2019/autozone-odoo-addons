@@ -43,6 +43,7 @@
         <field name="arch" type="xml">
             <field name="model_id" position="after">
                 <field name="custodian_id"/>
+                <field name="main_analytic_account_id"/>
             </field>
             <filter name="closed" position="after">
                 <separator/>
@@ -53,6 +54,8 @@
             </filter>
             <filter name="model" position="after">
                 <filter string="Custodian" name="group_custodian" context="{'group_by': 'custodian_id'}"/>
+                <filter string="Analytic" name="group_main_analytic" context="{'group_by': 'main_analytic_account_id'}"/>
+                <filter string="Analytic Plan" name="group_main_analytic_plan" context="{'group_by': 'main_analytic_plan_id'}"/>
             </filter>
         </field>
     </record>

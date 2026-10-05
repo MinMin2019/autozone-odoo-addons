@@ -7,6 +7,7 @@
 - **ซ่อนช่อง Repository** (`x_asset_repository` จาก `asset_module`) — ข้อมูลเดิมยังอยู่ใน DB ไม่ลบ
 - ตัวกรอง: *No Custodian*, *Custodian Archived (Resigned)* (ของค้างกับคนลาออก) + Group by Custodian
 - ลิสต์สินทรัพย์แสดงเพิ่ม: **รูป**, **Description** (`x_asset_description`), **Analytic Distribution** (v1.1.0); ซ่อนคอลัมน์ Class (Studio) เพราะซ้ำกับ Analytic (v1.2.0)
+- Group by **Analytic** / **Analytic Plan** ในลิสต์ ผ่านช่องซ่อน `main_analytic_account_id` (stored) = analytic ที่ % สูงสุดใน Analytic Distribution (v1.3.0) — สินทรัพย์ที่แบ่งหลายสาขาจะอยู่กลุ่มของสาขาที่ % มากสุด
 - ช่อง Custodian มี tracking ใน chatter → เห็นประวัติเปลี่ยนคนถือ
 
 ## การย้ายข้อมูลตอนติดตั้ง (post_init_hook)
