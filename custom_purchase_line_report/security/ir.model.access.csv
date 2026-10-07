@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_az_purchase_line_report_wizard,az.purchase.line.report.wizard,model_az_purchase_line_report_wizard,purchase.group_purchase_user,1,1,1,1
