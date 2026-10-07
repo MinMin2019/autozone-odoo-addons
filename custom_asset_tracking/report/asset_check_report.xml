@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_asset_check" model="report.paperformat">
+        <field name="name">A4 Landscape Asset Check</field>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">8</field>
+        <field name="margin_bottom">8</field>
+        <field name="margin_left">6</field>
+        <field name="margin_right">6</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_asset_check" model="ir.actions.report">
+        <field name="name">รายงานตรวจเช็คทรัพย์สิน</field>
+        <field name="model">account.asset</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">custom_asset_tracking.report_asset_check</field>
+        <field name="report_file">custom_asset_tracking.report_asset_check</field>
+        <field name="print_report_name">'Asset Check'</field>
+        <field name="paperformat_id" ref="paperformat_asset_check"/>
+    </record>
+
+    <!-- ห้ามตั้งชื่อตัวแปรวน "doc"/"o": web.basic_layout จะหยิบไปเป็น record (o._name) แล้วพัง
+         1 ชุด = 1 สาขา ผู้ถือครองทุกคนรวมในตาราง (สร้างใน report.custom_asset_tracking.report_asset_check)
+         แบ่งหน้าเองใน Python (_paginate) แถวสูงคงที่ → ค่า px ใน CSS ต้องตรงกับ ROW_H/GROUP_H/… ใน
+         asset_check_report_wizard.py; หน้าสุดท้ายมีรายการอย่างน้อย 1 แถวคู่กับสรุป + ลายเซ็น 3 ช่อง
+         ผู้ตรวจไม่อยู่บนหัว — ใช้ช่องลายเซ็น "ผู้ตรวจนับ" ท้ายเอกสารช่องเดียว -->
+    <template id="report_asset_check">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="sec">
+                <t t-call="web.basic_layout">
+                    <style>
+                        .header, .footer { display: none !important; }
+                        .ac-page { font-family: Sarabun, sans-serif; font-size: 12px; color: #000; }
+                        .ac-title { text-align: center; font-size: 19px; font-weight: bold; }
+                        .ac-company { text-align: center; font-size: 13px; margin-bottom: 8px; }
+                        /* หัว/ลายเซ็นใช้ div ไม่ใช้ table — table โดน css ของ report ใส่เส้นขอบจาง ๆ ลบไม่ออก */
+                        .ac-head { margin-bottom: 6px; font-size: 13px; }
+                        .ac-head-item { display: inline-block; margin-right: 22px; white-space: nowrap; }
+                        .ac-dots { display: inline-block; border-bottom: 1px dotted #000; min-width: 150px; height: 14px; }
+                        table.ac-lines { width: 100%; border-collapse: collapse; }
+                        table.ac-lines th, table.ac-lines td { border: 1px solid #555; padding: 3px 4px; vertical-align: middle; }
+                        table.ac-lines th { background: #eee; text-align: center; font-weight: bold; vertical-align: middle; }
+                        .ac-pb { page-break-before: always; }
+                        table.ac-lines thead tr { height: 23px; }
+                        tr.ac-row { height: 54px; }
+                        tr.ac-grow { height: 24px; }
+                        td.ac-group { background: #f3f3f3; font-weight: bold; }
+                        td.c { text-align: center; }
+                        td.r { text-align: right; }
+                        .ac-img { width: 40px; height: 40px; object-fit: cover; vertical-align: middle; }
+                        .ac-noimg { width: 40px; height: 40px; background: #d0d0d0; display: inline-block; vertical-align: middle; }
+                        .ac-name { max-height: 30px; line-height: 15px; overflow: hidden; }
+                        .ac-desc { max-height: 42px; line-height: 14px; overflow: hidden; font-size: 11px; }
+                        .ac-sub { height: 14px; line-height: 14px; font-size: 10.5px; color: #222; overflow: hidden; white-space: nowrap; }
+                        .ac-cell { max-height: 44px; line-height: 15px; overflow: hidden; }
+                        .ac-box { display: inline-block; width: 13px; height: 13px; border: 1px solid #000; }
+                        table.ac-sum { width: 100%; border-collapse: collapse; margin-top: 8px; page-break-inside: avoid; }
+                        table.ac-sum td { border: 1px solid #555; padding: 5px 6px; font-size: 13px; }
+                        .ac-blank { display: inline-block; border-bottom: 1px dotted #000; width: 60px; }
+                        .ac-sign { width: 100%; margin-top: 30px; font-size: 13px; }
+                        .ac-end { page-break-inside: avoid; }
+                        .ac-sign-cell { display: inline-block; width: 33%; text-align: center; line-height: 1.9; }
+                    </style>
+                    <div class="page ac-page">
+                        <div class="ac-title">รายงานตรวจเช็คทรัพย์สิน</div>
+                        <div class="ac-company" t-esc="sec['company'].name"/>
+
+                        <div class="ac-head">
+                            <span class="ac-head-item"><b>สาขา:</b> <t t-esc="sec['branch'].display_name or 'ไม่ระบุสาขา'"/></span>
+                            <span class="ac-head-item"><b>จำนวน:</b> <t t-esc="sec['count']"/> รายการ</span>
+                            <span class="ac-head-item"><b>วันที่พิมพ์:</b> <t t-esc="print_date.strftime('%d/%m/%Y')"/></span>
+                            <span class="ac-head-item"><b>วันที่ตรวจ:</b> <span class="ac-dots"/></span>
+                        </div>
+
+                        <t t-foreach="sec['pages']" t-as="page">
+                        <div t-att-class="'ac-pb' if not page_first else None">
+                        <table class="ac-lines">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2" style="width:3.5%;">ลำดับ</th>
+                                    <th rowspan="2" style="width:5%;">รูป</th>
+                                    <th rowspan="2" style="width:8%;">รหัสทรัพย์สิน</th>
+                                    <th rowspan="2" style="width:21%;">ชื่อทรัพย์สิน<br/>
+                                        <span style="font-weight:normal;">Brand / Model / Serial Number</span></th>
+                                    <th rowspan="2" style="width:9%;">ผู้ถือครอง</th>
+                                    <th rowspan="2" style="width:8%;">Location</th>
+                                    <th rowspan="2" style="width:13%;">Description</th>
+                                    <th rowspan="2" style="width:7%;">วันที่ได้มา</th>
+                                    <th rowspan="2" style="width:7.5%;">มูลค่าเดิม</th>
+                                    <th colspan="3">ผลการตรวจ</th>
+                                    <th rowspan="2">หมายเหตุ</th>
+                                </tr>
+                                <tr>
+                                    <th style="width:4%;">สภาพดี</th>
+                                    <th style="width:4%;">ชำรุด</th>
+                                    <th style="width:4%;">ไม่พบ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="page" t-as="row">
+                                    <tr t-if="row['type'] == 'group'" class="ac-grow">
+                                        <td colspan="13" class="ac-group">
+                                            <t t-esc="row['name']"/> (<t t-esc="row['count']"/>)<t t-if="row['cont']"> (ต่อ)</t>
+                                        </td>
+                                    </tr>
+                                    <t t-else="">
+                                        <t t-set="a" t-value="row['asset']"/>
+                                        <tr class="ac-row">
+                                            <td class="c" t-esc="row['seq']"/>
+                                            <td class="c">
+                                                <img t-if="a.image_128" class="ac-img"
+                                                     t-att-src="image_data_uri(a.image_128)"/>
+                                                <span t-else="" class="ac-noimg"/>
+                                            </td>
+                                            <td class="c" t-esc="row['code']"/>
+                                            <td>
+                                                <div class="ac-name" t-esc="a.name"/>
+                                                <div class="ac-sub" t-if="a.x_asset_brand or a.x_asset_model or a.x_asset_serial">
+                                                    <t t-if="a.x_asset_brand"><b>Brand:</b> <t t-esc="a.x_asset_brand"/>&#160;&#160;</t>
+                                                    <t t-if="a.x_asset_model"><b>Model:</b> <t t-esc="a.x_asset_model"/>&#160;&#160;</t>
+                                                    <t t-if="a.x_asset_serial"><b>S/N:</b> <t t-esc="a.x_asset_serial"/></t>
+                                                </div>
+                                            </td>
+                                            <td><div class="ac-cell" t-esc="row['custodian']"/></td>
+                                            <td><div class="ac-cell" t-esc="row['location']"/></td>
+                                            <td><div class="ac-desc" t-esc="a.x_asset_description or ''"/></td>
+                                            <td class="c" t-esc="a.acquisition_date and a.acquisition_date.strftime('%d/%m/%Y') or ''"/>
+                                            <td class="r" t-esc="'{:,.2f}'.format(a.original_value)"/>
+                                            <td class="c"><span class="ac-box"/></td>
+                                            <td class="c"><span class="ac-box"/></td>
+                                            <td class="c"><span class="ac-box"/></td>
+                                            <td/>
+                                        </tr>
+                                    </t>
+                                </t>
+                            </tbody>
+                        </table>
+                        </div>
+                        </t>
+
+                        <div class="ac-end">
+                        <table class="ac-sum">
+                            <tr>
+                                <td style="width:28%;"><b>สรุปผล</b> — ทั้งหมด <t t-esc="sec['count']"/> รายการ</td>
+                                <td style="width:24%;">สภาพดี <span class="ac-blank"/> รายการ</td>
+                                <td style="width:24%;">ชำรุด <span class="ac-blank"/> รายการ</td>
+                                <td style="width:24%;">ไม่พบ <span class="ac-blank"/> รายการ</td>
+                            </tr>
+                        </table>
+
+                        <div class="ac-sign">
+                            <t t-foreach="['ผู้ตรวจนับ', 'ผู้จัดการสาขา', 'ฝ่ายบัญชี']" t-as="sig">
+                                <div class="ac-sign-cell">
+                                    ลงชื่อ ..............................................<br/>
+                                    (..............................................)<br/>
+                                    <t t-esc="sig"/><br/>
+                                    วันที่ ......../......../..........
+                                </div>
+                            </t>
+                        </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

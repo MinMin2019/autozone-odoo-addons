@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_asset_check_report_wizard_form" model="ir.ui.view">
+        <field name="name">az.asset.check.report.wizard.form</field>
+        <field name="model">az.asset.check.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Asset Check Report">
+                <div class="alert alert-info" role="alert" invisible="not asset_ids">
+                    พิมพ์เฉพาะทรัพย์สินที่เลือกจากลิสต์ (<field name="asset_ids" widget="many2many_tags" readonly="1" class="d-inline"/>)
+                    — ตัวกรองด้านล่างจะกรองซ้ำในกลุ่มนี้
+                </div>
+                <group>
+                    <field name="branch_ids" widget="many2many_tags"
+                           options="{'no_create': True}" placeholder="ทุกสาขา"/>
+                    <field name="custodian_ids" widget="many2many_tags"
+                           options="{'no_create': True}" placeholder="ทุกคน"/>
+                    <field name="include_no_custodian"/>
+                </group>
+                <p class="text-muted">
+                    แยกเอกสาร 1 ชุดต่อสาขา (ขึ้นหน้าใหม่ทุกสาขา) ผู้ถือครองทุกคนรวมในตารางเดียว —
+                    พิมพ์เฉพาะสินทรัพย์สถานะ Draft / Running / Paused
+                </p>
+                <footer>
+                    <button name="action_print" string="Print" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_asset_check_report_wizard" model="ir.actions.act_window">
+        <field name="name">Asset Check Report</field>
+        <field name="res_model">az.asset.check.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="account_asset.model_account_asset"/>
+        <field name="binding_view_types">list</field>
+        <field name="binding_type">report</field>
+    </record>
+
+    <menuitem id="menu_asset_check_report"
+              name="Asset Check Report"
+              parent="account.menu_finance_entries"
+              action="action_asset_check_report_wizard"
+              sequence="61"
+              groups="account.group_account_readonly"/>
+</odoo>
