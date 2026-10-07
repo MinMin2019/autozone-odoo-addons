@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Autozone Employee Loan',
-    'version': '18.0.1.2.1',
+    'version': '18.0.1.3.1',
     'category': 'Autozone/HR',
     'summary': 'ทะเบียนเงินกู้สวัสดิการพนักงาน + ส่งยอดหักงวดเข้า Payslip Batch',
     'description': """
@@ -12,7 +12,8 @@ Autozone Employee Loan (เงินกู้สวัสดิการพน�
   สร้างเป็น Other Input รหัส LOAN (โครงสร้าง Legacy Import มี Salary Rule รองรับอยู่แล้ว)
 - งวดถูกตัดเป็น "หักแล้ว" อัตโนมัติเมื่อสลิปถูก Validate (คำนวณจากสถานะสลิป ไม่ override core)
 - เลขที่รันอัตโนมัติ LC<ปี พ.ศ.>/NNN (รีเซ็ตทุกปี) แก้มือได้จนกว่าจะปิดยอด ห้ามซ้ำ
-- รองรับชำระเอง/โปะปิดยอด (ติ๊กชำระเองที่งวด พร้อมหมายเหตุ)
+- รองรับชำระเอง/โปะปิดยอด (ติ๊กชำระเองที่งวด พร้อมวันที่ชำระ + หมายเหตุ)
+- รายงานเงินกู้ประจำเดือน: ยกมาต้นเดือน / จ่ายเพิ่ม(กู้ใหม่ในเดือน) / หักต้น-ดอก(รวมโปะ) / คงเหลือ / งวดค้าง
 - โมดูลเป็นแบบเพิ่มของใหม่ล้วน ไม่แก้พฤติกรรมเดิมของ payroll/บัญชี
   ถ้าไม่กดปุ่มก็ไม่มีผลใด ๆ กับ flow ปัจจุบัน (ใช้ Excel ต่อได้ตามเดิม)
 
@@ -30,6 +31,7 @@ Accounting ตามปกติ แล้วผูกเลข JE ไว้ท�
         'wizard/loan_push_wizard_views.xml',
         'views/hr_payslip_run_views.xml',
         'views/hr_employee_views.xml',
+        'views/hr_employee_loan_report_views.xml',
         'views/menus.xml',
     ],
     'installable': True,

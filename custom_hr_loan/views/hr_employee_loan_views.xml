@@ -73,6 +73,8 @@
                                     <field name="payslip_id"/>
                                     <field name="manual_paid"
                                            readonly="state in ('in_slip', 'paid')"/>
+                                    <field name="date_paid" invisible="not manual_paid"
+                                           required="manual_paid"/>
                                     <field name="manual_note"/>
                                     <field name="currency_id" column_invisible="1"/>
                                 </list>
@@ -117,10 +119,14 @@
                 <filter name="filter_running" string="กำลังผ่อน" domain="[('state', '=', 'running')]"/>
                 <filter name="filter_done" string="ปิดยอดแล้ว" domain="[('state', '=', 'done')]"/>
                 <filter name="filter_draft" string="ร่าง" domain="[('state', '=', 'draft')]"/>
+                <separator/>
+                <filter name="filter_date_loan" string="วันที่จ่ายเงินกู้" date="date_loan"/>
                 <group expand="0" string="Group By">
                     <filter name="group_employee" string="พนักงาน" context="{'group_by': 'employee_id'}"/>
                     <filter name="group_department" string="แผนก" context="{'group_by': 'department_id'}"/>
                     <filter name="group_state" string="สถานะ" context="{'group_by': 'state'}"/>
+                    <filter name="group_date_loan" string="เดือนที่จ่ายเงินกู้"
+                            context="{'group_by': 'date_loan:month'}"/>
                 </group>
             </search>
         </field>
@@ -157,6 +163,7 @@
                        decoration-success="state in ('paid', 'paid_manual')"
                        decoration-info="state == 'in_slip'"/>
                 <field name="payslip_id"/>
+                <field name="date_paid" optional="hide"/>
                 <field name="manual_note" optional="hide"/>
                 <field name="currency_id" column_invisible="1"/>
             </list>

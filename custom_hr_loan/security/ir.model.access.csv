@@ -7,3 +7,7 @@ access_hr_loan_push_wizard_payroll,loan.push.wizard payroll,model_hr_employee_lo
 access_hr_loan_push_wizard_account,loan.push.wizard account,model_hr_employee_loan_push_wizard,account.group_account_invoice,1,1,1,1
 access_hr_loan_push_wizard_line_payroll,loan.push.wizard.line payroll,model_hr_employee_loan_push_wizard_line,hr_payroll.group_hr_payroll_user,1,1,1,1
 access_hr_loan_push_wizard_line_account,loan.push.wizard.line account,model_hr_employee_loan_push_wizard_line,account.group_account_invoice,1,1,1,1
+access_hr_loan_report_payroll,hr.employee.loan.report payroll,model_hr_employee_loan_report,hr_payroll.group_hr_payroll_user,1,1,1,1
+access_hr_loan_report_account,hr.employee.loan.report account,model_hr_employee_loan_report,account.group_account_invoice,1,1,1,1
+access_hr_loan_report_wizard_payroll,loan.report.wizard payroll,model_hr_employee_loan_report_wizard,hr_payroll.group_hr_payroll_user,1,1,1,1
+access_hr_loan_report_wizard_account,loan.report.wizard account,model_hr_employee_loan_report_wizard,account.group_account_invoice,1,1,1,1

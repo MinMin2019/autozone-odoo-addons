@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_hr_employee_loan_report_wizard_form" model="ir.ui.view">
+        <field name="name">hr.employee.loan.report.wizard.form</field>
+        <field name="model">hr.employee.loan.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="รายงานเงินกู้ประจำเดือน">
+                <group>
+                    <group>
+                        <field name="month"/>
+                        <field name="year_be" options="{'format': false}"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_view_report" string="ดูรายงาน" type="object"
+                            class="oe_highlight"/>
+                    <button string="ยกเลิก" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_hr_employee_loan_report_wizard" model="ir.actions.act_window">
+        <field name="name">รายงานเงินกู้ประจำเดือน</field>
+        <field name="res_model">hr.employee.loan.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="view_hr_employee_loan_report_list" model="ir.ui.view">
+        <field name="name">hr.employee.loan.report.list</field>
+        <field name="model">hr.employee.loan.report</field>
+        <field name="arch" type="xml">
+            <list create="0" edit="0" delete="0" decoration-success="status == 'done'">
+                <field name="registration_number"/>
+                <field name="employee_id"/>
+                <field name="department_id" optional="hide"/>
+                <field name="loan_id" string="เลขที่สัญญา"/>
+                <field name="date_loan_be"/>
+                <field name="date_loan" column_invisible="1"/>
+                <field name="principal_amount" sum="รวม"/>
+                <field name="interest_total" sum="รวม"/>
+                <field name="opening_principal" sum="รวม"/>
+                <field name="new_loan_amount" sum="รวม"/>
+                <field name="paid_principal" sum="รวม"/>
+                <field name="paid_interest" sum="รวม"/>
+                <field name="remaining_principal" sum="รวม"/>
+                <field name="remaining_interest" sum="รวม"/>
+                <field name="remaining_total" sum="รวม" class="fw-bold"/>
+                <field name="count_remaining"/>
+                <field name="count_overdue" decoration-danger="count_overdue &gt; 0"
+                       decoration-bf="count_overdue &gt; 0"/>
+                <field name="status" widget="badge"
+                       decoration-info="status == 'running'"
+                       decoration-success="status == 'done'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_hr_employee_loan_report_search" model="ir.ui.view">
+        <field name="name">hr.employee.loan.report.search</field>
+        <field name="model">hr.employee.loan.report</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <field name="registration_number"/>
+                <field name="loan_name"/>
+                <filter name="filter_running" string="กำลังผ่อน" domain="[('status', '=', 'running')]"/>
+                <filter name="filter_done" string="ปิดยอดแล้ว" domain="[('status', '=', 'done')]"/>
+                <filter name="filter_new_loan" string="จ่ายเพิ่ม (กู้ใหม่) เดือนนี้"
+                        domain="[('new_loan_amount', '&gt;', 0)]"/>
+                <filter name="filter_overdue" string="มีงวดค้าง" domain="[('count_overdue', '&gt;', 0)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_department" string="แผนก" context="{'group_by': 'department_id'}"/>
+                    <filter name="group_status" string="สถานะ" context="{'group_by': 'status'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- เปิดจาก wizard เท่านั้น (wizard ใส่ชื่อเดือน + domain ผู้ใช้ให้) -->
+    <record id="action_hr_employee_loan_report" model="ir.actions.act_window">
+        <field name="name">รายงานเงินกู้ประจำเดือน</field>
+        <field name="res_model">hr.employee.loan.report</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_hr_employee_loan_report_search"/>
+    </record>
+
+</odoo>

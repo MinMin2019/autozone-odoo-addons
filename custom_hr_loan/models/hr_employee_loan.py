@@ -248,6 +248,9 @@ class HrEmployeeLoanLine(models.Model):
         help="ติ๊กเมื่อรับชำระนอกระบบเงินเดือน เช่น โปะปิดยอด หักจากเงินได้งวดสุดท้ายตอนลาออก "
              "(แก้ยอดงวดให้ตรงกับที่รับจริงก่อนติ๊ก)")
     manual_note = fields.Char(string='หมายเหตุชำระเอง', copy=False)
+    # รายงานเงินกู้ใช้หาเดือนที่นับยอดของงวดที่โปะล่วงหน้า (ชำระในเดือนก่อนเดือนกำหนดหัก
+    # = นับเป็นยอดหักของเดือนที่ชำระ) — ติ๊กชำระเองแล้วเติมวันนี้ให้เอง แก้ได้
+    date_paid = fields.Date(string='วันที่ชำระ', copy=False)
 
     state = fields.Selection([
         ('open', 'รอหัก'),
@@ -276,6 +279,45 @@ class HrEmployeeLoanLine(models.Model):
                 raise ValidationError(_("เงินต้นงวดต้องมากกว่า 0 (งวดที่ %s)") % line.number)
             if line.amount_interest < 0:
                 raise ValidationError(_("ดอกเบี้ยงวดติดลบไม่ได้ (งวดที่ %s)") % line.number)
+
+    @api.onchange('manual_paid')
+    def _onchange_manual_paid(self):
+        for line in self:
+            if line.manual_paid and not line.date_paid:
+                line.date_paid = fields.Date.context_today(line)
+            elif not line.manual_paid:
+                line.date_paid = False
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('manual_paid') and not vals.get('date_paid'):
+                vals['date_paid'] = fields.Date.context_today(self)
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if 'manual_paid' in vals and not vals['manual_paid']:
+            vals['date_paid'] = False
+        res = super().write(vals)
+        if vals.get('manual_paid') and not vals.get('date_paid'):
+            self.filtered(lambda l: l.manual_paid and not l.date_paid).write(
+                {'date_paid': fields.Date.context_today(self)})
+        return res
+
+    def _settle_info(self):
+        """(วันชำระ, เป็นการโปะล่วงหน้าไหม) ของงวดที่ตัดแล้ว — งวดที่ยังไม่ตัดคืน (False, False)
+
+        โปะล่วงหน้า = วันชำระอยู่ในเดือนก่อนเดือนกำหนดหัก; นอกนั้นถือเป็นการหักของเดือนกำหนดหัก
+        (เช่นติ๊กชำระเองงวด ก.ย. ตอนต้น ต.ค. ยังนับเป็นยอดหักเดือน ก.ย.)
+        """
+        self.ensure_one()
+        if self.state not in ('paid', 'paid_manual'):
+            return False, False
+        pay_date = self.date_paid
+        if not pay_date and self.state == 'paid':
+            pay_date = self.payslip_id.date_to
+        pay_date = pay_date or self.date_due
+        return pay_date, pay_date < self.date_due.replace(day=1)
 
     def unlink(self):
         if any(line.state not in ('open',) for line in self):
