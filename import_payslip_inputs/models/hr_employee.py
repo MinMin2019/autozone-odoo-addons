@@ -7,11 +7,13 @@ class HrEmployee(models.Model):
 
     # คำนำหน้าชื่อ (นาย/นาง/นางสาว/Mr./Miss ฯลฯ) แยกจาก name เพื่อให้ avatar/การค้นหา
     # ใช้ชื่อจริง ส่วนเอกสารทางการประกอบเป็น "คำนำหน้า + ชื่อ" ได้
-    title_th = fields.Char(string='คำนำหน้า', tracking=True)
+    # groups=hr_user: ฟิลด์ที่ไม่มีใน hr.employee.public ต้องจำกัดกลุ่ม ไม่งั้น user ไม่มีสิทธิ์ HR
+    # อ่านช่องใดก็ตามของพนักงาน (เช่นชื่อในรายงาน) แล้ว prefetch ลากช่องนี้ไปด้วย → AccessError
+    title_th = fields.Char(string='คำนำหน้า', tracking=True, groups='hr.group_hr_user')
 
     # ระดับตำแหน่งตามโครงสร้างองค์กรใหม่ (G2-G5, S2-S4, SC, M1, P2, TM1-TM2)
     # เก็บเป็น Char เพราะโครงสร้างยังไม่ final
-    job_level = fields.Char(string='ระดับตำแหน่ง (Job Level)', tracking=True)
+    job_level = fields.Char(string='ระดับตำแหน่ง (Job Level)', tracking=True, groups='hr.group_hr_user')
 
     # เพิ่มระดับวุฒิการศึกษาแบบไทยตามข้อมูลจริงของบริษัท
     # (แทรกก่อน Graduate เพื่อให้ dropdown เรียงจากต่ำไปสูง)
