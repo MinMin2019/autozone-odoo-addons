@@ -147,6 +147,9 @@ class PurchaseOrder(models.Model):
 class PurchaseOrderLine(models.Model):
     _inherit = "purchase.order.line"
 
+    # core ตั้ง aggregator=None -> pivot "ซื้อตามสาขา" พัง (No aggregate function for measure 'price_subtotal')
+    price_subtotal = fields.Monetary(aggregator="sum")
+
     az_branch_id = fields.Many2one(
         "account.analytic.account", "สาขา",
         compute="_compute_az_branch_id", inverse="_inverse_az_branch_id", store=True, index=True,
