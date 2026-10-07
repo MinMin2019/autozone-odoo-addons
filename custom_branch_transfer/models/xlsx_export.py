@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-"""ปุ่ม Export Excel บนใบโอนสินค้าไปสาขา (BT)
+"""ปุ่ม Export Excel บนใบโอนสินค้าไปสาขา (BT) / โอนคืนส่วนกลาง (BR)
 
 เลือกหลายใบจากหน้า list แล้วสั่งจากเมนู Action ได้ด้วย — 1 ใบ = 1 ชีท
-หัวใบ (เลขที่ ต้นทาง สาขา วันที่ สถานะ ใบส่ง/ใบรับ หมายเหตุ) + ตารางสินค้า + แถวรวม
+หัวใบ (เลขที่ ประเภท ต้นทาง ปลายทาง วันที่ สถานะ ใบส่ง/ใบรับ หมายเหตุ) + ตารางสินค้า + แถวรวม
 """
 import base64
 import io
@@ -64,18 +64,21 @@ class BranchTransfer(models.Model):
         self.ensure_one()
         state_label = dict(self._fields["state"]._description_selection(self.env)).get(self.state, self.state)
         tins = self.tin_picking_ids
+        is_return = self.direction == "return"
+        title = "ใบโอนสินค้าคืนส่วนกลาง" if is_return else "ใบโอนสินค้าไปสาขา"
         header = [
             ("เลขที่", self.name or ""),
-            ("ต้นทาง (ส่วนกลาง)", self.source_warehouse_id.name or ""),
-            ("สาขาปลายทาง", self.warehouse_id.name or ""),
+            ("ประเภท", title),
+            ("สาขาต้นทาง" if is_return else "ต้นทาง (ส่วนกลาง)", self.sender_warehouse_id.name or ""),
+            ("ปลายทาง (ส่วนกลาง)" if is_return else "สาขาปลายทาง", self.receiver_warehouse_id.name or ""),
             ("วันที่", self.date.strftime("%d/%m/%Y") if self.date else ""),
             ("สถานะ", state_label),
             ("ผู้สร้าง", self.user_id.name or ""),
-            ("ใบส่ง (TOUT)", self.tout_picking_id.name or ""),
-            ("ใบรับ (TIN)", ", ".join(tins.mapped("name"))),
+            ("ใบส่ง", self.tout_picking_id.name or ""),
+            ("ใบรับ", ", ".join(tins.mapped("name"))),
             ("หมายเหตุ", self.note or ""),
         ]
-        ws.write(0, 0, "%s - ใบโอนสินค้าไปสาขา" % self.company_id.name, fmt["title"])
+        ws.write(0, 0, "%s - %s" % (self.company_id.name, title), fmt["title"])
         row = 2
         for label, value in header:
             # ป้ายกินคอลัมน์ A-B (ลำดับ+รหัส) ค่าอยู่คอลัมน์ C ที่กว้างพอ
@@ -94,7 +97,7 @@ class BranchTransfer(models.Model):
         if show_sent:
             cols.append(("ส่งแล้ว", 12))
         if show_recv:
-            cols.append(("สาขารับแล้ว", 12))
+            cols.append(("รับแล้ว", 12))
         for c, (name, width) in enumerate(cols):
             ws.write(row, c, name, fmt["head"])
             ws.set_column(c, c, width)

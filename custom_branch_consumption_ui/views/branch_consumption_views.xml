@@ -171,8 +171,8 @@
     <menuitem id="menu_az_branch_consumption" name="เบิกใช้วัสดุ"
               parent="stock.menu_stock_warehouse_mgmt" action="action_az_branch_consumption"
               sequence="17" groups="stock.group_stock_user"/>
-    <menuitem id="menu_az_branch_consumption_new" name="+ เบิกใช้วัสดุ ใบใหม่"
-              parent="stock.menu_stock_warehouse_mgmt" action="action_az_branch_consumption_new"
-              sequence="18" groups="stock.group_stock_user"/>
+    <!-- เมนูทางลัด "+ เบิกใช้วัสดุ ใบใหม่" เอาออกแล้ว (7 ต.ค. 2026) — สร้างใบใหม่จากปุ่ม New ในเมนูเบิกใช้วัสดุ;
+         action_az_branch_consumption_new ยังเก็บไว้ -->
+    <!-- ฐานที่เคยติดตั้งเวอร์ชันก่อน 1.1.1: -u จะลบเมนูนี้ออกเอง (record หายจาก XML) -->
 
 </odoo>

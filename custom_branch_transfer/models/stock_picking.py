@@ -1,26 +1,27 @@
 # -*- coding: utf-8 -*-
 """กันพลาด 2 จุดที่ทำให้ Flow B พัง
 
-1. ห้ามสร้างใบ TOUT/TIN เอง (ต้องมาจากใบโอนสินค้าไปสาขา) — ยกเว้น backorder และ return
-2. ห้าม Validate ใบ TIN ก่อนที่ใบ TOUT ต้นทางจะ Done (กันคลังพักติดลบจากการกรอกจำนวนเอง)
+1. ห้ามสร้างใบ TOUT/TIN/ROUT/RIN เอง (ต้องมาจากใบโอน BT/BR) — ยกเว้น backorder และ return
+2. ห้าม Validate ใบรับ (TIN/RIN) ก่อนที่ใบส่งต้นทางจะ Done (กันคลังพักติดลบจากการกรอกจำนวนเอง)
 """
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
-GUARDED = ("TOUT", "TIN")
+GUARDED = ("TOUT", "TIN", "ROUT", "RIN")
+RECEIPT_CODES = ("TIN", "RIN")
 
 
 class ProcurementGroup(models.Model):
     _inherit = "procurement.group"
 
-    az_transfer_id = fields.Many2one("az.branch.transfer", "ใบโอนสินค้าไปสาขา", index=True)
+    az_transfer_id = fields.Many2one("az.branch.transfer", "ใบโอนสินค้าส่วนกลาง-สาขา", index=True)
 
 
 class StockPicking(models.Model):
     _inherit = "stock.picking"
 
     az_transfer_id = fields.Many2one(
-        "az.branch.transfer", "ใบโอนสินค้าไปสาขา", index=True, copy=True, readonly=True
+        "az.branch.transfer", "ใบโอนส่วนกลาง-สาขา", index=True, copy=True, readonly=True
     )
 
     @api.model_create_multi
@@ -38,7 +39,7 @@ class StockPicking(models.Model):
                 if group and group.az_transfer_id:
                     continue
                 raise UserError(
-                    _("ประเภท '%s' สร้างเองไม่ได้ — ให้ใช้เมนู Inventory > โอนสินค้าไปสาขา "
+                    _("ประเภท '%s' สร้างเองไม่ได้ — ให้ใช้เมนู Inventory > โอนสินค้าไปสาขา / โอนคืนส่วนกลาง "
                       "(ระบบจะสร้างใบส่ง/ใบรับคู่กันให้อัตโนมัติ)") % ptype.display_name
                 )
         return super().create(vals_list)
@@ -48,15 +49,15 @@ class StockPicking(models.Model):
         return super().button_validate()
 
     def _az_check_tin_ready(self):
-        """ใบ TIN ต้องมีของในคลังพักจริง (TOUT ต้นทาง Done แล้ว) ถึงจะรับได้"""
+        """ใบรับ TIN/RIN ต้องมีของในคลังพักจริง (ใบส่งต้นทาง Done แล้ว) ถึงจะรับได้"""
         for picking in self:
-            if picking.picking_type_id.sequence_code != "TIN" or picking.return_id:
+            if picking.picking_type_id.sequence_code not in RECEIPT_CODES or picking.return_id:
                 continue
             for move in picking.move_ids.filtered(lambda m: m.state not in ("done", "cancel")):
                 origs = move.sudo().move_orig_ids.filtered(lambda m: m.state != "cancel")
                 if origs and any(m.state != "done" for m in origs):
                     raise UserError(
-                        _("รับไม่ได้: ส่วนกลางยังไม่ได้ส่ง '%s' (ใบ %s ยังไม่ Validate) "
+                        _("รับไม่ได้: ฝั่งส่งยังไม่ได้ส่ง '%s' (ใบ %s ยังไม่ Validate) "
                           "กรุณารอสถานะใบรับเป็น Ready แล้วค่อยกด")
                         % (move.product_id.display_name,
                            ", ".join(origs.mapped("picking_id.name")))

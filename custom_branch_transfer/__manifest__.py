@@ -1,10 +1,10 @@
 {
-    "name": "Autozone Branch Transfer (H.O. -> Branch)",
-    "version": "18.0.1.3.0",
+    "name": "Autozone Branch Transfer (H.O. <-> Branch)",
+    "version": "18.0.1.4.2",
     "category": "Autozone/Inventory",
     "author": "Autozone",
-    "summary": "ใบโอนสินค้าไปสาขา: ส่วนกลางสร้าง/ส่ง สาขากดรับ — ครอบ Flow B (TOUT/TIN) ให้จบในจอเดียว "
-               "+ กันสร้าง TOUT/TIN มือ + กันรับก่อนส่ง",
+    "summary": "ใบโอนสินค้าไปสาขา (BT: ส่วนกลางส่ง สาขารับ, TOUT/TIN) + สาขาโอนคืนส่วนกลาง "
+               "(BR: สาขาส่ง ส่วนกลางรับ, ROUT/RIN) จบในจอเดียว + กันสร้างใบมือ + กันรับก่อนส่ง",
     "depends": ["stock", "autozone_base_address"],
     "data": [
         "security/ir.model.access.csv",

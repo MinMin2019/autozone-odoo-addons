@@ -5,7 +5,7 @@
              ACTION พิมพ์ "ใบโอนสินค้าไปสาขา"
              ========================================== -->
         <record id="action_report_az_branch_transfer" model="ir.actions.report">
-            <field name="name">ใบโอนสินค้าไปสาขา</field>
+            <field name="name">ใบโอนสินค้า</field>
             <field name="model">az.branch.transfer</field>
             <field name="report_type">qweb-pdf</field>
             <field name="report_name">custom_branch_transfer.report_az_branch_transfer</field>
@@ -22,12 +22,16 @@
              (wkhtmltopdf วางท้ายกระดาษ absolute ข้ามหลายหน้าไม่ได้)
              ทุกหน้า: หัวบริษัท + กล่องสาขา/เลขที่ + ตาราง (เส้นปิดล่างทุกหน้า)
              หน้าสุดท้าย: ตาราง → หมายเหตุ/ยอดรวม → ลายเซ็น 3 ช่องชิดล่าง
-             พิมพ์ 2 ชุด: ต้นฉบับ (ไปกับของให้สาขา) + สำเนา (ส่วนกลางเก็บ)
+             พิมพ์ 2 ชุด: ต้นฉบับ (ไปกับของให้ฝั่งรับ) + สำเนา (ฝั่งส่งเก็บ)
+             direction = return (BR): หัว "ใบโอนสินค้าคืนส่วนกลาง" ส่งถึง = ส่วนกลาง จาก = สาขา
              ========================================== -->
         <template id="report_az_branch_transfer">
             <t t-call="web.html_container">
                 <t t-foreach="docs" t-as="o">
-                    <t t-foreach="['ต้นฉบับ (สาขา)', 'สำเนา (ส่วนกลาง)']" t-as="copy_name">
+                    <t t-set="is_return" t-value="o.direction == 'return'"/>
+                    <t t-set="sender_label" t-value="'สาขา' if is_return else 'ส่วนกลาง'"/>
+                    <t t-set="receiver_label" t-value="'ส่วนกลาง' if is_return else 'สาขา'"/>
+                    <t t-foreach="['ต้นฉบับ (%s)' % receiver_label, 'สำเนา (%s)' % sender_label]" t-as="copy_name">
                         <t t-call="web.basic_layout">
                             <style>
                                 /* ปิด Header/Footer ระบบ */
@@ -130,10 +134,10 @@
                                         <div class="col-4"
                                             style="text-align: center; vertical-align: middle; margin-top: 10px;">
                                             <div style="font-size: 22px; font-weight: bold;">
-                                                <span>ใบโอนสินค้าไปสาขา</span>
+                                                <span t-esc="'ใบโอนสินค้าคืนส่วนกลาง' if is_return else 'ใบโอนสินค้าไปสาขา'"/>
                                             </div>
                                             <div style="font-size: 15px; font-weight: bold;">
-                                                <span>Branch Transfer Note</span>
+                                                <span t-esc="'Branch Return Note' if is_return else 'Branch Transfer Note'"/>
                                             </div>
                                             <div style="font-size: 13px; margin-top: 3px;">
                                                 <span t-esc="copy_name"/>
@@ -144,23 +148,25 @@
                                         </div>
                                     </div>
 
-                                    <!-- ==================== ส่วนที่ 2: สาขาปลายทาง + ข้อมูลเอกสาร ==================== -->
+                                    <!-- ==================== ส่วนที่ 2: ฝั่งรับ + ข้อมูลเอกสาร ==================== -->
+                                    <t t-set="dest_wh" t-value="o.receiver_warehouse_id"/>
+                                    <t t-set="from_wh" t-value="o.sender_warehouse_id"/>
                                     <div style="margin-bottom: 15px;">
                                         <table style="width: 100%; border-collapse: separate; border-spacing: 5px 0;">
                                             <tr>
                                                 <td style="width: 60%; vertical-align: top; border: 1px solid #000; padding: 10px;">
-                                                    <div style="font-size: 12px; color: #444;">ส่งถึงสาขา / Deliver To</div>
+                                                    <div style="font-size: 12px; color: #444;">ส่งถึง<t t-esc="receiver_label"/> / Deliver To</div>
                                                     <div style="font-weight: bold; margin-bottom: 4px; font-size: 15px;">
-                                                        <span t-esc="o.warehouse_id.name"/>
-                                                        <t t-if="o.warehouse_id.code"> (<span t-esc="o.warehouse_id.code"/>)</t>
+                                                        <span t-esc="dest_wh.name"/>
+                                                        <t t-if="dest_wh.code"> (<span t-esc="dest_wh.code"/>)</t>
                                                     </div>
-                                                    <div t-if="o.warehouse_id.partner_id">
-                                                        <span t-esc="o.warehouse_id.partner_id.get_thai_address()"/>
+                                                    <div t-if="dest_wh.partner_id">
+                                                        <span t-esc="dest_wh.partner_id.get_thai_address()"/>
                                                     </div>
                                                     <div style="margin-top: 6px;">
                                                         <span style="color: #444;">จาก / From:</span>
-                                                        <b><span t-esc="o.source_warehouse_id.name"/></b>
-                                                        <t t-if="o.source_warehouse_id.code"> (<span t-esc="o.source_warehouse_id.code"/>)</t>
+                                                        <b><span t-esc="from_wh.name"/></b>
+                                                        <t t-if="from_wh.code"> (<span t-esc="from_wh.code"/>)</t>
                                                     </div>
                                                 </td>
                                                 <td style="width: 40%; vertical-align: top; padding: 0;">
@@ -184,14 +190,14 @@
                                                             </tr>
                                                             <tr>
                                                                 <td style="font-weight: bold; background-color: #f8f9fa; border: 1px solid #000;">
-                                                                    ใบส่ง (TOUT)</td>
+                                                                    ใบส่ง</td>
                                                                 <td style="border: 1px solid #000;">
                                                                     <span t-esc="o.tout_picking_id.name or '-'"/>
                                                                 </td>
                                                             </tr>
                                                             <tr>
                                                                 <td style="font-weight: bold; background-color: #f8f9fa; border: 1px solid #000;">
-                                                                    ใบรับ (TIN)</td>
+                                                                    ใบรับ</td>
                                                                 <td style="border: 1px solid #000; max-width: 0;">
                                                                     <div class="cut"><span t-esc="', '.join(o.tin_picking_ids.mapped('name')) or '-'"/></div>
                                                                 </td>
@@ -296,7 +302,7 @@
                                                 <div class="row">
                                                     <div class="col-4" style="text-align: center;">
                                                         <div style="border-bottom: 1px solid #000; width: 70%; margin: 0 auto 5px auto;"></div>
-                                                        <div>ผู้จัดส่ง (ส่วนกลาง) / Sent By</div>
+                                                        <div>ผู้จัดส่ง (<t t-esc="sender_label"/>) / Sent By</div>
                                                         <div style="margin-top: 5px;">วันที่ _______/_______/_______</div>
                                                     </div>
                                                     <div class="col-4" style="text-align: center;">
@@ -306,7 +312,7 @@
                                                     </div>
                                                     <div class="col-4" style="text-align: center;">
                                                         <div style="border-bottom: 1px solid #000; width: 70%; margin: 0 auto 5px auto;"></div>
-                                                        <div>ผู้รับสินค้า (สาขา) / Received By</div>
+                                                        <div>ผู้รับสินค้า (<t t-esc="receiver_label"/>) / Received By</div>
                                                         <div style="margin-top: 5px;">วันที่ _______/_______/_______</div>
                                                     </div>
                                                 </div>
