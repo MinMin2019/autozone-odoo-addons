@@ -16,16 +16,22 @@
                             class="btn-primary" invisible="state != 'draft' or not line_count"/>
                     <button name="action_confirm_counted" string="ยืนยันผลนับ" type="object"
                             class="btn-primary" invisible="state != 'counting'"/>
-                    <button name="action_apply" string="ปรับปรุงสต็อก" type="object"
+                    <button name="action_close" string="ปิดใบ (ไม่ปรับระบบ)" type="object"
                             class="btn-primary" invisible="state != 'counted'"
-                            groups="stock.group_stock_manager"
-                            confirm="จะสร้างรายการปรับปรุงสต็อก (Inventory Adjustment) ลงวันที่ตามวันนับ สำหรับทุกรายการที่นับแล้วและมีผลต่าง ต้องการทำต่อหรือไม่?"/>
-                    <button name="action_print_form" string="พิมพ์แบบฟอร์ม (PDF)" type="object"
+                            confirm="ปิดใบกระทบยอดโดยไม่ปรับยอดในระบบ — ผลต่างให้แก้ที่ต้นทางตามสาเหตุที่บันทึกไว้ ต้องการทำต่อหรือไม่?"/>
+                    <button name="action_apply" string="ปรับปรุงสต็อก" type="object"
+                            invisible="state != 'counted'" groups="stock.group_stock_manager"
+                            confirm="จะสร้างรายการปรับปรุงสต็อก (Inventory Adjustment) เท่าผลต่างของทุกรายการขาด/เกิน ลงวันที่ตามวันนับ ต้องการทำต่อหรือไม่?"/>
+                    <button name="action_print_form" string="พิมพ์ใบตรวจนับ" type="object"
                             invisible="state == 'cancel' or not line_count"/>
+                    <button name="action_print_recon" string="พิมพ์กระทบยอด" type="object"
+                            invisible="state in ('draft', 'cancel') or not line_count"/>
+                    <button name="action_print_recon_diff" string="พิมพ์เฉพาะผลต่าง" type="object"
+                            invisible="state in ('draft', 'cancel') or not diff_line_count"/>
                     <button name="action_export_xlsx" string="Export Excel" type="object"
                             invisible="state == 'cancel' or not line_count"/>
-                    <button name="action_open_import" string="นำเข้ายอดนับจาก Excel" type="object"
-                            invisible="state != 'counting'"/>
+                    <button name="action_open_import" string="นำเข้าจาก Excel" type="object"
+                            invisible="state not in ('counting', 'counted')"/>
                     <button name="action_refresh_system_qty" string="รีเฟรชยอดระบบ" type="object"
                             invisible="state not in ('draft', 'counting', 'counted') or not line_count"/>
                     <button name="action_back_to_counting" string="กลับไปแก้ยอดนับ" type="object"
@@ -35,7 +41,7 @@
                             confirm="ยอดนับที่คีย์ไว้จะยังอยู่ แต่จะแก้รายการสินค้าได้อีกครั้ง ต้องการทำต่อหรือไม่?"/>
                     <button name="action_cancel" string="ยกเลิก" type="object"
                             invisible="state not in ('draft', 'counting', 'counted')"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,counting,counted,done"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,counting,counted,closed,done"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -55,49 +61,57 @@
                         <h1><field name="name" readonly="1"/></h1>
                     </div>
                     <group>
-                        <group>
+                        <group string="คลังและวันที่">
                             <field name="warehouse_id" readonly="state != 'draft'"
                                    options="{'no_create': True, 'no_open': True}"/>
                             <field name="location_id" readonly="state != 'draft'"
                                    options="{'no_create': True}"/>
-                            <field name="date_count" readonly="state in ('done', 'cancel')"/>
-                            <field name="count_type" readonly="state in ('done', 'cancel')"/>
+                            <field name="date_cutoff" readonly="state in ('closed', 'done', 'cancel')"/>
+                            <field name="date_count" readonly="state in ('closed', 'done', 'cancel')"/>
+                            <field name="count_type" readonly="state in ('closed', 'done', 'cancel')"/>
                             <field name="snapshot_date"/>
                             <field name="company_id" invisible="1"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
-                        <group>
-                            <field name="counter1" readonly="state in ('done', 'cancel')"/>
-                            <field name="counter2" readonly="state in ('done', 'cancel')"/>
-                            <field name="checker" readonly="state in ('done', 'cancel')"/>
-                            <field name="approver" readonly="state in ('done', 'cancel')"/>
+                        <group string="ผู้เกี่ยวข้อง">
+                            <field name="counter1" readonly="state in ('closed', 'done', 'cancel')"/>
+                            <field name="counter2" readonly="state in ('closed', 'done', 'cancel')"/>
+                            <field name="checker" readonly="state in ('closed', 'done', 'cancel')"/>
+                            <field name="summarizer" readonly="state in ('closed', 'done', 'cancel')"/>
+                            <field name="accountant" readonly="state in ('closed', 'done', 'cancel')"/>
+                            <field name="approver" readonly="state in ('closed', 'done', 'cancel')"/>
                             <field name="user_id"/>
                         </group>
                     </group>
                     <group>
                         <group string="ตัวเลือกดึงรายการ / แบบฟอร์ม">
-                            <field name="blind" readonly="state in ('done', 'cancel')"/>
+                            <field name="blind" readonly="state in ('closed', 'done', 'cancel')"/>
                             <field name="include_zero" readonly="state != 'draft'"/>
                             <field name="categ_ids" widget="many2many_tags" readonly="state != 'draft'"
                                    options="{'no_create': True}"/>
                         </group>
-                        <group string="สรุปผลนับ" invisible="not line_count">
+                        <group string="สรุปผลการตรวจนับ" invisible="not line_count">
                             <field name="uncounted_count"/>
-                            <field name="diff_line_count"/>
-                            <field name="diff_qty_short"/>
-                            <field name="diff_qty_over"/>
+                            <field name="match_count"/>
+                            <field name="accuracy_pct" widget="progressbar"/>
+                            <field name="short_count"/>
+                            <field name="over_count"/>
+                            <field name="missing_reason_count" decoration-danger="missing_reason_count"/>
+                            <field name="value_short" groups="stock.group_stock_manager"/>
+                            <field name="value_over" groups="stock.group_stock_manager"/>
                             <field name="diff_value_total" groups="stock.group_stock_manager"/>
-                            <field name="applied_by" invisible="state != 'done'"/>
-                            <field name="applied_date" invisible="state != 'done'"/>
+                            <field name="stock_value" groups="stock.group_stock_manager"/>
+                            <field name="closed_by" invisible="state not in ('closed', 'done')"/>
+                            <field name="closed_date" invisible="state not in ('closed', 'done')"/>
                         </group>
                     </group>
                     <notebook>
                         <page string="รายการนับ" name="lines">
-                            <field name="line_ids" readonly="state in ('done', 'cancel')">
+                            <field name="line_ids" readonly="state in ('closed', 'done', 'cancel')">
                                 <list editable="bottom"
-                                      decoration-danger="counted and qty_diff &lt; 0"
-                                      decoration-warning="counted and qty_diff &gt; 0"
-                                      decoration-muted="not counted">
+                                      decoration-danger="status == 'short'"
+                                      decoration-warning="status == 'over'"
+                                      decoration-muted="status == 'none'">
                                     <field name="state" column_invisible="1"/>
                                     <field name="sequence" readonly="1"/>
                                     <field name="categ_name" optional="show" readonly="1"/>
@@ -105,17 +119,53 @@
                                     <field name="product_id" readonly="parent.state != 'draft'"
                                            options="{'no_create': True}"/>
                                     <field name="uom_id" readonly="1"/>
-                                    <field name="qty_system" sum="รวม"/>
+                                    <field name="qty_system" optional="show"/>
+                                    <field name="qty_in" optional="hide"/>
+                                    <field name="qty_out" optional="hide"/>
+                                    <field name="qty_expected" sum="รวม"/>
+                                    <field name="qty_count1" readonly="parent.state == 'draft'" optional="hide"/>
+                                    <field name="qty_count2" readonly="parent.state == 'draft'" optional="hide"/>
                                     <field name="qty_counted" readonly="parent.state == 'draft'"/>
                                     <field name="counted" readonly="1" widget="boolean_toggle" optional="show"/>
                                     <field name="qty_diff" readonly="1" sum="รวม"/>
-                                    <field name="standard_price" optional="hide" groups="stock.group_stock_manager"/>
-                                    <field name="diff_value" readonly="1" sum="รวม" optional="show"
-                                           groups="stock.group_stock_manager"/>
+                                    <field name="status" readonly="1" optional="show"/>
                                     <field name="note" readonly="parent.state == 'draft'"/>
                                     <button name="action_clear_count" type="object" icon="fa-eraser"
                                             title="ล้างยอดนับ (กลับเป็นยังไม่นับ)"
                                             invisible="not counted or parent.state not in ('counting', 'counted')"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="กระทบยอด / สาเหตุผลต่าง" name="recon" invisible="state == 'draft'">
+                            <div class="text-muted mb-2">
+                                ยอดที่ควรมี = ยอดตามบัญชี ณ วันตัดยอด + รับเข้า - จ่ายออก (Odoo ดึงให้จากประวัติการเคลื่อนไหว)
+                                — ทุกรายการ <b>ขาด/เกิน</b> ต้องกรอก <b>สาเหตุของผลต่าง</b> ก่อนปิดใบ
+                            </div>
+                            <field name="line_ids" readonly="state in ('done', 'cancel')">
+                                <list editable="bottom" create="false" delete="false"
+                                      decoration-danger="status == 'short'"
+                                      decoration-warning="status == 'over'"
+                                      decoration-muted="status == 'none'"
+                                      default_order="status, sequence">
+                                    <field name="sequence" readonly="1"/>
+                                    <field name="default_code" readonly="1"/>
+                                    <field name="product_id" readonly="1"/>
+                                    <field name="uom_id" readonly="1" optional="hide"/>
+                                    <field name="qty_system" readonly="1"/>
+                                    <field name="qty_in" readonly="1"/>
+                                    <field name="qty_out" readonly="1"/>
+                                    <field name="qty_expected" readonly="1"/>
+                                    <field name="qty_counted" readonly="1"/>
+                                    <field name="qty_diff" readonly="1"/>
+                                    <field name="diff_pct" readonly="1" optional="show"/>
+                                    <field name="standard_price" readonly="1" optional="hide" groups="stock.group_stock_manager"/>
+                                    <field name="diff_value" readonly="1" sum="รวม" groups="stock.group_stock_manager"/>
+                                    <field name="status" readonly="1"/>
+                                    <field name="reason"/>
+                                    <field name="ref_doc"/>
+                                    <field name="responsible"/>
+                                    <field name="action_taken" optional="show"/>
+                                    <field name="date_resolved" optional="show"/>
                                 </list>
                             </field>
                         </page>
@@ -135,21 +185,24 @@
         <field name="model">az.stock.count</field>
         <field name="arch" type="xml">
             <list decoration-info="state == 'counting'" decoration-warning="state == 'counted'"
-                  decoration-success="state == 'done'" decoration-muted="state == 'cancel'">
+                  decoration-success="state in ('closed', 'done')" decoration-muted="state == 'cancel'">
                 <field name="name"/>
                 <field name="warehouse_id"/>
                 <field name="location_id" optional="hide"/>
+                <field name="date_cutoff" optional="show"/>
                 <field name="date_count"/>
                 <field name="count_type"/>
                 <field name="line_count"/>
                 <field name="counted_count"/>
-                <field name="diff_line_count"/>
+                <field name="short_count"/>
+                <field name="over_count"/>
+                <field name="accuracy_pct" optional="show"/>
                 <field name="diff_value_total" optional="show" groups="stock.group_stock_manager"/>
                 <field name="user_id" optional="hide"/>
                 <field name="state" widget="badge"
                        decoration-info="state == 'counting'"
                        decoration-warning="state == 'counted'"
-                       decoration-success="state == 'done'"/>
+                       decoration-success="state in ('closed', 'done')"/>
             </list>
         </field>
     </record>
@@ -163,10 +216,10 @@
                 <field name="name"/>
                 <field name="warehouse_id"/>
                 <field name="counter1"/>
-                <filter name="open" string="ยังไม่ปรับปรุง" domain="[('state', 'in', ('draft', 'counting', 'counted'))]"/>
+                <filter name="open" string="ยังไม่ปิดใบ" domain="[('state', 'in', ('draft', 'counting', 'counted'))]"/>
                 <filter name="counting" string="กำลังนับ" domain="[('state', '=', 'counting')]"/>
-                <filter name="counted" string="รอปรับปรุง" domain="[('state', '=', 'counted')]"/>
-                <filter name="done" string="ปรับปรุงแล้ว" domain="[('state', '=', 'done')]"/>
+                <filter name="counted" string="รอสรุป" domain="[('state', '=', 'counted')]"/>
+                <filter name="closed" string="ปิดแล้ว" domain="[('state', 'in', ('closed', 'done'))]"/>
                 <separator/>
                 <filter name="this_month" string="เดือนนี้" date="date_count" default_period="month"/>
                 <group expand="0" string="จัดกลุ่ม">
@@ -186,7 +239,8 @@
         <field name="context">{'search_default_open': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">สร้างใบตรวจนับสต็อกใบแรก</p>
-            <p>เลือกสาขา/คลัง → ดึงรายการสินค้า → พิมพ์แบบฟอร์มให้สาขานับ → คีย์ยอดนับ (หรือนำเข้า Excel) → ปรับปรุงสต็อก</p>
+            <p>เลือกสาขา/คลัง + วันตัดยอด/วันนับ → ดึงรายการสินค้า → พิมพ์ใบตรวจนับให้สาขานับ → คีย์ยอดนับ (หรือนำเข้า Excel)
+               → กระทบยอด (รับ/จ่ายระหว่างกลาง Odoo ดึงให้) → บันทึกสาเหตุผลต่าง → ปิดใบ หรือปรับปรุงสต็อก</p>
         </field>
     </record>
 
@@ -196,9 +250,9 @@
         <field name="model">az.stock.count.line</field>
         <field name="arch" type="xml">
             <list create="false" delete="false" editable="bottom"
-                  decoration-danger="counted and qty_diff &lt; 0"
-                  decoration-warning="counted and qty_diff &gt; 0"
-                  decoration-muted="not counted">
+                  decoration-danger="status == 'short'"
+                  decoration-warning="status == 'over'"
+                  decoration-muted="status == 'none'">
                 <field name="count_id" readonly="1"/>
                 <field name="warehouse_id" readonly="1" optional="hide"/>
                 <field name="date_count" readonly="1" optional="hide"/>
@@ -208,12 +262,22 @@
                 <field name="default_code" readonly="1"/>
                 <field name="product_id" readonly="1"/>
                 <field name="uom_id" readonly="1"/>
-                <field name="qty_system" readonly="1" sum="รวม"/>
+                <field name="qty_system" readonly="1" optional="show"/>
+                <field name="qty_in" readonly="1" optional="hide"/>
+                <field name="qty_out" readonly="1" optional="hide"/>
+                <field name="qty_expected" readonly="1" sum="รวม"/>
                 <field name="qty_counted" readonly="state not in ('counting', 'counted')"/>
                 <field name="counted" readonly="1" widget="boolean_toggle"/>
                 <field name="qty_diff" readonly="1" sum="รวม"/>
+                <field name="diff_pct" readonly="1" optional="hide"/>
                 <field name="diff_value" readonly="1" sum="รวม" groups="stock.group_stock_manager"/>
-                <field name="note" readonly="state not in ('counting', 'counted')"/>
+                <field name="status" readonly="1"/>
+                <field name="reason" readonly="state not in ('counting', 'counted', 'closed')"/>
+                <field name="ref_doc" readonly="state not in ('counting', 'counted', 'closed')" optional="show"/>
+                <field name="responsible" readonly="state not in ('counting', 'counted', 'closed')" optional="show"/>
+                <field name="action_taken" readonly="state not in ('counting', 'counted', 'closed')" optional="hide"/>
+                <field name="date_resolved" readonly="state not in ('counting', 'counted', 'closed')" optional="hide"/>
+                <field name="note" readonly="state not in ('counting', 'counted')" optional="hide"/>
             </list>
         </field>
     </record>
@@ -227,14 +291,20 @@
                 <field name="default_code"/>
                 <field name="count_id"/>
                 <field name="categ_name"/>
-                <filter name="uncounted" string="ยังไม่นับ" domain="[('counted', '=', False)]"/>
-                <filter name="has_diff" string="มีผลต่าง" domain="[('counted', '=', True), ('qty_diff', '!=', 0)]"/>
-                <filter name="short" string="ขาด" domain="[('qty_diff', '&lt;', 0)]"/>
-                <filter name="over" string="เกิน" domain="[('qty_diff', '&gt;', 0)]"/>
+                <field name="reason"/>
+                <filter name="uncounted" string="ยังไม่นับ" domain="[('status', '=', 'none')]"/>
+                <filter name="has_diff" string="มีผลต่าง" domain="[('status', 'in', ('short', 'over'))]"/>
+                <filter name="short" string="ขาด" domain="[('status', '=', 'short')]"/>
+                <filter name="over" string="เกิน" domain="[('status', '=', 'over')]"/>
+                <filter name="no_reason" string="ผลต่างที่ยังไม่มีสาเหตุ"
+                        domain="[('status', 'in', ('short', 'over')), ('reason', 'in', (False, ''))]"/>
+                <filter name="unresolved" string="ยังไม่แก้ที่ต้นทาง"
+                        domain="[('status', 'in', ('short', 'over')), ('date_resolved', '=', False)]"/>
                 <separator/>
-                <filter name="open" string="ใบที่ยังไม่ปรับปรุง" domain="[('state', 'in', ('counting', 'counted'))]"/>
+                <filter name="open" string="ใบที่ยังไม่ปิด" domain="[('state', 'in', ('counting', 'counted'))]"/>
                 <group expand="0" string="จัดกลุ่ม">
                     <filter name="group_count" string="ใบนับ" context="{'group_by': 'count_id'}"/>
+                    <filter name="group_status" string="สถานะรายการ" context="{'group_by': 'status'}"/>
                     <filter name="group_categ" string="หมวดสินค้า" context="{'group_by': 'categ_name'}"/>
                     <filter name="group_wh" string="สาขา / คลัง" context="{'group_by': 'warehouse_id'}"/>
                 </group>

@@ -1,27 +1,51 @@
 # -*- coding: utf-8 -*-
-"""นำเข้ายอดนับจากไฟล์ Excel ที่ Export ออกจากใบนับแล้วกรอกคอลัมน์ "ยอดตรวจนับ" กลับมา
+"""นำเข้าจากไฟล์ Excel ที่ Export ออกจากใบนับแล้วกรอกกลับมา (อ่านตามชื่อหัวคอลัมน์ ไม่ยึดตำแหน่ง)
 
-จับคู่สินค้า: คอลัมน์ I (product id) → รหัสสินค้า (B) → ชื่อสินค้า (C)
-แถวที่คอลัมน์ F (ยอดตรวจนับ) ว่าง = ยังไม่นับ ข้าม; คอลัมน์ H = หมายเหตุ
-หัวตารางหาจากแถวที่ A = "ลำดับ" จึงรับไฟล์ที่ผู้ใช้แทรก/ลบแถวหัวกระดาษได้
+* ชีต "ใบตรวจนับ": หัวตาราง = แถวที่มี "Material"/"รหัสสินค้า" — อ่าน นับครั้งที่ 1 / นับครั้งที่ 2 /
+  ยืนยันจำนวน (หรือ ยอดตรวจนับ*) / หมายเหตุ / ID   แถวที่ยืนยันจำนวนว่าง = ยังไม่นับ ข้าม
+* ชีต "หมายเหตุผลต่าง" (ถ้ามี): หัวตาราง = แถวที่มี "สาเหตุของผลต่าง" — อ่าน สาเหตุ / เอกสาร /
+  ผู้รับผิดชอบ / การดำเนินการ / วันที่แล้วเสร็จ   เขียนเฉพาะช่องที่ไม่ว่าง
+จับคู่สินค้า: ID (product id) → รหัสสินค้า → ชื่อสินค้า
+รองรับไฟล์รุ่นแรก (คอลัมน์ ลำดับ/รหัสสินค้า/ชื่อสินค้า/หน่วย/ยอดคงเหลือ/ยอดตรวจนับ/ผลต่าง/หมายเหตุ/ID) ด้วย
 """
 import base64
 import io
+from datetime import date, datetime
 
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
+# ชื่อหัวคอลัมน์ที่ยอมรับ (เทียบแบบ startswith หลังตัดช่องว่าง)
+COLS_COUNT = {
+    "id": ("ID",),
+    "code": ("Material", "รหัสสินค้า"),
+    "name": ("Description", "ชื่อสินค้า"),
+    "count1": ("นับครั้งที่ 1",),
+    "count2": ("นับครั้งที่ 2",),
+    "counted": ("ยืนยันจำนวน", "ยอดตรวจนับ"),
+    "note": ("หมายเหตุ",),
+}
+COLS_NOTES = {
+    "code": ("Material", "รหัสสินค้า"),
+    "name": ("Description", "ชื่อสินค้า"),
+    "reason": ("สาเหตุของผลต่าง", "สาเหตุ"),
+    "ref_doc": ("เอกสาร",),
+    "responsible": ("ผู้รับผิดชอบ",),
+    "action_taken": ("การดำเนินการ",),
+    "date_resolved": ("วันที่แล้วเสร็จ",),
+}
+
 
 class StockCountImport(models.TransientModel):
     _name = "az.stock.count.import"
-    _description = "นำเข้ายอดนับจาก Excel"
+    _description = "นำเข้ายอดนับ / สาเหตุผลต่าง จาก Excel"
 
     count_id = fields.Many2one("az.stock.count", required=True, ondelete="cascade")
     file = fields.Binary("ไฟล์ Excel (.xlsx)", required=True)
     filename = fields.Char()
     overwrite = fields.Boolean(
         "ทับยอดที่คีย์ไว้แล้ว", default=True,
-        help="ไม่ติ๊ก = รายการที่คีย์ในจอไปแล้วจะไม่ถูกแก้ด้วยค่าจากไฟล์",
+        help="ไม่ติ๊ก = รายการที่คีย์ยอดนับในจอไปแล้วจะไม่ถูกแก้ด้วยค่าจากไฟล์ (สาเหตุผลต่างทับเสมอถ้าไฟล์มีค่า)",
     )
     result = fields.Text("ผลการนำเข้า", readonly=True)
 
@@ -37,12 +61,59 @@ class StockCountImport(models.TransientModel):
         try:
             return float(text)
         except ValueError:
-            raise UserError(_("ค่ายอดนับ '%s' ไม่ใช่ตัวเลข", value))
+            raise UserError(_("ค่า '%s' ไม่ใช่ตัวเลข", value))
+
+    @api.model
+    def _to_date(self, value):
+        if value in (None, ""):
+            return None
+        if isinstance(value, datetime):
+            return value.date()
+        if isinstance(value, date):
+            return value
+        text = str(value).strip()
+        for fmt in ("%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y"):
+            try:
+                return datetime.strptime(text, fmt).date()
+            except ValueError:
+                continue
+        return None
+
+    @api.model
+    def _find_header(self, ws, spec, must):
+        """หาแถวหัวตาราง → (row_idx, {key: col_idx}) หรือ (None, None)"""
+        for r_idx, row in enumerate(ws.iter_rows(values_only=True)):
+            cols = {}
+            for c_idx, val in enumerate(row):
+                if not isinstance(val, str):
+                    continue
+                text = val.strip()
+                for key, names in spec.items():
+                    if key not in cols and any(text.startswith(n) for n in names):
+                        cols[key] = c_idx
+                        break
+            if must in cols and ("code" in cols or "id" in cols):
+                return r_idx, cols
+        return None, None
+
+    def _match_line(self, maps, row, cols):
+        by_id, by_code, by_name = maps
+        line = None
+        if "id" in cols and row[cols["id"]] not in (None, ""):
+            try:
+                line = by_id.get(int(float(row[cols["id"]])))
+            except (TypeError, ValueError):
+                line = None
+        if not line and "code" in cols and row[cols["code"]] not in (None, ""):
+            line = by_code.get(str(row[cols["code"]]).strip())
+        if not line and "name" in cols and row[cols["name"]]:
+            line = by_name.get(str(row[cols["name"]]).strip())
+        return line
 
     def action_import(self):
         self.ensure_one()
         count = self.count_id
-        count._check_state(("counting",), "นำเข้ายอดนับจาก Excel")
+        count._check_state(("counting", "counted"), "นำเข้าจาก Excel")
         try:
             from openpyxl import load_workbook
         except ImportError:
@@ -54,65 +125,90 @@ class StockCountImport(models.TransientModel):
 
         lines = count.line_ids
         by_id = {l.product_id.id: l for l in lines}
-        by_code = {}
-        by_name = {}
+        by_code, by_name = {}, {}
         for l in lines:
             if l.product_id.default_code:
                 by_code.setdefault(l.product_id.default_code.strip(), l)
             by_name.setdefault((l.product_id.name or "").strip(), l)
+        maps = (by_id, by_code, by_name)
 
-        updated = skipped = unmatched = 0
+        summary = []
         problems = []
+        count_done = notes_done = False
         for ws in wb.worksheets:
-            header_found = False
-            for row in ws.iter_rows(values_only=True):
-                cells = list(row) + [None] * (9 - len(row))
-                a, b, c, _d, _e, f, _g, h, i = cells[:9]
-                if not header_found:
-                    if isinstance(a, str) and a.strip() == "ลำดับ":
-                        header_found = True
+            # ---- ชีตยอดนับ ----
+            if not count_done:
+                h, cols = self._find_header(ws, COLS_COUNT, "counted")
+                if h is not None:
+                    count_done = True
+                    updated = skipped = unmatched = 0
+                    for row in ws.iter_rows(min_row=h + 2, values_only=True):
+                        row = list(row) + [None] * (max(cols.values()) + 1 - len(row))
+                        if not any(row[c] not in (None, "") for k, c in cols.items() if k in ("id", "code")):
+                            continue  # แถวว่าง / หัวหมวด / ลายเซ็น
+                        line = self._match_line(maps, row, cols)
+                        if not line:
+                            if any(row[c] not in (None, "") for k, c in cols.items() if k in ("count1", "count2", "counted")):
+                                unmatched += 1
+                                if len(problems) < 20:
+                                    problems.append("%s | %s" % (row[cols.get("code", 0)] or "", row[cols.get("name", 0)] or ""))
+                            continue
+                        vals = {}
+                        for key, field in (("count1", "qty_count1"), ("count2", "qty_count2")):
+                            if key in cols:
+                                v = self._to_float(row[cols[key]])
+                                if v is not None:
+                                    vals[field] = v
+                        if "note" in cols and row[cols["note"]] not in (None, ""):
+                            vals["note"] = str(row[cols["note"]]).strip()
+                        qty = self._to_float(row[cols["counted"]])
+                        if qty is None:
+                            skipped += 1
+                        elif line.counted and not self.overwrite and count.state == "counting":
+                            skipped += 1
+                        elif count.state == "counting" or self.overwrite:
+                            vals.update({"qty_counted": qty, "counted": True})
+                            updated += 1
+                        if vals:
+                            line.write(vals)
+                    summary.append(_("ชีต '%(s)s': นำเข้ายอดนับ %(u)d รายการ, ข้าม (ไม่ได้กรอก/ไม่ทับ) %(k)d, จับคู่สินค้าไม่ได้ %(x)d",
+                                     s=ws.title, u=updated, k=skipped, x=unmatched))
                     continue
-                if not (b or c or i):
-                    continue  # แถวว่าง / หัวหมวด / ลายเซ็น
-                if isinstance(a, str) and not b and not i:
-                    continue  # หัวหมวด (merge A:H)
-                line = None
-                if i not in (None, ""):
-                    try:
-                        line = by_id.get(int(float(i)))
-                    except (TypeError, ValueError):
-                        line = None
-                if not line and b not in (None, ""):
-                    line = by_code.get(str(b).strip())
-                if not line and c:
-                    line = by_name.get(str(c).strip())
-                if not line:
-                    unmatched += 1
-                    if len(problems) < 20:
-                        problems.append("%s | %s" % (b or "", c or ""))
-                    continue
-                qty = self._to_float(f)
-                if qty is None:
-                    skipped += 1
-                    continue
-                if line.counted and not self.overwrite:
-                    skipped += 1
-                    continue
-                vals = {"qty_counted": qty, "counted": True}
-                if h not in (None, ""):
-                    vals["note"] = str(h).strip()
-                line.write(vals)
-                updated += 1
-            if header_found:
-                break
-            problems.append(_("ชีท '%s': ไม่พบหัวตาราง (แถวที่คอลัมน์ A = ลำดับ)", ws.title))
-
-        summary = _("นำเข้าแล้ว %(u)d รายการ, ข้าม (ไม่ได้กรอก/ไม่ทับ) %(s)d, จับคู่สินค้าไม่ได้ %(x)d",
-                    u=updated, s=skipped, x=unmatched)
+            # ---- ชีตสาเหตุผลต่าง ----
+            if not notes_done:
+                h, cols = self._find_header(ws, COLS_NOTES, "reason")
+                if h is not None:
+                    notes_done = True
+                    updated = unmatched = 0
+                    for row in ws.iter_rows(min_row=h + 2, values_only=True):
+                        row = list(row) + [None] * (max(cols.values()) + 1 - len(row))
+                        vals = {}
+                        for key in ("reason", "ref_doc", "responsible", "action_taken"):
+                            if key in cols and row[cols[key]] not in (None, ""):
+                                vals[key] = str(row[cols[key]]).strip()
+                        if "date_resolved" in cols:
+                            d = self._to_date(row[cols["date_resolved"]])
+                            if d:
+                                vals["date_resolved"] = d
+                        if not vals or row[cols["code"]] in (None, ""):
+                            continue  # แถวว่าง / ลายเซ็น
+                        line = self._match_line(maps, row, cols)
+                        if not line:
+                            unmatched += 1
+                            if len(problems) < 20:
+                                problems.append("%s | %s" % (row[cols.get("code", 0)] or "", row[cols.get("name", 0)] or ""))
+                            continue
+                        line.write(vals)
+                        updated += 1
+                    summary.append(_("ชีต '%(s)s': นำเข้าสาเหตุผลต่าง %(u)d รายการ, จับคู่สินค้าไม่ได้ %(x)d",
+                                     s=ws.title, u=updated, x=unmatched))
+        if not count_done and not notes_done:
+            raise UserError(_("ไม่พบหัวตารางที่รู้จักในไฟล์ (ต้องมีคอลัมน์ Material/รหัสสินค้า และ ยืนยันจำนวน หรือ สาเหตุของผลต่าง)"))
+        text = "\n".join(summary)
         if problems:
-            summary += "\n" + "\n".join(problems)
-        count.message_post(body=_("นำเข้ายอดนับจากไฟล์ %(f)s: %(s)s", f=self.filename or "", s=summary))
-        self.result = summary
+            text += "\n" + _("จับคู่ไม่ได้:") + "\n" + "\n".join(problems)
+        count.message_post(body=_("นำเข้าจากไฟล์ %(f)s:<br/>%(s)s", f=self.filename or "", s=text.replace("\n", "<br/>")))
+        self.result = text
         return {
             "type": "ir.actions.act_window",
             "res_model": self._name,

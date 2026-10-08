@@ -2,22 +2,65 @@
 <odoo>
     <data>
         <record id="action_report_az_stock_count" model="ir.actions.report">
-            <field name="name">แบบฟอร์มตรวจนับสต็อก</field>
+            <field name="name">ใบตรวจนับสต็อก</field>
             <field name="model">az.stock.count</field>
             <field name="report_type">qweb-pdf</field>
             <field name="report_name">custom_stock_count.report_az_stock_count</field>
             <field name="report_file">custom_stock_count.report_az_stock_count</field>
-            <field name="print_report_name">'%s-แบบฟอร์มตรวจนับสต๊อก-%s' % (object.name, object.warehouse_id.code or '')</field>
+            <field name="print_report_name">'%s-ใบตรวจนับ-%s' % (object.name, object.warehouse_id.code or '')</field>
+            <field name="paperformat_id" ref="paperformat_az_stock_count"/>
+            <field name="binding_model_id" ref="model_az_stock_count"/>
+            <field name="binding_type">report</field>
+        </record>
+        <record id="action_report_az_stock_count_recon" model="ir.actions.report">
+            <field name="name">รายงานกระทบยอดตรวจนับ</field>
+            <field name="model">az.stock.count</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">custom_stock_count.report_az_stock_count_recon</field>
+            <field name="report_file">custom_stock_count.report_az_stock_count_recon</field>
+            <field name="print_report_name">'%s-กระทบยอด-%s' % (object.name, object.warehouse_id.code or '')</field>
             <field name="paperformat_id" ref="paperformat_az_stock_count"/>
             <field name="binding_model_id" ref="model_az_stock_count"/>
             <field name="binding_type">report</field>
         </record>
 
+        <!-- CSS ร่วม -->
+        <template id="report_az_stock_count_style">
+            <style>
+                .page { font-family: Sarabun, sans-serif; font-size: 12px; color: #000; }
+                .sc-title { font-size: 16px; font-weight: bold; }
+                .sc-sub { font-size: 13px; font-weight: bold; }
+                .sc-box td { padding: 2px 6px; border: none !important; }
+                .sc-lbl { font-weight: bold; background: #FFFF80; }
+                .sc-val { background: #FFFF80; }
+                table.sc-lines { width: 100%; border-collapse: collapse; }
+                table.sc-lines thead { display: table-header-group; }
+                table.sc-lines th { border: 1px solid #000; background: #DCE6F1; padding: 3px 2px;
+                                    text-align: center; font-weight: bold; vertical-align: middle; font-size: 11px; }
+                table.sc-lines th.grp { background: #fff; border: none; border-bottom: 1px solid #000; }
+                table.sc-lines td { border: 1px solid #000; padding: 2px 3px; height: 24px;
+                                    vertical-align: middle; max-width: 0; }
+                table.sc-lines tr { page-break-inside: avoid; }
+                table.sc-lines td.grp { background: #BDE1F2; font-weight: bold; max-width: none; }
+                table.sc-lines td.c { text-align: center; }
+                table.sc-lines td.r { text-align: right; }
+                table.sc-lines td.y { background: #FFFFE0; }
+                table.sc-lines td.tot { background: #FCE4D6; font-weight: bold; }
+                .short { color: #c00000; }
+                .over { color: #b36b00; }
+                .cut { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+                .sc-sign { page-break-inside: avoid; margin-top: 24px; width: 100%; }
+                .sc-sign td { width: 25%; padding: 4px 8px; vertical-align: top; border: none !important; }
+                .sc-sum { page-break-inside: avoid; margin-top: 10px; border-collapse: collapse; }
+                .sc-sum td { padding: 2px 10px; background: #FFFF80; border: none !important; }
+                .sc-sum td.n { text-align: right; min-width: 90px; }
+                .footer { font-family: Sarabun, sans-serif; font-size: 10px; text-align: center; }
+            </style>
+        </template>
+
         <!-- ==========================================
-             แบบฟอร์มตรวจนับ — เลย์เอาต์ตาม other/Autozone-แบบฟอร์มตรวจนับสต๊อก-BHA.xlsx
-             A4 แนวนอน ปล่อยให้ wkhtmltopdf ตัดหน้าเอง: หัวตารางพิมพ์ซ้ำทุกหน้า (thead),
-             แถวไม่ถูกตัดกลาง, เลขหน้าที่ท้ายกระดาษ (div.footer ถูกดึงไปเป็น footer ของ wkhtmltopdf)
-             blind + ยังนับไม่เสร็จ → ยอดคงเหลือ/ผลต่างเว้นว่างให้เขียนมือ
+             1) ใบตรวจนับ — ตามชีต "ใบตรวจนับ" ของแบบฟอร์ม v3 (+ นับครั้งที่ 1/2 ตามวิธีใช้)
+             blind + ยังนับไม่เสร็จ → ยอดตามบัญชี/มูลค่า/ผลต่าง เว้นว่าง
              ========================================== -->
         <template id="report_az_stock_count">
             <t t-call="web.html_container">
@@ -26,107 +69,63 @@
                     <t t-set="show_cnt" t-value="o._show_counted()"/>
                     <t t-set="company" t-value="o.company_id"/>
                     <t t-call="web.basic_layout">
-                        <style>
-                            .page { font-family: Sarabun, sans-serif; font-size: 12px; color: #000; }
-                            .sc-title { font-size: 18px; font-weight: bold; }
-                            .sc-box td { padding: 2px 6px; }
-                            .sc-lbl { font-weight: bold; background: #FFFF80; }
-                            .sc-val { background: #FFFF80; }
-                            table.sc-lines { width: 100%; border-collapse: collapse; }
-                            table.sc-lines thead { display: table-header-group; }
-                            table.sc-lines th { border: 1px solid #000; background: #DCE6F1; padding: 4px 3px;
-                                                text-align: center; font-weight: bold; vertical-align: middle; }
-                            table.sc-lines td { border: 1px solid #000; padding: 2px 4px; height: 24px;
-                                                vertical-align: middle; max-width: 0; }
-                            table.sc-lines tr { page-break-inside: avoid; }
-                            table.sc-lines td.grp { background: #BDE1F2; font-weight: bold; max-width: none; }
-                            table.sc-lines td.c { text-align: center; }
-                            table.sc-lines td.r { text-align: right; }
-                            .cut { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-                            .sc-sign { page-break-inside: avoid; margin-top: 28px; width: 100%; }
-                            .sc-sign td { width: 25%; padding: 4px 8px; vertical-align: top; border: none !important; }
-                            .sc-box td, .sc-sign td { border: none !important; }
-                            .footer { font-family: Sarabun, sans-serif; font-size: 10px; text-align: center; }
-                        </style>
-
+                        <t t-call="custom_stock_count.report_az_stock_count_style"/>
                         <div class="footer">
-                            <span t-esc="o.name"/> · หน้า <span class="page"/> / <span class="topage"/>
+                            <span t-esc="o.name"/> · ใบตรวจนับ · หน้า <span class="page"/> / <span class="topage"/>
                         </div>
-
                         <div class="page">
-                            <!-- หัวกระดาษ -->
-                            <table style="width: 100%; margin-bottom: 6px;">
+                            <table style="width: 100%; margin-bottom: 4px;">
                                 <tr>
-                                    <td style="width: 60%; vertical-align: top;">
-                                        <div class="sc-title">ใบตรวจนับสินค้าคงคลัง</div>
-                                        <div style="font-size: 13px;"><span t-esc="company.name"/></div>
-                                        <div style="font-size: 11px; color: #333;">
-                                            <span t-esc="company.partner_id.get_thai_address()"/>
-                                        </div>
+                                    <td style="width: 65%; vertical-align: top;">
+                                        <div class="sc-title"><span t-esc="company.name"/></div>
+                                        <div class="sc-sub">รายละเอียดสินค้าคงคลัง  ใบตรวจนับ  สาขา <span t-esc="o._wh_label()"/></div>
+                                        <div>ยอดตามบัญชี ณ วันที่ <b t-esc="o._fmt_date(o.date_cutoff)"/>
+                                            &#160;&#160; ตรวจนับจริงวันที่ <b t-esc="o._fmt_date(o.date_count)"/>
+                                            &#160;&#160; รอบ <span t-esc="o._count_type_label()"/></div>
+                                        <div style="font-size: 11px; color: #333;"><span t-esc="company.partner_id.get_thai_address()"/></div>
                                     </td>
-                                    <td style="width: 40%; vertical-align: top; text-align: right;">
-                                        <div>ยอดคงเหลือ ณ วันที่
-                                            <span style="display: inline-block; min-width: 150px; background: #FFFF00; padding: 0 6px; text-align: center;">
-                                                <t t-if="show_sys"><span t-esc="o._snapshot_local()"/></t>
-                                                <t t-else="">&#160;</t>
-                                            </span>
-                                        </div>
+                                    <td style="width: 35%; vertical-align: top;">
+                                        <table class="sc-box" style="width: 100%;">
+                                            <tr><td class="sc-lbl" style="width: 40%;">เลขที่ใบนับ</td><td class="sc-val"><span t-esc="o.name"/></td></tr>
+                                            <tr><td class="sc-lbl">ผู้นับคนที่ 1</td><td class="sc-val"><span t-esc="o.counter1 or '_________________'"/></td></tr>
+                                            <tr><td class="sc-lbl">ผู้นับคนที่ 2</td><td class="sc-val"><span t-esc="o.counter2 or '_________________'"/></td></tr>
+                                        </table>
                                     </td>
                                 </tr>
                             </table>
+                            <div style="font-size: 11px; margin-bottom: 4px;">
+                                ผู้นับสองคนนับแยกกัน เขียนช่อง นับครั้งที่ 1 / 2 ถ้าไม่ตรงให้นับครั้งที่สามต่อหน้าหัวหน้าคลัง
+                                แล้วเขียนตัวเลขที่ยืนยันแล้วในช่อง ยืนยันจำนวน
+                                <t t-if="show_sys"> ช่อง ผลต่าง = ผลต่างเบื้องต้นเทียบกับบัญชี ณ <span t-esc="o._fmt_date(o.date_cutoff)"/>
+                                    (กระทบยอดจริงรวมรับ/จ่ายระหว่างกลาง ดูรายงานกระทบยอด)</t>
+                                <t t-else=""> ยอดตามบัญชีไม่แสดงในใบนี้ (นับของจริงก่อน) การกระทบยอดอยู่ในรายงานกระทบยอด</t>
+                            </div>
 
-                            <table class="sc-box" style="width: 100%; margin-bottom: 8px;">
-                                <tr>
-                                    <td class="sc-lbl" style="width: 15%;">สาขา / คลังที่นับ</td>
-                                    <td class="sc-val" style="width: 40%;">
-                                        <span t-esc="o.warehouse_id.code or ''"/>
-                                        <t t-if="o.warehouse_id.name and o.warehouse_id.name != o.warehouse_id.code">
-                                            - <span t-esc="o.warehouse_id.name"/>
-                                        </t>
-                                        <t t-if="o.location_id != o.warehouse_id.lot_stock_id">
-                                            (<span t-esc="o.location_id.complete_name"/>)
-                                        </t>
-                                    </td>
-                                    <td style="width: 5%;"></td>
-                                    <td class="sc-lbl" style="width: 15%;">เลขที่ใบนับ</td>
-                                    <td class="sc-val" style="width: 25%;"><span t-esc="o.name"/></td>
-                                </tr>
-                                <tr>
-                                    <td class="sc-lbl">วันที่นับ</td>
-                                    <td class="sc-val"><span t-esc="o.date_count.strftime('%d/%m/%Y') if o.date_count else ''"/></td>
-                                    <td></td>
-                                    <td class="sc-lbl">รอบการนับ</td>
-                                    <td class="sc-val"><span t-esc="o._count_type_label()"/></td>
-                                </tr>
-                                <tr>
-                                    <td class="sc-lbl">ผู้นับคนที่ 1</td>
-                                    <td class="sc-val"><span t-esc="o.counter1 or '_________________________'"/></td>
-                                    <td></td>
-                                    <td class="sc-lbl">ผู้นับคนที่ 2</td>
-                                    <td class="sc-val"><span t-esc="o.counter2 or '_________________________'"/></td>
-                                </tr>
-                            </table>
-
-                            <!-- ตารางรายการ -->
                             <table class="sc-lines">
                                 <thead>
                                     <tr>
-                                        <th style="width: 5%;">ลำดับ</th>
-                                        <th style="width: 15%;">รหัสสินค้า</th>
-                                        <th style="width: 34%;">ชื่อสินค้า</th>
-                                        <th style="width: 7%;">หน่วย</th>
-                                        <th style="width: 9%;">ยอดคงเหลือ</th>
-                                        <th style="width: 9%;">ยอดตรวจนับ</th>
-                                        <th style="width: 8%;">ผลต่าง</th>
-                                        <th style="width: 13%;">หมายเหตุ</th>
+                                        <th class="grp" colspan="4"></th>
+                                        <th class="grp" colspan="2">ยอดตามบัญชี ณ <span t-esc="o._fmt_date(o.date_cutoff)"/></th>
+                                        <th class="grp" colspan="5">บันทึกจากการนับจริง ณ <span t-esc="o._fmt_date(o.date_count)"/></th>
+                                    </tr>
+                                    <tr>
+                                        <th style="width: 4%;">ลำดับ</th>
+                                        <th style="width: 13%;">Material</th>
+                                        <th style="width: 27%;">Description</th>
+                                        <th style="width: 6%;">UOM</th>
+                                        <th style="width: 7%;">Quantity</th>
+                                        <th style="width: 8%;">Amount</th>
+                                        <th style="width: 7%;">นับครั้งที่ 1</th>
+                                        <th style="width: 7%;">นับครั้งที่ 2</th>
+                                        <th style="width: 7%;">ยืนยันจำนวน</th>
+                                        <th style="width: 6%;">ผลต่าง</th>
+                                        <th style="width: 8%;">หมายเหตุ</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <t t-set="seq" t-value="0"/>
                                     <t t-foreach="o._report_groups()" t-as="grp">
-                                        <tr>
-                                            <td class="grp" colspan="8"><span t-esc="grp[0]"/></td>
-                                        </tr>
+                                        <tr><td class="grp" colspan="11"><span t-esc="grp[0]"/></td></tr>
                                         <t t-foreach="grp[1]" t-as="line">
                                             <t t-set="seq" t-value="seq + 1"/>
                                             <tr>
@@ -134,30 +133,29 @@
                                                 <td><span class="cut" t-esc="line.product_id.default_code or ''"/></td>
                                                 <td><span class="cut" t-esc="line.product_id.name or ''"/></td>
                                                 <td><span class="cut" t-esc="line.uom_id.name or ''"/></td>
-                                                <td class="r">
-                                                    <t t-if="show_sys"><span t-esc="o._fmt_qty(line.qty_system)"/></t>
-                                                </td>
-                                                <td class="r">
-                                                    <t t-if="show_cnt and line.counted"><span t-esc="o._fmt_qty(line.qty_counted)"/></t>
-                                                </td>
-                                                <td class="r">
-                                                    <t t-if="show_cnt and show_sys and line.counted"><span t-esc="o._fmt_qty(line.qty_diff)"/></t>
-                                                </td>
-                                                <td><span class="cut" t-esc="line.note or ''"/></td>
+                                                <td class="r"><t t-if="show_sys"><span t-esc="o._fmt_qty(line.qty_system)"/></t></td>
+                                                <td class="r"><t t-if="show_sys"><span t-esc="o._fmt_money(line.amount)"/></t></td>
+                                                <td class="r y"><t t-if="show_cnt and line.qty_count1"><span t-esc="o._fmt_qty(line.qty_count1)"/></t></td>
+                                                <td class="r y"><t t-if="show_cnt and line.qty_count2"><span t-esc="o._fmt_qty(line.qty_count2)"/></t></td>
+                                                <td class="r y"><t t-if="show_cnt and line.counted"><span t-esc="o._fmt_qty(line.qty_counted)"/></t></td>
+                                                <td class="r y"><t t-if="show_cnt and show_sys and line.counted"><span t-esc="o._fmt_qty(line.qty_counted - line.qty_system)"/></t></td>
+                                                <td class="y"><span class="cut" t-esc="line.note or ''"/></td>
                                             </tr>
                                         </t>
                                     </t>
+                                    <tr>
+                                        <td class="tot" colspan="4" style="max-width: none;">รวมทั้งสิ้น <span t-esc="len(o.line_ids)"/> รายการ</td>
+                                        <td class="tot r"><t t-if="show_sys"><span t-esc="o._fmt_qty(sum(o.line_ids.mapped('qty_system')))"/></t></td>
+                                        <td class="tot r"><t t-if="show_sys"><span t-esc="o._fmt_money(o.stock_value)"/></t></td>
+                                        <td class="tot"></td><td class="tot"></td>
+                                        <td class="tot r"><t t-if="show_cnt"><span t-esc="o._fmt_qty(sum(o.line_ids.filtered('counted').mapped('qty_counted')))"/></t></td>
+                                        <td class="tot"></td><td class="tot"></td>
+                                    </tr>
                                 </tbody>
                             </table>
 
-                            <!-- ลายเซ็น -->
                             <table class="sc-sign">
-                                <tr>
-                                    <td><b>ผู้นับคนที่ 1</b></td>
-                                    <td><b>ผู้นับคนที่ 2</b></td>
-                                    <td><b>ผู้ทาน / หัวหน้าคลัง</b></td>
-                                    <td><b>ผู้อนุมัติ</b></td>
-                                </tr>
+                                <tr><td><b>ผู้นับคนที่ 1</b></td><td><b>ผู้นับคนที่ 2</b></td><td><b>ผู้ทาน / หัวหน้าคลัง</b></td><td><b>ผู้อนุมัติ</b></td></tr>
                                 <tr>
                                     <td style="padding-top: 22px;">ลงชื่อ ____________________</td>
                                     <td style="padding-top: 22px;">ลงชื่อ ____________________</td>
@@ -170,12 +168,126 @@
                                     <td>(<span t-esc="o.checker or '____________________'"/>)</td>
                                     <td>(<span t-esc="o.approver or '____________________'"/>)</td>
                                 </tr>
+                                <tr><td>วันที่ ______________</td><td>วันที่ ______________</td><td>วันที่ ______________</td><td>วันที่ ______________</td></tr>
+                            </table>
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </template>
+
+        <!-- ==========================================
+             2) รายงานกระทบยอด — ชีต "กระทบยอด" + "หมายเหตุผลต่าง" รวมในรายงานเดียว
+             only_diff (จาก data) = พิมพ์เฉพาะรายการขาด/เกิน
+             ========================================== -->
+        <template id="report_az_stock_count_recon">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="o">
+                    <t t-set="company" t-value="o.company_id"/>
+                    <t t-set="only_diff" t-value="only_diff if only_diff is not None else False"/>
+                    <t t-set="rep_lines" t-value="o.line_ids.filtered(lambda l: l.status in ('short', 'over')) if only_diff else o.line_ids"/>
+                    <t t-call="web.basic_layout">
+                        <t t-call="custom_stock_count.report_az_stock_count_style"/>
+                        <div class="footer">
+                            <span t-esc="o.name"/> · กระทบยอด · หน้า <span class="page"/> / <span class="topage"/>
+                        </div>
+                        <div class="page">
+                            <div class="sc-title"><span t-esc="company.name"/></div>
+                            <div class="sc-sub">รายละเอียดการตรวจนับสินค้าคงคลัง  สาขา <span t-esc="o._wh_label()"/>
+                                <t t-if="only_diff"> — เฉพาะรายการที่มีผลต่าง</t></div>
+                            <div>สิ้นสุด ณ วันที่ <b t-esc="o._fmt_date(o.date_cutoff)"/>
+                                &#160;&#160; ตรวจนับจริงวันที่ <b t-esc="o._fmt_date(o.date_count)"/>
+                                &#160;&#160; เลขที่ใบนับ <b t-esc="o.name"/>
+                                &#160;&#160; สถานะ <span t-esc="dict(o._fields['state']._description_selection(o.env)).get(o.state)"/></div>
+                            <div style="font-size: 11px; margin-bottom: 4px;">
+                                ยอดที่ควรมี = ยอดตามบัญชี ณ วันตัดยอด + รับเข้า - จ่ายออก
+                                <t t-if="o._period_label()">(ความเคลื่อนไหวของคลัง <span t-esc="o.location_id.complete_name"/> ช่วง <span t-esc="o._period_label()"/> จาก Odoo)</t>
+                                &#160; ผลต่าง = ตรวจนับได้ - ยอดที่ควรมี (ติดลบ = ขาด, บวก = เกิน)
+                                &#160; คำนวณเมื่อ <span t-esc="o._snapshot_local()"/>
+                            </div>
+
+                            <table class="sc-lines">
+                                <thead>
+                                    <tr>
+                                        <th class="grp" colspan="4"></th>
+                                        <th class="grp">ตามบัญชี</th>
+                                        <th class="grp" colspan="2">ธุรกรรมระหว่างกลาง</th>
+                                        <th class="grp" colspan="2"></th>
+                                        <th class="grp" colspan="3">ผลต่าง</th>
+                                        <th class="grp" colspan="3"></th>
+                                    </tr>
+                                    <tr>
+                                        <th style="width: 3%;">ลำดับ</th>
+                                        <th style="width: 10%;">Material</th>
+                                        <th style="width: 19%;">Description</th>
+                                        <th style="width: 5%;">UOM</th>
+                                        <th style="width: 6%;">ณ <span t-esc="o._fmt_date(o.date_cutoff)"/></th>
+                                        <th style="width: 5%;">+ รับ</th>
+                                        <th style="width: 5%;">- จ่าย</th>
+                                        <th style="width: 6%;">ควรมี</th>
+                                        <th style="width: 6%;">นับได้</th>
+                                        <th style="width: 5%;">จำนวน</th>
+                                        <th style="width: 5%;">%</th>
+                                        <th style="width: 7%;">มูลค่า</th>
+                                        <th style="width: 5%;">สถานะ</th>
+                                        <th style="width: 13%;">สาเหตุ / เอกสาร / ผู้รับผิดชอบ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-set="seq" t-value="0"/>
+                                    <t t-foreach="o._report_groups(rep_lines)" t-as="grp">
+                                        <tr><td class="grp" colspan="14"><span t-esc="grp[0]"/></td></tr>
+                                        <t t-foreach="grp[1]" t-as="line">
+                                            <t t-set="seq" t-value="seq + 1"/>
+                                            <t t-set="cls" t-value="'short' if line.status == 'short' else ('over' if line.status == 'over' else '')"/>
+                                            <tr>
+                                                <td class="c"><span t-esc="seq"/></td>
+                                                <td><span class="cut" t-esc="line.product_id.default_code or ''"/></td>
+                                                <td><span class="cut" t-esc="line.product_id.name or ''"/></td>
+                                                <td><span class="cut" t-esc="line.uom_id.name or ''"/></td>
+                                                <td class="r"><span t-esc="o._fmt_qty(line.qty_system)"/></td>
+                                                <td class="r"><t t-if="line.qty_in"><span t-esc="o._fmt_qty(line.qty_in)"/></t></td>
+                                                <td class="r"><t t-if="line.qty_out"><span t-esc="o._fmt_qty(line.qty_out)"/></t></td>
+                                                <td class="r"><span t-esc="o._fmt_qty(line.qty_expected)"/></td>
+                                                <td class="r y"><t t-if="line.counted"><span t-esc="o._fmt_qty(line.qty_counted)"/></t></td>
+                                                <td t-attf-class="r {{cls}}"><t t-if="line.counted"><span t-esc="o._fmt_qty(line.qty_diff)"/></t></td>
+                                                <td t-attf-class="r {{cls}}"><t t-if="line.counted and line.qty_expected"><span t-esc="o._fmt_pct(line.diff_pct)"/></t></td>
+                                                <td t-attf-class="r {{cls}}"><t t-if="line.counted"><span t-esc="o._fmt_money(line.diff_value)"/></t></td>
+                                                <td t-attf-class="c {{cls}}"><span t-esc="line._status_label()"/></td>
+                                                <td><span class="cut" t-esc="' / '.join([x for x in (line.reason, line.ref_doc, line.responsible) if x])"/></td>
+                                            </tr>
+                                        </t>
+                                    </t>
+                                </tbody>
+                            </table>
+
+                            <table class="sc-sum">
+                                <tr><td colspan="4"><b>สรุปผลการตรวจนับ</b> (ทั้งใบ)</td></tr>
+                                <tr><td>จำนวนรายการที่ต้องนับ</td><td class="n" t-esc="o.line_count"/>
+                                    <td>มูลค่าส่วนที่ขาด</td><td class="n" t-esc="o._fmt_money(o.value_short)"/></tr>
+                                <tr><td>นับแล้ว / ยังไม่ได้นับ</td><td class="n"><span t-esc="o.counted_count"/> / <span t-esc="o.uncounted_count"/></td>
+                                    <td>มูลค่าส่วนที่เกิน</td><td class="n" t-esc="o._fmt_money(o.value_over)"/></tr>
+                                <tr><td>ตรงกับบัญชี</td><td class="n"><span t-esc="o.match_count"/> (<span t-esc="o._fmt_pct(o.accuracy_pct)"/>)</td>
+                                    <td>ผลต่างมูลค่าสุทธิ</td><td class="n" t-esc="o._fmt_money(o.diff_value_total)"/></tr>
+                                <tr><td>ขาด / เกิน (รายการ)</td><td class="n"><span t-esc="o.short_count"/> / <span t-esc="o.over_count"/></td>
+                                    <td>มูลค่าสต๊อกตามบัญชี</td><td class="n" t-esc="o._fmt_money(o.stock_value)"/></tr>
+                            </table>
+
+                            <table class="sc-sign">
+                                <tr><td><b>ผู้สรุปผลต่าง</b></td><td><b>หัวหน้าคลัง</b></td><td><b>ฝ่ายบัญชี</b></td><td><b>ผู้อนุมัติ</b></td></tr>
                                 <tr>
-                                    <td>วันที่ ______________</td>
-                                    <td>วันที่ ______________</td>
-                                    <td>วันที่ ______________</td>
-                                    <td>วันที่ ______________</td>
+                                    <td style="padding-top: 22px;">ลงชื่อ ____________________</td>
+                                    <td style="padding-top: 22px;">ลงชื่อ ____________________</td>
+                                    <td style="padding-top: 22px;">ลงชื่อ ____________________</td>
+                                    <td style="padding-top: 22px;">ลงชื่อ ____________________</td>
                                 </tr>
+                                <tr>
+                                    <td>(<span t-esc="o.summarizer or '____________________'"/>)</td>
+                                    <td>(<span t-esc="o.checker or '____________________'"/>)</td>
+                                    <td>(<span t-esc="o.accountant or '____________________'"/>)</td>
+                                    <td>(<span t-esc="o.approver or '____________________'"/>)</td>
+                                </tr>
+                                <tr><td>วันที่ ______________</td><td>วันที่ ______________</td><td>วันที่ ______________</td><td>วันที่ ______________</td></tr>
                             </table>
                         </div>
                     </t>
