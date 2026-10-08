@@ -79,7 +79,7 @@ class StockCount(models.Model):
     accountant = fields.Char("ฝ่ายบัญชี")
     approver = fields.Char("ผู้อนุมัติ")
     blind = fields.Boolean(
-        "ใบตรวจนับไม่แสดงยอดตามบัญชี (นับแบบไม่เห็นยอด)", default=True,
+        "ใบตรวจนับไม่แสดงยอดตามบัญชี (นับแบบไม่เห็นยอด)", default=False,
         help="ติ๊ก = PDF/Excel ใบตรวจนับเว้นช่องยอดตามบัญชี/มูลค่า/ผลต่างไว้ ให้ผู้นับนับของจริงก่อน "
              "ยอดตามบัญชีจะแสดงเฉพาะชีต/รายงานกระทบยอด",
     )
@@ -626,9 +626,7 @@ class StockCountLine(models.Model):
                            help="จ่ายออกจากคลังนี้หลังวันตัดยอดถึงสิ้นวันนับ")
     qty_expected = fields.Float("ยอดที่ควรมี ณ วันนับ", digits="Product Unit of Measure",
                                 compute="_compute_diff", store=True)
-    qty_count1 = fields.Float("นับครั้งที่ 1", digits="Product Unit of Measure")
-    qty_count2 = fields.Float("นับครั้งที่ 2", digits="Product Unit of Measure")
-    qty_counted = fields.Float("ยืนยันจำนวน (ตรวจนับได้)", digits="Product Unit of Measure")
+    qty_counted = fields.Float("ยอดตรวจนับได้", digits="Product Unit of Measure")
     counted = fields.Boolean("นับแล้ว", default=False)
     qty_diff = fields.Float("ผลต่างจำนวน", digits="Product Unit of Measure", compute="_compute_diff", store=True)
     diff_pct = fields.Float("ผลต่าง %", digits=(16, 1), compute="_compute_diff", store=True)
@@ -668,7 +666,7 @@ class StockCountLine(models.Model):
             cmp = float_compare(diff, 0.0, precision_rounding=rounding)
             line.status = "match" if cmp == 0 else ("over" if cmp > 0 else "short")
 
-    @api.onchange("qty_counted", "qty_count1", "qty_count2")
+    @api.onchange("qty_counted")
     def _onchange_qty_counted(self):
         """พิมพ์ตัวเลขในช่องนับ (รวม 0) = นับแล้ว — ฝั่งหน้าจอทันที ไม่ต้องรอ write
         หมายเหตุ: พิมพ์ 0 ทับ 0.00 เดิม client ไม่ส่ง onchange/write (ไม่มีการเปลี่ยนค่า)
@@ -676,8 +674,6 @@ class StockCountLine(models.Model):
         for line in self:
             if line.count_id.state in ("counting", "counted") and not line.counted:
                 line.counted = True
-            if line.qty_count1 and line.qty_count1 == line.qty_count2 and not line.qty_counted:
-                line.qty_counted = line.qty_count1
 
     @api.model_create_multi
     def create(self, vals_list):

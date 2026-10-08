@@ -2,7 +2,7 @@
 """Export Excel 4 ชีต — เลย์เอาต์ตาม other/Autozone-แบบฟอร์มตรวจนับสต๊อก-BHA-v3.xlsx
 
 1. ใบตรวจนับ   : พิมพ์ให้สาขานับ (Plant, Material, Description, Quantity, UOM, Amount,
-                 นับครั้งที่ 1, นับครั้งที่ 2, ยืนยันจำนวน, ผลต่าง, หมายเหตุ) + คอลัมน์ L = product id (เทา)
+                 ยอดตรวจนับได้, ผลต่าง, หมายเหตุ) + คอลัมน์ J = product id (เทา)
                  blind → Quantity/Amount/ผลต่าง เว้นว่าง
 2. กระทบยอด    : ณ วันตัดยอด / +รับ / -จ่าย (Odoo กรอกให้) / ควรมี / นับได้ (สูตรดึงจากชีต 1) /
                  ผลต่าง จำนวน-%-มูลค่า / สถานะ + สรุปท้ายตาราง — ทั้งหมดเป็นสูตร Excel จึงใช้ต่อได้เอง
@@ -131,9 +131,9 @@ class StockCount(models.Model):
         d_cut, d_cnt = self._fmt_date(self.date_cutoff), self._fmt_date(self.date_count)
         underscores = "_" * 25
 
-        for c, w in enumerate([7.8, 22.8, 46.8, 11.8, 9.8, 13.8, 11.8, 11.8, 12.8, 11.8, 24.8]):
+        for c, w in enumerate([7.8, 22.8, 46.8, 12.8, 8.8, 14.8, 13.8, 11.8, 26.8]):
             ws.set_column(c, c, w)
-        ws.set_column(11, 11, 7, fmt["id"])
+        ws.set_column(9, 9, 7, fmt["id"])
 
         ws.set_row(0, 19)
         ws.write(0, 0, self.company_id.name or "", fmt["title"])
@@ -151,24 +151,22 @@ class StockCount(models.Model):
         ws.write(4, 5, "ผู้นับคนที่ 2", fmt["lbl"])
         ws.write(4, 6, self.counter2 or underscores, fmt["val"])
         if show_sys:
-            note = ("ผู้นับสองคนนับแยกกัน เขียนช่อง นับครั้งที่ 1 / 2  ไม่ตรงให้นับครั้งที่สามต่อหน้าหัวหน้าคลัง "
-                    "แล้วเขียนตัวเลขที่ยืนยันแล้วในช่อง ยืนยันจำนวน  ช่อง ผลต่าง คือผลต่างเบื้องต้นเทียบกับบัญชี ณ %s  "
+            note = ("นับของจริงแล้วเขียนลงช่อง ยอดตรวจนับได้  ช่อง ผลต่าง คือผลต่างเบื้องต้นเทียบกับบัญชี ณ %s  "
                     "การกระทบยอดจริงที่รวมรับเข้า/จ่ายออกช่วง %s อยู่ในชีต %s") % (
                 d_cut, self._period_label() or d_cnt, SHEET_RECON)
         else:
-            note = ("ผู้นับสองคนนับแยกกัน เขียนช่อง นับครั้งที่ 1 / 2  ไม่ตรงให้นับครั้งที่สามต่อหน้าหัวหน้าคลัง "
-                    "แล้วเขียนตัวเลขที่ยืนยันแล้วในช่อง ยืนยันจำนวน  ยอดตามบัญชีไม่แสดงในใบนี้ (นับของจริงก่อน) "
+            note = ("นับของจริงแล้วเขียนลงช่อง ยอดตรวจนับได้  ยอดตามบัญชีไม่แสดงในใบนี้ (นับของจริงก่อน) "
                     "การกระทบยอดอยู่ในชีต %s") % SHEET_RECON
         ws.write(6, 0, note, fmt["plain"])
 
         ws.merge_range(7, 3, 7, 5, "ยอดตามบัญชี ณ %s" % d_cut, fmt["grp_hdr"])
-        ws.merge_range(7, 6, 7, 10, "บันทึกจากการนับจริง ณ %s" % d_cnt, fmt["grp_hdr"])
+        ws.merge_range(7, 6, 7, 8, "บันทึกจากการนับจริง ณ %s" % d_cnt, fmt["grp_hdr"])
         head_row = 8
         heads = ["Plant", "Material", "Description", "Quantity", "UOM", "Amount",
-                 "นับครั้งที่ 1", "นับครั้งที่ 2", "ยืนยันจำนวน", "ผลต่าง", "หมายเหตุ"]
+                 "ยอดตรวจนับได้", "ผลต่าง", "หมายเหตุ"]
         for c, h in enumerate(heads):
             ws.write(head_row, c, h, fmt["head"])
-        ws.write(head_row, 11, "ID", fmt["id_head"])
+        ws.write(head_row, 9, "ID", fmt["id_head"])
         ws.set_row(head_row, 32)
 
         plant = self.warehouse_id.code or self.warehouse_id.name or ""
@@ -176,7 +174,7 @@ class StockCount(models.Model):
         first_data = row
         row_map = {}
         for categ, grp_lines in self._report_groups(lines):
-            ws.merge_range(row, 0, row, 10, categ, fmt["group"])
+            ws.merge_range(row, 0, row, 8, categ, fmt["group"])
             row += 1
             for line in grp_lines:
                 r1 = row + 1  # เลขแถว Excel
@@ -193,33 +191,28 @@ class StockCount(models.Model):
                     ws.write_number(row, 5, line.amount, fmt["num"])
                 else:
                     ws.write_blank(row, 5, None, fmt["num"])
-                for c, val in ((6, line.qty_count1), (7, line.qty_count2)):
-                    if show_cnt and val:
-                        ws.write_number(row, c, val, fmt["num_y"])
-                    else:
-                        ws.write_blank(row, c, None, fmt["num_y"])
                 if show_cnt and line.counted:
-                    ws.write_number(row, 8, line.qty_counted, fmt["num_y"])
+                    ws.write_number(row, 6, line.qty_counted, fmt["num_y"])
                 else:
-                    ws.write_blank(row, 8, None, fmt["num_y"])
+                    ws.write_blank(row, 6, None, fmt["num_y"])
                 if show_sys:
-                    ws.write_formula(row, 9, '=IF(I%d="","",I%d-D%d)' % (r1, r1, r1), fmt["num_y"])
+                    ws.write_formula(row, 7, '=IF(G%d="","",G%d-D%d)' % (r1, r1, r1), fmt["num_y"])
                 else:
-                    ws.write_blank(row, 9, None, fmt["num_y"])
-                ws.write(row, 10, line.note or "", fmt["text_y"])
-                ws.write_number(row, 11, line.product_id.id, fmt["id"])
+                    ws.write_blank(row, 7, None, fmt["num_y"])
+                ws.write(row, 8, line.note or "", fmt["text_y"])
+                ws.write_number(row, 9, line.product_id.id, fmt["id"])
                 row += 1
         last_data = row - 1
 
         ws.write(row, 0, "", fmt["tot_l"])
         ws.write(row, 1, "", fmt["tot_l"])
         ws.write(row, 2, "รวมทั้งสิ้น", fmt["tot_l"])
-        for c, col in ((3, "D"), (5, "F"), (8, "I"), (9, "J")):
-            if col in ("D", "F", "J") and not show_sys:
+        for c, col in ((3, "D"), (5, "F"), (6, "G"), (7, "H")):
+            if col in ("D", "F", "H") and not show_sys:
                 ws.write(row, c, "", fmt["tot_l"])
             else:
                 ws.write_formula(row, c, "=SUM(%s%d:%s%d)" % (col, first_data + 1, col, last_data + 1), fmt["tot_n"])
-        for c in (4, 6, 7, 10):
+        for c in (4, 8):
             ws.write(row, c, "", fmt["tot_l"])
 
         row += 3
@@ -288,7 +281,7 @@ class StockCount(models.Model):
             ws.write_number(row, 5, line.qty_in, fmt["num"])
             ws.write_number(row, 6, line.qty_out, fmt["num"])
             ws.write_formula(row, 7, "=E%d+N(F%d)-N(G%d)" % (r, r, r), fmt["num"])
-            ws.write_formula(row, 8, '=IF(%sI%d="","",%sI%d)' % (q, cr, q, cr), fmt["num"])
+            ws.write_formula(row, 8, '=IF(%sG%d="","",%sG%d)' % (q, cr, q, cr), fmt["num"])
             ws.write_formula(row, 9, '=IF(I%d="","",I%d-H%d)' % (r, r, r), fmt["num"])
             ws.write_formula(row, 10, '=IF(OR(I%d="",H%d=0),"",J%d/H%d)' % (r, r, r, r), fmt["pct"])
             ws.write_number(row, 11, line.standard_price, fmt["num"])
@@ -417,8 +410,8 @@ class StockCount(models.Model):
             ("", None),
             ("ขั้นตอนทำงาน", "bold"),
             ("1  พิมพ์ชีต %s  ตั้งค่าหน้าไว้แล้วเป็น A4 แนวนอน พอดีความกว้าง ซ้ำหัวตารางทุกหน้า  (หรือกดพิมพ์ PDF จาก Odoo)" % SHEET_COUNT, "plain"),
-            ("2  ให้ผู้นับสองคนนับแยกกัน เขียนลงช่อง นับครั้งที่ 1 และ นับครั้งที่ 2  ถ้าไม่ตรงให้นับครั้งที่สามต่อหน้าหัวหน้าคลัง", "plain"),
-            ("3  เขียนตัวเลขที่ยืนยันแล้วในช่อง ยืนยันจำนวน  แล้วคีย์กลับเข้าไฟล์นี้ในชีต %s ช่องเดียวเท่านั้น  ชีตอื่นดึงไปให้เอง" % SHEET_COUNT, "plain"),
+            ("2  ผู้นับสองคนนับของจริงด้วยกัน ตรวจทานแล้วเขียนตัวเลขลงช่อง ยอดตรวจนับได้  ไม่ตรงกันให้นับซ้ำต่อหน้าหัวหน้าคลัง", "plain"),
+            ("3  คีย์ตัวเลขกลับเข้าไฟล์นี้ในชีต %s ช่อง ยอดตรวจนับได้ ช่องเดียวเท่านั้น  ชีตอื่นดึงไปให้เอง" % SHEET_COUNT, "plain"),
             ("   หรือคีย์ในจอ Odoo (ใบตรวจนับ %s แท็บ รายการนับ) หรืออัปโหลดไฟล์นี้กลับเข้า Odoo ด้วยปุ่ม นำเข้าจาก Excel" % self.name, "plain"),
             ("4  ช่อง บวกรับ และ หักจ่าย ในชีต %s Odoo กรอกให้แล้ว จากประวัติการเคลื่อนไหวของคลัง %s ช่วง %s" % (SHEET_RECON, loc, period), "plain"),
             ("   ถ้ามีการบันทึกเอกสารย้อนหลังเพิ่มหลังจาก Export ไฟล์นี้ ให้กด รีเฟรชยอดระบบ ใน Odoo แล้ว Export ใหม่", "plain"),
@@ -426,9 +419,9 @@ class StockCount(models.Model):
             ("6  เปิดชีต %s  กรองสถานะให้เหลือเฉพาะ ขาด และ เกิน  แล้วกรอกช่องสีเหลืองให้ครบทุกรายการ" % SHEET_NOTES, "plain"),
             ("7  ให้ผู้สรุป หัวหน้าคลัง ฝ่ายบัญชี และผู้อนุมัติ ลงนามท้ายชีต แล้วเก็บไว้เป็นหลักฐาน", "plain"),
             ("", None),
-            ("ทำไมใบตรวจนับจึงไม่แสดงยอดในระบบ", "bold"),
-            ("ถ้าผู้นับเห็นตัวเลขไว้ก่อน จะเกิดการนับให้ตรงกับที่เห็นแทนที่จะนับของจริง  ผลต่างที่ควรเจอจะหายไปหมด  "
-             "ยอดตามบัญชีจึงไปแสดงเฉพาะในชีต %s" % SHEET_RECON, "wrap"),
+            ("ยอดตามบัญชีในใบตรวจนับ", "bold"),
+            ("ใบตรวจนับแสดง Quantity / Amount ตามบัญชี ณ วันตัดยอดไว้ให้เทียบทันที  ถ้าต้องการนับแบบไม่เห็นยอด (กันนับให้ตรงกับตัวเลขแทนที่จะนับของจริง) "
+             "ให้ติ๊ก ใบตรวจนับไม่แสดงยอดตามบัญชี ในใบนับก่อน Export  ยอดตามบัญชีจะไปแสดงเฉพาะในชีต %s" % SHEET_RECON, "wrap"),
             ("", None),
             ("สาเหตุของผลต่างที่พบบ่อย  ใช้เป็นแนวทางกรอกช่องสาเหตุ", "bold"),
             ("เอกสารยังไม่ได้บันทึกในระบบ  เช่น ใบโอนเข้าสาขาหรือใบเบิกใช้วัสดุที่ยังค้าง  แก้ด้วยการบันทึกเอกสารให้ครบ", "plain"),

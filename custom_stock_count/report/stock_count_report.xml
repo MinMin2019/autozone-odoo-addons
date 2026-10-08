@@ -59,7 +59,7 @@
         </template>
 
         <!-- ==========================================
-             1) ใบตรวจนับ — ตามชีต "ใบตรวจนับ" ของแบบฟอร์ม v3 (+ นับครั้งที่ 1/2 ตามวิธีใช้)
+             1) ใบตรวจนับ — ตามชีต "ใบตรวจนับ" ของแบบฟอร์ม v3 
              blind + ยังนับไม่เสร็จ → ยอดตามบัญชี/มูลค่า/ผลต่าง เว้นว่าง
              ========================================== -->
         <template id="report_az_stock_count">
@@ -94,8 +94,7 @@
                                 </tr>
                             </table>
                             <div style="font-size: 11px; margin-bottom: 4px;">
-                                ผู้นับสองคนนับแยกกัน เขียนช่อง นับครั้งที่ 1 / 2 ถ้าไม่ตรงให้นับครั้งที่สามต่อหน้าหัวหน้าคลัง
-                                แล้วเขียนตัวเลขที่ยืนยันแล้วในช่อง ยืนยันจำนวน
+                                นับของจริงแล้วเขียนลงช่อง ยอดตรวจนับได้
                                 <t t-if="show_sys"> ช่อง ผลต่าง = ผลต่างเบื้องต้นเทียบกับบัญชี ณ <span t-esc="o._fmt_date(o.date_cutoff)"/>
                                     (กระทบยอดจริงรวมรับ/จ่ายระหว่างกลาง ดูรายงานกระทบยอด)</t>
                                 <t t-else=""> ยอดตามบัญชีไม่แสดงในใบนี้ (นับของจริงก่อน) การกระทบยอดอยู่ในรายงานกระทบยอด</t>
@@ -106,26 +105,24 @@
                                     <tr>
                                         <th class="grp" colspan="4"></th>
                                         <th class="grp" colspan="2">ยอดตามบัญชี ณ <span t-esc="o._fmt_date(o.date_cutoff)"/></th>
-                                        <th class="grp" colspan="5">บันทึกจากการนับจริง ณ <span t-esc="o._fmt_date(o.date_count)"/></th>
+                                        <th class="grp" colspan="3">บันทึกจากการนับจริง ณ <span t-esc="o._fmt_date(o.date_count)"/></th>
                                     </tr>
                                     <tr>
-                                        <th style="width: 4%;">ลำดับ</th>
-                                        <th style="width: 13%;">Material</th>
-                                        <th style="width: 27%;">Description</th>
-                                        <th style="width: 6%;">UOM</th>
-                                        <th style="width: 7%;">Quantity</th>
-                                        <th style="width: 8%;">Amount</th>
-                                        <th style="width: 7%;">นับครั้งที่ 1</th>
-                                        <th style="width: 7%;">นับครั้งที่ 2</th>
-                                        <th style="width: 7%;">ยืนยันจำนวน</th>
-                                        <th style="width: 6%;">ผลต่าง</th>
-                                        <th style="width: 8%;">หมายเหตุ</th>
+                                        <th style="width: 5%;">ลำดับ</th>
+                                        <th style="width: 15%;">Material</th>
+                                        <th style="width: 31%;">Description</th>
+                                        <th style="width: 7%;">UOM</th>
+                                        <th style="width: 8%;">Quantity</th>
+                                        <th style="width: 9%;">Amount</th>
+                                        <th style="width: 9%;">ยอดตรวจนับได้</th>
+                                        <th style="width: 7%;">ผลต่าง</th>
+                                        <th style="width: 9%;">หมายเหตุ</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <t t-set="seq" t-value="0"/>
                                     <t t-foreach="o._report_groups()" t-as="grp">
-                                        <tr><td class="grp" colspan="11"><span t-esc="grp[0]"/></td></tr>
+                                        <tr><td class="grp" colspan="9"><span t-esc="grp[0]"/></td></tr>
                                         <t t-foreach="grp[1]" t-as="line">
                                             <t t-set="seq" t-value="seq + 1"/>
                                             <tr>
@@ -135,8 +132,6 @@
                                                 <td><span class="cut" t-esc="line.uom_id.name or ''"/></td>
                                                 <td class="r"><t t-if="show_sys"><span t-esc="o._fmt_qty(line.qty_system)"/></t></td>
                                                 <td class="r"><t t-if="show_sys"><span t-esc="o._fmt_money(line.amount)"/></t></td>
-                                                <td class="r y"><t t-if="show_cnt and line.qty_count1"><span t-esc="o._fmt_qty(line.qty_count1)"/></t></td>
-                                                <td class="r y"><t t-if="show_cnt and line.qty_count2"><span t-esc="o._fmt_qty(line.qty_count2)"/></t></td>
                                                 <td class="r y"><t t-if="show_cnt and line.counted"><span t-esc="o._fmt_qty(line.qty_counted)"/></t></td>
                                                 <td class="r y"><t t-if="show_cnt and show_sys and line.counted"><span t-esc="o._fmt_qty(line.qty_counted - line.qty_system)"/></t></td>
                                                 <td class="y"><span class="cut" t-esc="line.note or ''"/></td>
@@ -147,7 +142,6 @@
                                         <td class="tot" colspan="4" style="max-width: none;">รวมทั้งสิ้น <span t-esc="len(o.line_ids)"/> รายการ</td>
                                         <td class="tot r"><t t-if="show_sys"><span t-esc="o._fmt_qty(sum(o.line_ids.mapped('qty_system')))"/></t></td>
                                         <td class="tot r"><t t-if="show_sys"><span t-esc="o._fmt_money(o.stock_value)"/></t></td>
-                                        <td class="tot"></td><td class="tot"></td>
                                         <td class="tot r"><t t-if="show_cnt"><span t-esc="o._fmt_qty(sum(o.line_ids.filtered('counted').mapped('qty_counted')))"/></t></td>
                                         <td class="tot"></td><td class="tot"></td>
                                     </tr>

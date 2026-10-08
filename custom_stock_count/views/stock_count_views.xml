@@ -111,7 +111,7 @@
                     <notebook>
                         <page string="รายการนับ" name="lines">
                             <div class="text-muted mb-2" invisible="state != 'counting'">
-                                คีย์ช่อง <b>ยืนยันจำนวน</b> แล้วช่อง "นับแล้ว" ติ๊กให้เอง — <b>นับได้ 0:</b> พิมพ์ 0 ทับ 0.00 ระบบไม่ถือว่าเปลี่ยน
+                                คีย์ช่อง <b>ยอดตรวจนับได้</b> แล้วช่อง "นับแล้ว" ติ๊กให้เอง — <b>นับได้ 0:</b> พิมพ์ 0 ทับ 0.00 ระบบไม่ถือว่าเปลี่ยน
                                 ให้ติ๊กช่อง "นับแล้ว" ของแถวนั้นเอง หรือคีย์รายการที่มีของให้ครบแล้วกดปุ่ม <b>"ที่เหลือ = 0"</b> บนหัวใบ
                             </div>
                             <field name="line_ids" readonly="state in ('closed', 'done', 'cancel')">
@@ -130,8 +130,6 @@
                                     <field name="qty_in" optional="hide"/>
                                     <field name="qty_out" optional="hide"/>
                                     <field name="qty_expected" sum="รวม"/>
-                                    <field name="qty_count1" readonly="parent.state == 'draft'" optional="hide"/>
-                                    <field name="qty_count2" readonly="parent.state == 'draft'" optional="hide"/>
                                     <field name="qty_counted" readonly="parent.state == 'draft'"/>
                                     <field name="counted" readonly="parent.state == 'draft'" widget="boolean_toggle" optional="show"/>
                                     <field name="qty_diff" readonly="1" sum="รวม"/>

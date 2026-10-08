@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """นำเข้าจากไฟล์ Excel ที่ Export ออกจากใบนับแล้วกรอกกลับมา (อ่านตามชื่อหัวคอลัมน์ ไม่ยึดตำแหน่ง)
 
-* ชีต "ใบตรวจนับ": หัวตาราง = แถวที่มี "Material"/"รหัสสินค้า" — อ่าน นับครั้งที่ 1 / นับครั้งที่ 2 /
-  ยืนยันจำนวน (หรือ ยอดตรวจนับ*) / หมายเหตุ / ID   แถวที่ยืนยันจำนวนว่าง = ยังไม่นับ ข้าม
+* ชีต "ใบตรวจนับ": หัวตาราง = แถวที่มี "Material"/"รหัสสินค้า" — อ่าน ยอดตรวจนับได้ (หรือ ยืนยันจำนวน) / หมายเหตุ / ID   แถวที่ยืนยันจำนวนว่าง = ยังไม่นับ ข้าม
 * ชีต "หมายเหตุผลต่าง" (ถ้ามี): หัวตาราง = แถวที่มี "สาเหตุของผลต่าง" — อ่าน สาเหตุ / เอกสาร /
   ผู้รับผิดชอบ / การดำเนินการ / วันที่แล้วเสร็จ   เขียนเฉพาะช่องที่ไม่ว่าง
 จับคู่สินค้า: ID (product id) → รหัสสินค้า → ชื่อสินค้า
@@ -20,8 +19,6 @@ COLS_COUNT = {
     "id": ("ID",),
     "code": ("Material", "รหัสสินค้า"),
     "name": ("Description", "ชื่อสินค้า"),
-    "count1": ("นับครั้งที่ 1",),
-    "count2": ("นับครั้งที่ 2",),
     "counted": ("ยืนยันจำนวน", "ยอดตรวจนับ"),
     "note": ("หมายเหตุ",),
 }
@@ -148,17 +145,12 @@ class StockCountImport(models.TransientModel):
                             continue  # แถวว่าง / หัวหมวด / ลายเซ็น
                         line = self._match_line(maps, row, cols)
                         if not line:
-                            if any(row[c] not in (None, "") for k, c in cols.items() if k in ("count1", "count2", "counted")):
+                            if row[cols["counted"]] not in (None, ""):
                                 unmatched += 1
                                 if len(problems) < 20:
                                     problems.append("%s | %s" % (row[cols.get("code", 0)] or "", row[cols.get("name", 0)] or ""))
                             continue
                         vals = {}
-                        for key, field in (("count1", "qty_count1"), ("count2", "qty_count2")):
-                            if key in cols:
-                                v = self._to_float(row[cols[key]])
-                                if v is not None:
-                                    vals[field] = v
                         if "note" in cols and row[cols["note"]] not in (None, ""):
                             vals["note"] = str(row[cols["note"]]).strip()
                         qty = self._to_float(row[cols["counted"]])
