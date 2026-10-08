@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ==================== FORM ==================== -->
+    <record id="view_az_stock_count_form" model="ir.ui.view">
+        <field name="name">az.stock.count.form</field>
+        <field name="model">az.stock.count</field>
+        <field name="arch" type="xml">
+            <form string="ใบตรวจนับสต็อก">
+                <header>
+                    <button name="action_generate_lines" string="ดึงรายการสินค้า" type="object"
+                            class="btn-primary" invisible="state != 'draft' or line_count"/>
+                    <button name="action_generate_lines" string="ดึงรายการใหม่" type="object"
+                            invisible="state != 'draft' or not line_count"
+                            confirm="จะลบรายการเดิมทั้งหมดแล้วดึงใหม่จากสต็อกปัจจุบัน ต้องการทำต่อหรือไม่?"/>
+                    <button name="action_start" string="เริ่มนับ (ล็อกรายการ)" type="object"
+                            class="btn-primary" invisible="state != 'draft' or not line_count"/>
+                    <button name="action_confirm_counted" string="ยืนยันผลนับ" type="object"
+                            class="btn-primary" invisible="state != 'counting'"/>
+                    <button name="action_apply" string="ปรับปรุงสต็อก" type="object"
+                            class="btn-primary" invisible="state != 'counted'"
+                            groups="stock.group_stock_manager"
+                            confirm="จะสร้างรายการปรับปรุงสต็อก (Inventory Adjustment) ลงวันที่ตามวันนับ สำหรับทุกรายการที่นับแล้วและมีผลต่าง ต้องการทำต่อหรือไม่?"/>
+                    <button name="action_print_form" string="พิมพ์แบบฟอร์ม (PDF)" type="object"
+                            invisible="state == 'cancel' or not line_count"/>
+                    <button name="action_export_xlsx" string="Export Excel" type="object"
+                            invisible="state == 'cancel' or not line_count"/>
+                    <button name="action_open_import" string="นำเข้ายอดนับจาก Excel" type="object"
+                            invisible="state != 'counting'"/>
+                    <button name="action_refresh_system_qty" string="รีเฟรชยอดระบบ" type="object"
+                            invisible="state not in ('draft', 'counting', 'counted') or not line_count"/>
+                    <button name="action_back_to_counting" string="กลับไปแก้ยอดนับ" type="object"
+                            invisible="state != 'counted'"/>
+                    <button name="action_draft" string="กลับเป็นร่าง" type="object"
+                            invisible="state not in ('counting', 'counted', 'cancel')"
+                            confirm="ยอดนับที่คีย์ไว้จะยังอยู่ แต่จะแก้รายการสินค้าได้อีกครั้ง ต้องการทำต่อหรือไม่?"/>
+                    <button name="action_cancel" string="ยกเลิก" type="object"
+                            invisible="state not in ('draft', 'counting', 'counted')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,counting,counted,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_lines" type="object" class="oe_stat_button" icon="fa-list"
+                                invisible="not line_count">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value"><field name="counted_count"/> / <field name="line_count"/></span>
+                                <span class="o_stat_text">นับแล้ว / รายการ</span>
+                            </div>
+                        </button>
+                        <button name="action_view_moves" type="object" class="oe_stat_button" icon="fa-exchange"
+                                invisible="not move_count">
+                            <field name="move_count" widget="statinfo" string="รายการปรับปรุง"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="warehouse_id" readonly="state != 'draft'"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                            <field name="location_id" readonly="state != 'draft'"
+                                   options="{'no_create': True}"/>
+                            <field name="date_count" readonly="state in ('done', 'cancel')"/>
+                            <field name="count_type" readonly="state in ('done', 'cancel')"/>
+                            <field name="snapshot_date"/>
+                            <field name="company_id" invisible="1"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="counter1" readonly="state in ('done', 'cancel')"/>
+                            <field name="counter2" readonly="state in ('done', 'cancel')"/>
+                            <field name="checker" readonly="state in ('done', 'cancel')"/>
+                            <field name="approver" readonly="state in ('done', 'cancel')"/>
+                            <field name="user_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="ตัวเลือกดึงรายการ / แบบฟอร์ม">
+                            <field name="blind" readonly="state in ('done', 'cancel')"/>
+                            <field name="include_zero" readonly="state != 'draft'"/>
+                            <field name="categ_ids" widget="many2many_tags" readonly="state != 'draft'"
+                                   options="{'no_create': True}"/>
+                        </group>
+                        <group string="สรุปผลนับ" invisible="not line_count">
+                            <field name="uncounted_count"/>
+                            <field name="diff_line_count"/>
+                            <field name="diff_qty_short"/>
+                            <field name="diff_qty_over"/>
+                            <field name="diff_value_total" groups="stock.group_stock_manager"/>
+                            <field name="applied_by" invisible="state != 'done'"/>
+                            <field name="applied_date" invisible="state != 'done'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="รายการนับ" name="lines">
+                            <field name="line_ids" readonly="state in ('done', 'cancel')">
+                                <list editable="bottom"
+                                      decoration-danger="counted and qty_diff &lt; 0"
+                                      decoration-warning="counted and qty_diff &gt; 0"
+                                      decoration-muted="not counted">
+                                    <field name="state" column_invisible="1"/>
+                                    <field name="sequence" readonly="1"/>
+                                    <field name="categ_name" optional="show" readonly="1"/>
+                                    <field name="default_code" readonly="1"/>
+                                    <field name="product_id" readonly="parent.state != 'draft'"
+                                           options="{'no_create': True}"/>
+                                    <field name="uom_id" readonly="1"/>
+                                    <field name="qty_system" sum="รวม"/>
+                                    <field name="qty_counted" readonly="parent.state == 'draft'"/>
+                                    <field name="counted" readonly="1" widget="boolean_toggle" optional="show"/>
+                                    <field name="qty_diff" readonly="1" sum="รวม"/>
+                                    <field name="standard_price" optional="hide" groups="stock.group_stock_manager"/>
+                                    <field name="diff_value" readonly="1" sum="รวม" optional="show"
+                                           groups="stock.group_stock_manager"/>
+                                    <field name="note" readonly="parent.state == 'draft'"/>
+                                    <button name="action_clear_count" type="object" icon="fa-eraser"
+                                            title="ล้างยอดนับ (กลับเป็นยังไม่นับ)"
+                                            invisible="not counted or parent.state not in ('counting', 'counted')"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="หมายเหตุ" name="note">
+                            <field name="note" placeholder="หมายเหตุ / สิ่งผิดปกติที่พบระหว่างนับ"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ==================== LIST ==================== -->
+    <record id="view_az_stock_count_list" model="ir.ui.view">
+        <field name="name">az.stock.count.list</field>
+        <field name="model">az.stock.count</field>
+        <field name="arch" type="xml">
+            <list decoration-info="state == 'counting'" decoration-warning="state == 'counted'"
+                  decoration-success="state == 'done'" decoration-muted="state == 'cancel'">
+                <field name="name"/>
+                <field name="warehouse_id"/>
+                <field name="location_id" optional="hide"/>
+                <field name="date_count"/>
+                <field name="count_type"/>
+                <field name="line_count"/>
+                <field name="counted_count"/>
+                <field name="diff_line_count"/>
+                <field name="diff_value_total" optional="show" groups="stock.group_stock_manager"/>
+                <field name="user_id" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'counting'"
+                       decoration-warning="state == 'counted'"
+                       decoration-success="state == 'done'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ==================== SEARCH ==================== -->
+    <record id="view_az_stock_count_search" model="ir.ui.view">
+        <field name="name">az.stock.count.search</field>
+        <field name="model">az.stock.count</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="warehouse_id"/>
+                <field name="counter1"/>
+                <filter name="open" string="ยังไม่ปรับปรุง" domain="[('state', 'in', ('draft', 'counting', 'counted'))]"/>
+                <filter name="counting" string="กำลังนับ" domain="[('state', '=', 'counting')]"/>
+                <filter name="counted" string="รอปรับปรุง" domain="[('state', '=', 'counted')]"/>
+                <filter name="done" string="ปรับปรุงแล้ว" domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter name="this_month" string="เดือนนี้" date="date_count" default_period="month"/>
+                <group expand="0" string="จัดกลุ่ม">
+                    <filter name="group_wh" string="สาขา / คลัง" context="{'group_by': 'warehouse_id'}"/>
+                    <filter name="group_state" string="สถานะ" context="{'group_by': 'state'}"/>
+                    <filter name="group_month" string="เดือนที่นับ" context="{'group_by': 'date_count:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_az_stock_count" model="ir.actions.act_window">
+        <field name="name">ใบตรวจนับสต็อก</field>
+        <field name="res_model">az.stock.count</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_az_stock_count_search"/>
+        <field name="context">{'search_default_open': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">สร้างใบตรวจนับสต็อกใบแรก</p>
+            <p>เลือกสาขา/คลัง → ดึงรายการสินค้า → พิมพ์แบบฟอร์มให้สาขานับ → คีย์ยอดนับ (หรือนำเข้า Excel) → ปรับปรุงสต็อก</p>
+        </field>
+    </record>
+
+    <!-- ==================== LINES ==================== -->
+    <record id="view_az_stock_count_line_list" model="ir.ui.view">
+        <field name="name">az.stock.count.line.list</field>
+        <field name="model">az.stock.count.line</field>
+        <field name="arch" type="xml">
+            <list create="false" delete="false" editable="bottom"
+                  decoration-danger="counted and qty_diff &lt; 0"
+                  decoration-warning="counted and qty_diff &gt; 0"
+                  decoration-muted="not counted">
+                <field name="count_id" readonly="1"/>
+                <field name="warehouse_id" readonly="1" optional="hide"/>
+                <field name="date_count" readonly="1" optional="hide"/>
+                <field name="state" readonly="1" optional="show"/>
+                <field name="sequence" readonly="1"/>
+                <field name="categ_name" readonly="1" optional="hide"/>
+                <field name="default_code" readonly="1"/>
+                <field name="product_id" readonly="1"/>
+                <field name="uom_id" readonly="1"/>
+                <field name="qty_system" readonly="1" sum="รวม"/>
+                <field name="qty_counted" readonly="state not in ('counting', 'counted')"/>
+                <field name="counted" readonly="1" widget="boolean_toggle"/>
+                <field name="qty_diff" readonly="1" sum="รวม"/>
+                <field name="diff_value" readonly="1" sum="รวม" groups="stock.group_stock_manager"/>
+                <field name="note" readonly="state not in ('counting', 'counted')"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_az_stock_count_line_search" model="ir.ui.view">
+        <field name="name">az.stock.count.line.search</field>
+        <field name="model">az.stock.count.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="product_id"/>
+                <field name="default_code"/>
+                <field name="count_id"/>
+                <field name="categ_name"/>
+                <filter name="uncounted" string="ยังไม่นับ" domain="[('counted', '=', False)]"/>
+                <filter name="has_diff" string="มีผลต่าง" domain="[('counted', '=', True), ('qty_diff', '!=', 0)]"/>
+                <filter name="short" string="ขาด" domain="[('qty_diff', '&lt;', 0)]"/>
+                <filter name="over" string="เกิน" domain="[('qty_diff', '&gt;', 0)]"/>
+                <separator/>
+                <filter name="open" string="ใบที่ยังไม่ปรับปรุง" domain="[('state', 'in', ('counting', 'counted'))]"/>
+                <group expand="0" string="จัดกลุ่ม">
+                    <filter name="group_count" string="ใบนับ" context="{'group_by': 'count_id'}"/>
+                    <filter name="group_categ" string="หมวดสินค้า" context="{'group_by': 'categ_name'}"/>
+                    <filter name="group_wh" string="สาขา / คลัง" context="{'group_by': 'warehouse_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_az_stock_count_line" model="ir.actions.act_window">
+        <field name="name">รายการตรวจนับ</field>
+        <field name="res_model">az.stock.count.line</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_az_stock_count_line_search"/>
+        <field name="context">{'search_default_open': 1, 'search_default_group_count': 1}</field>
+    </record>
+
+    <!-- ==================== MENU: Inventory > Operations ==================== -->
+    <menuitem id="menu_az_stock_count_root" name="ตรวจนับสต็อก"
+              parent="stock.menu_stock_warehouse_mgmt" sequence="45"/>
+    <menuitem id="menu_az_stock_count" name="ใบตรวจนับสต็อก"
+              parent="menu_az_stock_count_root" action="action_az_stock_count" sequence="10"/>
+    <menuitem id="menu_az_stock_count_line" name="รายการตรวจนับ"
+              parent="menu_az_stock_count_root" action="action_az_stock_count_line" sequence="20"/>
+
+    <!-- Export Excel หลายใบจากหน้า list -->
+    <record id="action_az_stock_count_export_xlsx" model="ir.actions.server">
+        <field name="name">Export Excel (แบบฟอร์มตรวจนับ)</field>
+        <field name="model_id" ref="model_az_stock_count"/>
+        <field name="binding_model_id" ref="model_az_stock_count"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_export_xlsx()</field>
+    </record>
+</odoo>

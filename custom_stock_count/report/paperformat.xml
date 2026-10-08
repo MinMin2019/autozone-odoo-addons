@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- A4 แนวนอน ขอบแคบ — ท้ายกระดาษมีเลขหน้า (div.footer) จึงเว้น margin_bottom ไว้ -->
+    <record id="paperformat_az_stock_count" model="report.paperformat">
+        <field name="name">A4 Landscape Stock Count</field>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">8</field>
+        <field name="margin_bottom">12</field>
+        <field name="margin_left">7</field>
+        <field name="margin_right">7</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
+</odoo>

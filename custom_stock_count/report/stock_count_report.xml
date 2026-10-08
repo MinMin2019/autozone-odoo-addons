@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="action_report_az_stock_count" model="ir.actions.report">
+            <field name="name">แบบฟอร์มตรวจนับสต็อก</field>
+            <field name="model">az.stock.count</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">custom_stock_count.report_az_stock_count</field>
+            <field name="report_file">custom_stock_count.report_az_stock_count</field>
+            <field name="print_report_name">'%s-แบบฟอร์มตรวจนับสต๊อก-%s' % (object.name, object.warehouse_id.code or '')</field>
+            <field name="paperformat_id" ref="paperformat_az_stock_count"/>
+            <field name="binding_model_id" ref="model_az_stock_count"/>
+            <field name="binding_type">report</field>
+        </record>
+
+        <!-- ==========================================
+             แบบฟอร์มตรวจนับ — เลย์เอาต์ตาม other/Autozone-แบบฟอร์มตรวจนับสต๊อก-BHA.xlsx
+             A4 แนวนอน ปล่อยให้ wkhtmltopdf ตัดหน้าเอง: หัวตารางพิมพ์ซ้ำทุกหน้า (thead),
+             แถวไม่ถูกตัดกลาง, เลขหน้าที่ท้ายกระดาษ (div.footer ถูกดึงไปเป็น footer ของ wkhtmltopdf)
+             blind + ยังนับไม่เสร็จ → ยอดคงเหลือ/ผลต่างเว้นว่างให้เขียนมือ
+             ========================================== -->
+        <template id="report_az_stock_count">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="o">
+                    <t t-set="show_sys" t-value="o._show_system_qty()"/>
+                    <t t-set="show_cnt" t-value="o._show_counted()"/>
+                    <t t-set="company" t-value="o.company_id"/>
+                    <t t-call="web.basic_layout">
+                        <style>
+                            .page { font-family: Sarabun, sans-serif; font-size: 12px; color: #000; }
+                            .sc-title { font-size: 18px; font-weight: bold; }
+                            .sc-box td { padding: 2px 6px; }
+                            .sc-lbl { font-weight: bold; background: #FFFF80; }
+                            .sc-val { background: #FFFF80; }
+                            table.sc-lines { width: 100%; border-collapse: collapse; }
+                            table.sc-lines thead { display: table-header-group; }
+                            table.sc-lines th { border: 1px solid #000; background: #DCE6F1; padding: 4px 3px;
+                                                text-align: center; font-weight: bold; vertical-align: middle; }
+                            table.sc-lines td { border: 1px solid #000; padding: 2px 4px; height: 24px;
+                                                vertical-align: middle; max-width: 0; }
+                            table.sc-lines tr { page-break-inside: avoid; }
+                            table.sc-lines td.grp { background: #BDE1F2; font-weight: bold; max-width: none; }
+                            table.sc-lines td.c { text-align: center; }
+                            table.sc-lines td.r { text-align: right; }
+                            .cut { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+                            .sc-sign { page-break-inside: avoid; margin-top: 28px; width: 100%; }
+                            .sc-sign td { width: 25%; padding: 4px 8px; vertical-align: top; border: none !important; }
+                            .sc-box td, .sc-sign td { border: none !important; }
+                            .footer { font-family: Sarabun, sans-serif; font-size: 10px; text-align: center; }
+                        </style>
+
+                        <div class="footer">
+                            <span t-esc="o.name"/> · หน้า <span class="page"/> / <span class="topage"/>
+                        </div>
+
+                        <div class="page">
+                            <!-- หัวกระดาษ -->
+                            <table style="width: 100%; margin-bottom: 6px;">
+                                <tr>
+                                    <td style="width: 60%; vertical-align: top;">
+                                        <div class="sc-title">ใบตรวจนับสินค้าคงคลัง</div>
+                                        <div style="font-size: 13px;"><span t-esc="company.name"/></div>
+                                        <div style="font-size: 11px; color: #333;">
+                                            <span t-esc="company.partner_id.get_thai_address()"/>
+                                        </div>
+                                    </td>
+                                    <td style="width: 40%; vertical-align: top; text-align: right;">
+                                        <div>ยอดคงเหลือ ณ วันที่
+                                            <span style="display: inline-block; min-width: 150px; background: #FFFF00; padding: 0 6px; text-align: center;">
+                                                <t t-if="show_sys"><span t-esc="o._snapshot_local()"/></t>
+                                                <t t-else="">&#160;</t>
+                                            </span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <table class="sc-box" style="width: 100%; margin-bottom: 8px;">
+                                <tr>
+                                    <td class="sc-lbl" style="width: 15%;">สาขา / คลังที่นับ</td>
+                                    <td class="sc-val" style="width: 40%;">
+                                        <span t-esc="o.warehouse_id.code or ''"/>
+                                        <t t-if="o.warehouse_id.name and o.warehouse_id.name != o.warehouse_id.code">
+                                            - <span t-esc="o.warehouse_id.name"/>
+                                        </t>
+                                        <t t-if="o.location_id != o.warehouse_id.lot_stock_id">
+                                            (<span t-esc="o.location_id.complete_name"/>)
+                                        </t>
+                                    </td>
+                                    <td style="width: 5%;"></td>
+                                    <td class="sc-lbl" style="width: 15%;">เลขที่ใบนับ</td>
+                                    <td class="sc-val" style="width: 25%;"><span t-esc="o.name"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="sc-lbl">วันที่นับ</td>
+                                    <td class="sc-val"><span t-esc="o.date_count.strftime('%d/%m/%Y') if o.date_count else ''"/></td>
+                                    <td></td>
+                                    <td class="sc-lbl">รอบการนับ</td>
+                                    <td class="sc-val"><span t-esc="o._count_type_label()"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="sc-lbl">ผู้นับคนที่ 1</td>
+                                    <td class="sc-val"><span t-esc="o.counter1 or '_________________________'"/></td>
+                                    <td></td>
+                                    <td class="sc-lbl">ผู้นับคนที่ 2</td>
+                                    <td class="sc-val"><span t-esc="o.counter2 or '_________________________'"/></td>
+                                </tr>
+                            </table>
+
+                            <!-- ตารางรายการ -->
+                            <table class="sc-lines">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 5%;">ลำดับ</th>
+                                        <th style="width: 15%;">รหัสสินค้า</th>
+                                        <th style="width: 34%;">ชื่อสินค้า</th>
+                                        <th style="width: 7%;">หน่วย</th>
+                                        <th style="width: 9%;">ยอดคงเหลือ</th>
+                                        <th style="width: 9%;">ยอดตรวจนับ</th>
+                                        <th style="width: 8%;">ผลต่าง</th>
+                                        <th style="width: 13%;">หมายเหตุ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-set="seq" t-value="0"/>
+                                    <t t-foreach="o._report_groups()" t-as="grp">
+                                        <tr>
+                                            <td class="grp" colspan="8"><span t-esc="grp[0]"/></td>
+                                        </tr>
+                                        <t t-foreach="grp[1]" t-as="line">
+                                            <t t-set="seq" t-value="seq + 1"/>
+                                            <tr>
+                                                <td class="c"><span t-esc="seq"/></td>
+                                                <td><span class="cut" t-esc="line.product_id.default_code or ''"/></td>
+                                                <td><span class="cut" t-esc="line.product_id.name or ''"/></td>
+                                                <td><span class="cut" t-esc="line.uom_id.name or ''"/></td>
+                                                <td class="r">
+                                                    <t t-if="show_sys"><span t-esc="o._fmt_qty(line.qty_system)"/></t>
+                                                </td>
+                                                <td class="r">
+                                                    <t t-if="show_cnt and line.counted"><span t-esc="o._fmt_qty(line.qty_counted)"/></t>
+                                                </td>
+                                                <td class="r">
+                                                    <t t-if="show_cnt and show_sys and line.counted"><span t-esc="o._fmt_qty(line.qty_diff)"/></t>
+                                                </td>
+                                                <td><span class="cut" t-esc="line.note or ''"/></td>
+                                            </tr>
+                                        </t>
+                                    </t>
+                                </tbody>
+                            </table>
+
+                            <!-- ลายเซ็น -->
+                            <table class="sc-sign">
+                                <tr>
+                                    <td><b>ผู้นับคนที่ 1</b></td>
+                                    <td><b>ผู้นับคนที่ 2</b></td>
+                                    <td><b>ผู้ทาน / หัวหน้าคลัง</b></td>
+                                    <td><b>ผู้อนุมัติ</b></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-top: 22px;">ลงชื่อ ____________________</td>
+                                    <td style="padding-top: 22px;">ลงชื่อ ____________________</td>
+                                    <td style="padding-top: 22px;">ลงชื่อ ____________________</td>
+                                    <td style="padding-top: 22px;">ลงชื่อ ____________________</td>
+                                </tr>
+                                <tr>
+                                    <td>(<span t-esc="o.counter1 or '____________________'"/>)</td>
+                                    <td>(<span t-esc="o.counter2 or '____________________'"/>)</td>
+                                    <td>(<span t-esc="o.checker or '____________________'"/>)</td>
+                                    <td>(<span t-esc="o.approver or '____________________'"/>)</td>
+                                </tr>
+                                <tr>
+                                    <td>วันที่ ______________</td>
+                                    <td>วันที่ ______________</td>
+                                    <td>วันที่ ______________</td>
+                                    <td>วันที่ ______________</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>

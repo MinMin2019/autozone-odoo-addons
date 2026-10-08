@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_az_stock_count_user,az.stock.count user,model_az_stock_count,stock.group_stock_user,1,1,1,0
+access_az_stock_count_manager,az.stock.count manager,model_az_stock_count,stock.group_stock_manager,1,1,1,1
+access_az_stock_count_line_user,az.stock.count.line user,model_az_stock_count_line,stock.group_stock_user,1,1,1,1
+access_az_stock_count_import_user,az.stock.count.import user,model_az_stock_count_import,stock.group_stock_user,1,1,1,1
