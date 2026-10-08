@@ -360,6 +360,15 @@ class StockCount(models.Model):
             rec.state = "counted"
         return True
 
+    def action_mark_rest_zero(self):
+        """รายการที่ยังไม่ได้คีย์ทั้งหมด = นับได้ 0 (ใช้หลังคีย์ครบแล้ว ของที่ไม่มีในใบนับจริงคือหมด)"""
+        self._check_state(("counting",), "ทำเครื่องหมายที่เหลือ = 0")
+        for rec in self:
+            rest = rec.line_ids.filtered(lambda l: not l.counted)
+            rest.write({"qty_counted": 0.0, "counted": True})
+            rec.message_post(body=_("ทำเครื่องหมายรายการที่ไม่ได้คีย์ %d รายการ = นับได้ 0", len(rest)))
+        return True
+
     def action_back_to_counting(self):
         self._check_state(("counted",), "กลับไปแก้ยอดนับ")
         self.write({"state": "counting"})
@@ -658,6 +667,17 @@ class StockCountLine(models.Model):
             line.diff_value = diff * (line.standard_price or 0.0)
             cmp = float_compare(diff, 0.0, precision_rounding=rounding)
             line.status = "match" if cmp == 0 else ("over" if cmp > 0 else "short")
+
+    @api.onchange("qty_counted", "qty_count1", "qty_count2")
+    def _onchange_qty_counted(self):
+        """พิมพ์ตัวเลขในช่องนับ (รวม 0) = นับแล้ว — ฝั่งหน้าจอทันที ไม่ต้องรอ write
+        หมายเหตุ: พิมพ์ 0 ทับ 0.00 เดิม client ไม่ส่ง onchange/write (ไม่มีการเปลี่ยนค่า)
+        ต้องติ๊กช่อง 'นับแล้ว' เอง หรือใช้ปุ่ม 'ที่เหลือ = 0' บนหัวใบ"""
+        for line in self:
+            if line.count_id.state in ("counting", "counted") and not line.counted:
+                line.counted = True
+            if line.qty_count1 and line.qty_count1 == line.qty_count2 and not line.qty_counted:
+                line.qty_counted = line.qty_count1
 
     @api.model_create_multi
     def create(self, vals_list):

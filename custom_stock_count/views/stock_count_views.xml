@@ -16,6 +16,9 @@
                             class="btn-primary" invisible="state != 'draft' or not line_count"/>
                     <button name="action_confirm_counted" string="ยืนยันผลนับ" type="object"
                             class="btn-primary" invisible="state != 'counting'"/>
+                    <button name="action_mark_rest_zero" string="ที่เหลือ = 0" type="object"
+                            invisible="state != 'counting' or not uncounted_count"
+                            confirm="รายการที่ยังไม่ได้คีย์ทั้งหมดจะถูกบันทึกว่า นับได้ 0 (ของหมด) ต้องการทำต่อหรือไม่?"/>
                     <button name="action_close" string="ปิดใบ (ไม่ปรับระบบ)" type="object"
                             class="btn-primary" invisible="state != 'counted'"
                             confirm="ปิดใบกระทบยอดโดยไม่ปรับยอดในระบบ — ผลต่างให้แก้ที่ต้นทางตามสาเหตุที่บันทึกไว้ ต้องการทำต่อหรือไม่?"/>
@@ -107,6 +110,10 @@
                     </group>
                     <notebook>
                         <page string="รายการนับ" name="lines">
+                            <div class="text-muted mb-2" invisible="state != 'counting'">
+                                คีย์ช่อง <b>ยืนยันจำนวน</b> แล้วช่อง "นับแล้ว" ติ๊กให้เอง — <b>นับได้ 0:</b> พิมพ์ 0 ทับ 0.00 ระบบไม่ถือว่าเปลี่ยน
+                                ให้ติ๊กช่อง "นับแล้ว" ของแถวนั้นเอง หรือคีย์รายการที่มีของให้ครบแล้วกดปุ่ม <b>"ที่เหลือ = 0"</b> บนหัวใบ
+                            </div>
                             <field name="line_ids" readonly="state in ('closed', 'done', 'cancel')">
                                 <list editable="bottom"
                                       decoration-danger="status == 'short'"
@@ -126,7 +133,7 @@
                                     <field name="qty_count1" readonly="parent.state == 'draft'" optional="hide"/>
                                     <field name="qty_count2" readonly="parent.state == 'draft'" optional="hide"/>
                                     <field name="qty_counted" readonly="parent.state == 'draft'"/>
-                                    <field name="counted" readonly="1" widget="boolean_toggle" optional="show"/>
+                                    <field name="counted" readonly="parent.state == 'draft'" widget="boolean_toggle" optional="show"/>
                                     <field name="qty_diff" readonly="1" sum="รวม"/>
                                     <field name="status" readonly="1" optional="show"/>
                                     <field name="note" readonly="parent.state == 'draft'"/>
@@ -267,7 +274,7 @@
                 <field name="qty_out" readonly="1" optional="hide"/>
                 <field name="qty_expected" readonly="1" sum="รวม"/>
                 <field name="qty_counted" readonly="state not in ('counting', 'counted')"/>
-                <field name="counted" readonly="1" widget="boolean_toggle"/>
+                <field name="counted" readonly="state not in ('counting', 'counted')" widget="boolean_toggle"/>
                 <field name="qty_diff" readonly="1" sum="รวม"/>
                 <field name="diff_pct" readonly="1" optional="hide"/>
                 <field name="diff_value" readonly="1" sum="รวม" groups="stock.group_stock_manager"/>

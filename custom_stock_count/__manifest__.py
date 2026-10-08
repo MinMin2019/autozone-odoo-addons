@@ -1,6 +1,6 @@
 {
     "name": "Autozone Stock Count Sheet (ใบตรวจนับสต็อก)",
-    "version": "18.0.1.1.0",
+    "version": "18.0.1.1.1",
     "category": "Autozone/Inventory",
     "author": "Autozone",
     "summary": "ใบตรวจนับสต็อกประจำสาขา: ดึงรายการจากคลัง → พิมพ์แบบฟอร์ม PDF/Excel (ตามแบบ "
