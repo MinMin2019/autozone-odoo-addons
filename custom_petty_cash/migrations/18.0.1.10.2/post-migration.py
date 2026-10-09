@@ -15,6 +15,12 @@ def migrate(cr, version):
     ใบที่ยังเป็นร่างใช้สูตรใหม่
     """
     env = api.Environment(cr, SUPERUSER_ID, {})
+    # ใบเคลียร์ที่ยังไม่เติมเงิน (ร่าง/สร้างบิลแล้ว) ให้ใช้สูตรใหม่ทันที
+    # (amount_return เป็นฟิลด์เดิม Odoo ไม่คำนวณใหม่เองตอน upgrade)
+    open_clr = env["petty.cash.clearing"].search([("state", "in", ("draft", "billed"))])
+    if open_clr:
+        open_clr._compute_amount_return()
+        env.flush_all()
     done = env["petty.cash.replenish"].search([("state", "in", ("done", "cancel"))])
     if not done:
         return
