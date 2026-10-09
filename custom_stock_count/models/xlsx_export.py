@@ -246,13 +246,13 @@ class StockCount(models.Model):
         ws.write(2, 0, "สิ้นสุด ณ วันที่ %s   ตรวจนับจริงวันที่ %s" % (d_cut, d_cnt), fmt["bold"])
         period = self._period_label()
         if period:
-            ws.write(3, 0, "ช่อง บวกรับ / หักจ่าย ดึงจาก Odoo ให้แล้ว = ความเคลื่อนไหวของคลัง %s ช่วง %s "
-                           "(คำนวณเมื่อ %s)  ช่อง ตรวจนับได้ ดึงจากชีต %s อัตโนมัติ" % (
+            ws.write(3, 0, "ช่องสีเหลือง บวกรับ / หักจ่าย Odoo เติมให้แล้วจากความเคลื่อนไหวของคลัง %s ช่วง %s (คำนวณเมื่อ %s) "
+                           "แก้เองได้ถ้ามีรายการที่ยังไม่ได้คีย์เข้า Odoo แล้วนำเข้ากลับ  ช่อง ตรวจนับได้ ดึงจากชีต %s อัตโนมัติ" % (
                                self.location_id.complete_name, period, self._snapshot_local(), count_sheet),
                      fmt["plain"])
         else:
-            ws.write(3, 0, "นับวันเดียวกับวันตัดยอด จึงไม่มีรับเข้า/จ่ายออกคั่น  ช่อง ตรวจนับได้ ดึงจากชีต %s อัตโนมัติ"
-                     % count_sheet, fmt["plain"])
+            ws.write(3, 0, "นับวันเดียวกับวันตัดยอด จึงไม่มีรับเข้า/จ่ายออกคั่น (ช่องสีเหลืองแก้เองได้ถ้ามี)  "
+                           "ช่อง ตรวจนับได้ ดึงจากชีต %s อัตโนมัติ" % count_sheet, fmt["plain"])
 
         ws.write(4, 4, "ปริมาณคงเหลือตามบัญชี", fmt["grp_hdr"])
         ws.merge_range(4, 5, 4, 6, "ธุรกรรมระหว่าง %s ถึง %s" % (d_cut, d_cnt), fmt["grp_hdr"])
@@ -278,8 +278,8 @@ class StockCount(models.Model):
             ws.write(row, 2, line.product_id.name or "", fmt["text"])
             ws.write(row, 3, line.uom_id.name or "", fmt["text"])
             ws.write_number(row, 4, line.qty_system, fmt["num"])
-            ws.write_number(row, 5, line.qty_in, fmt["num"])
-            ws.write_number(row, 6, line.qty_out, fmt["num"])
+            ws.write_number(row, 5, line.qty_in, fmt["num_y"])
+            ws.write_number(row, 6, line.qty_out, fmt["num_y"])
             ws.write_formula(row, 7, "=E%d+N(F%d)-N(G%d)" % (r, r, r), fmt["num"])
             ws.write_formula(row, 8, '=IF(%sG%d="","",%sG%d)' % (q, cr, q, cr), fmt["num"])
             ws.write_formula(row, 9, '=IF(I%d="","",I%d-H%d)' % (r, r, r), fmt["num"])
@@ -413,8 +413,9 @@ class StockCount(models.Model):
             ("2  ผู้นับสองคนนับของจริงด้วยกัน ตรวจทานแล้วเขียนตัวเลขลงช่อง ยอดตรวจนับได้  ไม่ตรงกันให้นับซ้ำต่อหน้าหัวหน้าคลัง", "plain"),
             ("3  คีย์ตัวเลขกลับเข้าไฟล์นี้ในชีต %s ช่อง ยอดตรวจนับได้ ช่องเดียวเท่านั้น  ชีตอื่นดึงไปให้เอง" % SHEET_COUNT, "plain"),
             ("   หรือคีย์ในจอ Odoo (ใบตรวจนับ %s แท็บ รายการนับ) หรืออัปโหลดไฟล์นี้กลับเข้า Odoo ด้วยปุ่ม นำเข้าจาก Excel" % self.name, "plain"),
-            ("4  ช่อง บวกรับ และ หักจ่าย ในชีต %s Odoo กรอกให้แล้ว จากประวัติการเคลื่อนไหวของคลัง %s ช่วง %s" % (SHEET_RECON, loc, period), "plain"),
-            ("   ถ้ามีการบันทึกเอกสารย้อนหลังเพิ่มหลังจาก Export ไฟล์นี้ ให้กด รีเฟรชยอดระบบ ใน Odoo แล้ว Export ใหม่", "plain"),
+            ("4  ช่องสีเหลือง บวกรับ และ หักจ่าย ในชีต %s Odoo กรอกให้แล้ว จากประวัติการเคลื่อนไหวของคลัง %s ช่วง %s" % (SHEET_RECON, loc, period), "plain"),
+            ("   ถ้ามีรายการที่ยังไม่ได้คีย์เข้า Odoo (เช่น ยอดเบิกจากโปรแกรมอู่) ให้แก้ตัวเลขในช่องนี้เอง แล้วนำเข้ากลับ Odoo ได้  "
+             "ระวัง: ปุ่ม รีเฟรชยอดระบบ ใน Odoo จะดึงจาก Odoo มาทับค่าที่แก้เอง", "plain"),
             ("5  ชีต %s จะคำนวณ ยอดที่ควรมี ผลต่างจำนวน ผลต่าง %% ผลต่างมูลค่า และสถานะให้เอง  พร้อมสรุปยอดรวมท้ายตาราง" % SHEET_RECON, "plain"),
             ("6  เปิดชีต %s  กรองสถานะให้เหลือเฉพาะ ขาด และ เกิน  แล้วกรอกช่องสีเหลืองให้ครบทุกรายการ" % SHEET_NOTES, "plain"),
             ("7  ให้ผู้สรุป หัวหน้าคลัง ฝ่ายบัญชี และผู้อนุมัติ ลงนามท้ายชีต แล้วเก็บไว้เป็นหลักฐาน", "plain"),

@@ -36,7 +36,8 @@
                     <button name="action_open_import" string="นำเข้าจาก Excel" type="object"
                             invisible="state not in ('counting', 'counted')"/>
                     <button name="action_refresh_system_qty" string="รีเฟรชยอดระบบ" type="object"
-                            invisible="state not in ('draft', 'counting', 'counted') or not line_count"/>
+                            invisible="state not in ('draft', 'counting', 'counted') or not line_count"
+                            confirm="ยอดตามบัญชี / รับเข้า / จ่ายออก ของทุกรายการจะถูกดึงใหม่จาก Odoo — ตัวเลขรับเข้า/จ่ายออกที่คีย์เองไว้จะถูกทับทั้งหมด (ดูจำนวนที่ช่อง 'รายการที่คีย์รับ/จ่ายเอง') ต้องการดึงข้อมูลใหม่หรือไม่?"/>
                     <button name="action_back_to_counting" string="กลับไปแก้ยอดนับ" type="object"
                             invisible="state != 'counted'"/>
                     <button name="action_draft" string="กลับเป็นร่าง" type="object"
@@ -100,6 +101,7 @@
                             <field name="short_count"/>
                             <field name="over_count"/>
                             <field name="missing_reason_count" decoration-danger="missing_reason_count"/>
+                            <field name="manual_io_count" decoration-warning="manual_io_count"/>
                             <field name="value_short" groups="stock.group_stock_manager"/>
                             <field name="value_over" groups="stock.group_stock_manager"/>
                             <field name="diff_value_total" groups="stock.group_stock_manager"/>
@@ -127,8 +129,9 @@
                                            options="{'no_create': True}"/>
                                     <field name="uom_id" readonly="1"/>
                                     <field name="qty_system" optional="show"/>
-                                    <field name="qty_in" optional="hide"/>
-                                    <field name="qty_out" optional="hide"/>
+                                    <field name="qty_in" optional="hide" readonly="parent.state not in ('counting', 'counted')"/>
+                                    <field name="qty_out" optional="hide" readonly="parent.state not in ('counting', 'counted')"/>
+                                    <field name="manual_io" column_invisible="1"/>
                                     <field name="qty_expected" sum="รวม"/>
                                     <field name="qty_counted" readonly="parent.state == 'draft'"/>
                                     <field name="counted" readonly="parent.state == 'draft'" widget="boolean_toggle" optional="show"/>
@@ -143,8 +146,9 @@
                         </page>
                         <page string="กระทบยอด / สาเหตุผลต่าง" name="recon" invisible="state == 'draft'">
                             <div class="text-muted mb-2">
-                                ยอดที่ควรมี = ยอดตามบัญชี ณ วันตัดยอด + รับเข้า - จ่ายออก (Odoo ดึงให้จากประวัติการเคลื่อนไหว)
-                                — ทุกรายการ <b>ขาด/เกิน</b> ต้องกรอก <b>สาเหตุของผลต่าง</b> ก่อนปิดใบ
+                                ยอดที่ควรมี = ยอดตามบัญชี ณ วันตัดยอด + รับเข้า - จ่ายออก (Odoo เติมให้จากประวัติการเคลื่อนไหว)
+                                — ช่อง <b>รับเข้า / จ่ายออก แก้เองได้</b> ถ้ามีรายการที่ยังไม่ได้คีย์เข้า Odoo (เช่น ยอดเบิกจากโปรแกรมอู่)
+                                แต่ปุ่ม "รีเฟรชยอดระบบ" จะดึงจาก Odoo ทับ — ทุกรายการ <b>ขาด/เกิน</b> ต้องกรอก <b>สาเหตุของผลต่าง</b> ก่อนปิดใบ
                             </div>
                             <field name="line_ids" readonly="state in ('done', 'cancel')">
                                 <list editable="bottom" create="false" delete="false"
@@ -157,8 +161,9 @@
                                     <field name="product_id" readonly="1"/>
                                     <field name="uom_id" readonly="1" optional="hide"/>
                                     <field name="qty_system" readonly="1"/>
-                                    <field name="qty_in" readonly="1"/>
-                                    <field name="qty_out" readonly="1"/>
+                                    <field name="qty_in" readonly="parent.state not in ('counting', 'counted')"/>
+                                    <field name="qty_out" readonly="parent.state not in ('counting', 'counted')"/>
+                                    <field name="manual_io" readonly="1" widget="boolean_toggle" optional="show"/>
                                     <field name="qty_expected" readonly="1"/>
                                     <field name="qty_counted" readonly="1"/>
                                     <field name="qty_diff" readonly="1"/>
@@ -268,8 +273,9 @@
                 <field name="product_id" readonly="1"/>
                 <field name="uom_id" readonly="1"/>
                 <field name="qty_system" readonly="1" optional="show"/>
-                <field name="qty_in" readonly="1" optional="hide"/>
-                <field name="qty_out" readonly="1" optional="hide"/>
+                <field name="qty_in" readonly="state not in ('counting', 'counted')" optional="hide"/>
+                <field name="qty_out" readonly="state not in ('counting', 'counted')" optional="hide"/>
+                <field name="manual_io" readonly="1" optional="hide"/>
                 <field name="qty_expected" readonly="1" sum="รวม"/>
                 <field name="qty_counted" readonly="state not in ('counting', 'counted')"/>
                 <field name="counted" readonly="state not in ('counting', 'counted')" widget="boolean_toggle"/>

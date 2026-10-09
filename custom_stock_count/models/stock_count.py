@@ -117,6 +117,7 @@ class StockCount(models.Model):
     diff_value_total = fields.Monetary("ผลต่างมูลค่าสุทธิ", compute="_compute_stats", currency_field="currency_id")
     stock_value = fields.Monetary("มูลค่าสต๊อกตามบัญชี", compute="_compute_stats", currency_field="currency_id")
     missing_reason_count = fields.Integer("ผลต่างที่ยังไม่มีสาเหตุ", compute="_compute_stats")
+    manual_io_count = fields.Integer("รายการที่คีย์รับ/จ่ายเอง", compute="_compute_stats")
 
     # ------------------------------------------------------------------
     # defaults / compute
@@ -140,7 +141,7 @@ class StockCount(models.Model):
             rec.move_count = len(rec.move_ids)
 
     @api.depends("line_ids.status", "line_ids.qty_diff", "line_ids.diff_value", "line_ids.amount",
-                 "line_ids.reason")
+                 "line_ids.reason", "line_ids.manual_io")
     def _compute_stats(self):
         for rec in self:
             lines = rec.line_ids
@@ -162,6 +163,7 @@ class StockCount(models.Model):
             rec.diff_value_total = rec.value_short + rec.value_over
             rec.stock_value = sum(lines.mapped("amount"))
             rec.missing_reason_count = len((short | over).filtered(lambda l: not (l.reason or "").strip()))
+            rec.manual_io_count = len(lines.filtered("manual_io"))
 
     @api.constrains("date_cutoff", "date_count")
     def _check_dates(self):
@@ -319,18 +321,28 @@ class StockCount(models.Model):
         return True
 
     def _refresh_system_qty(self):
-        """คำนวณยอดตามบัญชี/รับ/จ่าย/ต้นทุนของรายการที่มีอยู่ใหม่ (ไม่เพิ่ม/ลบรายการ)"""
+        """ดึงยอดตามบัญชี/รับ/จ่าย/ต้นทุนของรายการที่มีอยู่ใหม่จาก Odoo (ไม่เพิ่ม/ลบรายการ)
+        ⚠️ ค่ารับเข้า/จ่ายออกที่ผู้ใช้คีย์เองจะถูกทับ — ปุ่มในจอมีกล่องเตือนก่อน"""
+        Line = self.env["az.stock.count.line"].with_context(az_refresh=True)
         for rec in self:
             balances = rec._compute_balances()
+            overwritten = rec.line_ids.filtered("manual_io")
             for line in rec.line_ids:
                 at_cutoff, qty_in, qty_out = balances.get(line.product_id, (0.0, 0.0, 0.0))
-                line.write({
+                Line.browse(line.id).write({
                     "qty_system": at_cutoff,
                     "qty_in": qty_in,
                     "qty_out": qty_out,
+                    "manual_io": False,
                     "standard_price": line.product_id.with_company(rec.company_id).standard_price,
                 })
             rec.snapshot_date = fields.Datetime.now()
+            if overwritten:
+                rec.message_post(body=_(
+                    "รีเฟรชยอดระบบ: ดึงรับเข้า/จ่ายออกจาก Odoo ทับค่าที่คีย์เอง %(n)d รายการ (%(codes)s)",
+                    n=len(overwritten),
+                    codes=", ".join(overwritten.mapped("product_id.default_code")[:15]),
+                ))
 
     def action_refresh_system_qty(self):
         self._check_state(("draft", "counting", "counted"), "รีเฟรชยอดระบบ")
@@ -356,7 +368,7 @@ class StockCount(models.Model):
         for rec in self:
             if not rec.line_ids.filtered("counted"):
                 raise UserError(_("%s: ยังไม่ได้กรอกยอดนับเลยสักรายการ", rec.name))
-            rec._refresh_system_qty()
+            # ไม่รีเฟรชอัตโนมัติ: ค่ารับ/จ่ายที่คีย์เองต้องคงอยู่ (กด รีเฟรชยอดระบบ เองถ้าต้องการ)
             rec.state = "counted"
         return True
 
@@ -414,7 +426,7 @@ class StockCount(models.Model):
         for rec in self:
             if rec.date_count > fields.Date.context_today(rec):
                 raise UserError(_("%s: วันที่นับเป็นวันในอนาคต ปรับปรุงไม่ได้", rec.name))
-            rec._refresh_system_qty()
+            # ใช้ผลต่างตามที่เห็นในใบ (รวมรับ/จ่ายที่คีย์เอง) ไม่ดึงใหม่
             lines = rec.line_ids.filtered(lambda l: l.status in ("short", "over"))
             if not rec.line_ids.filtered("counted"):
                 raise UserError(_("%s: ไม่มีรายการที่นับแล้ว", rec.name))
@@ -620,10 +632,14 @@ class StockCountLine(models.Model):
     )
     uom_id = fields.Many2one(related="product_id.uom_id", string="หน่วย")
     qty_system = fields.Float("ยอดตามบัญชี ณ วันตัดยอด", digits="Product Unit of Measure", readonly=True)
-    qty_in = fields.Float("+ รับเข้า", digits="Product Unit of Measure", readonly=True,
-                          help="รับเข้าคลังนี้หลังวันตัดยอดถึงสิ้นวันนับ (จากประวัติการเคลื่อนไหว)")
-    qty_out = fields.Float("- จ่ายออก", digits="Product Unit of Measure", readonly=True,
-                           help="จ่ายออกจากคลังนี้หลังวันตัดยอดถึงสิ้นวันนับ")
+    qty_in = fields.Float("+ รับเข้า", digits="Product Unit of Measure",
+                          help="รับเข้าคลังนี้หลังวันตัดยอดถึงสิ้นวันนับ — Odoo เติมให้จากประวัติการเคลื่อนไหว "
+                               "แก้เองได้ถ้ามีรายการที่ยังไม่ได้คีย์เข้า Odoo (ปุ่ม รีเฟรชยอดระบบ จะดึงทับ)")
+    qty_out = fields.Float("- จ่ายออก", digits="Product Unit of Measure",
+                           help="จ่ายออกจากคลังนี้หลังวันตัดยอดถึงสิ้นวันนับ — Odoo เติมให้ แก้เองได้ "
+                                "เช่น ยอดเบิกจากโปรแกรมอู่ที่ยังไม่ได้คีย์เข้า Odoo (ปุ่ม รีเฟรชยอดระบบ จะดึงทับ)")
+    manual_io = fields.Boolean("รับ/จ่าย คีย์เอง", default=False,
+                               help="ติ๊กให้เองเมื่อมีการแก้ช่องรับเข้า/จ่ายออกด้วยมือ")
     qty_expected = fields.Float("ยอดที่ควรมี ณ วันนับ", digits="Product Unit of Measure",
                                 compute="_compute_diff", store=True)
     qty_counted = fields.Float("ยอดตรวจนับได้", digits="Product Unit of Measure")
@@ -692,6 +708,9 @@ class StockCountLine(models.Model):
     def write(self, vals):
         if "qty_counted" in vals and "counted" not in vals:
             vals["counted"] = True
+        if ("qty_in" in vals or "qty_out" in vals) and "manual_io" not in vals \
+                and not self.env.context.get("az_refresh"):
+            vals["manual_io"] = True
         return super().write(vals)
 
     def unlink(self):
