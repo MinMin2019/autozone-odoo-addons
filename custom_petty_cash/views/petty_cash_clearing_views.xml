@@ -35,6 +35,8 @@
                 <field name="fund_id" />
                 <field name="amount_advance" optional="show" />
                 <field name="amount_spent" sum="รวม" />
+                <field name="amount_wht_total" sum="รวม" optional="hide" />
+                <field name="amount_net_cash" sum="รวม" optional="show" />
                 <field name="amount_return" optional="show" />
                 <field name="replenish_id" optional="hide" />
                 <field name="state" widget="badge"

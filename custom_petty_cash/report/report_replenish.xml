@@ -57,13 +57,16 @@
 
                         <div style="margin-top: 25px;">
                             <div class="text-bold" style="margin-bottom: 8px;">ใบเคลียร์ที่รวมเติมเงิน</div>
+                            <t t-set="has_wht" t-value="bool(o.amount_wht_total)" />
                             <table class="data-table">
                                 <thead>
                                     <tr>
-                                        <th style="width: 20%;">เลขที่</th>
-                                        <th style="width: 15%;">วันที่</th>
-                                        <th style="width: 45%;">อ้างถึงใบเบิก</th>
-                                        <th style="width: 20%;">ยอดใช้จ่าย</th>
+                                        <th style="width: 18%;">เลขที่</th>
+                                        <th style="width: 12%;">วันที่</th>
+                                        <th t-att-style="'width: %s;' % ('28%' if has_wht else '52%')">อ้างถึงใบเบิก</th>
+                                        <th t-att-style="'width: %s;' % ('14%' if has_wht else '18%')">ยอดใช้จ่าย</th>
+                                        <th t-if="has_wht" style="width: 12%;">หัก ณ ที่จ่าย</th>
+                                        <th t-if="has_wht" style="width: 16%;">เงินสดจ่ายสุทธิ</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -78,8 +81,22 @@
                                         <td class="num">
                                             <span t-esc="'{:,.2f}'.format(clr.amount_spent)" />
                                         </td>
+                                        <td t-if="has_wht" class="num">
+                                            <span t-if="clr.amount_wht_total" t-esc="'{:,.2f}'.format(clr.amount_wht_total)" />
+                                        </td>
+                                        <td t-if="has_wht" class="num">
+                                            <span t-esc="'{:,.2f}'.format(clr.amount_net_cash)" />
+                                        </td>
                                     </tr>
                                 </tbody>
+                                <tfoot t-if="has_wht">
+                                    <tr style="background-color: #f9f9f9; font-weight: bold;">
+                                        <td colspan="3" style="padding-left: 10px;">รวม</td>
+                                        <td class="num"><span t-esc="'{:,.2f}'.format(o.amount_spent_total)" /></td>
+                                        <td class="num"><span t-esc="'{:,.2f}'.format(o.amount_wht_total)" /></td>
+                                        <td class="num"><span t-esc="'{:,.2f}'.format(o.amount_total)" /></td>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
 
@@ -116,14 +133,32 @@
                                 </tbody>
                                 <tfoot>
                                     <tr style="background-color: #f9f9f9; font-weight: bold;">
-                                        <td colspan="2" style="padding-left: 10px; font-style: italic;">
-                                            <span t-esc="o.currency_id.with_context(lang='th_TH').amount_to_text(o.amount_total)" />
+                                        <td colspan="2" style="padding-left: 10px;">
+                                            <t t-if="has_wht">รวมค่าใช้จ่าย</t>
+                                            <span t-else="" style="font-style: italic;"
+                                                t-esc="o.currency_id.with_context(lang='th_TH').amount_to_text(o.amount_total)" />
                                         </td>
                                         <td class="num">
                                             <span t-esc="'{:,.2f}'.format(sum(r['untaxed'] for r in summary))" />
                                         </td>
                                         <td class="num">
                                             <span t-esc="'{:,.2f}'.format(sum(r['tax'] for r in summary))" />
+                                        </td>
+                                        <td class="num">
+                                            <span t-esc="'{:,.2f}'.format(o.amount_spent_total)" />
+                                        </td>
+                                    </tr>
+                                    <tr t-if="has_wht">
+                                        <td colspan="4" style="padding-left: 10px;">หัก ณ ที่จ่าย (บริษัทนำส่งสรรพากรเอง ไม่ใช่เงินของกอง)</td>
+                                        <td class="num">
+                                            <span t-esc="'{:,.2f}'.format(-o.amount_wht_total)" />
+                                        </td>
+                                    </tr>
+                                    <tr t-if="has_wht" style="background-color: #f9f9f9; font-weight: bold;">
+                                        <td colspan="4" style="padding-left: 10px;">
+                                            ยอดขอเติมเงิน (เงินสดจ่ายสุทธิ) :
+                                            <span style="font-style: italic;"
+                                                t-esc="o.currency_id.with_context(lang='th_TH').amount_to_text(o.amount_total)" />
                                         </td>
                                         <td class="num">
                                             <span t-esc="'{:,.2f}'.format(o.amount_total)" />

@@ -61,16 +61,24 @@ class PettyCashClearing(models.Model):
         string="ยอดใช้จ่ายจริง", compute="_compute_amounts", store=True,
         help="ใบเสร็จทั้งหมด + บิลตั้งหนี้ที่จ่ายด้วยเงินสดย่อย")
     amount_return = fields.Monetary(
-        string="เงินทอนคืนกอง", compute="_compute_amounts", store=True,
-        help="ยอดเบิก − ยอดใช้จ่ายจริง (ติดลบ = สาขาสำรองจ่ายเพิ่ม)")
+        string="เงินทอนคืนกอง", compute="_compute_amount_return", store=True,
+        help="ยอดเบิก − เงินสดจ่ายสุทธิ (ติดลบ = สาขาสำรองจ่ายเพิ่ม) — "
+        "คิดจากเงินสดที่ออกจริงหลังหัก ณ ที่จ่าย ไม่ใช่ยอดเต็มของบิล")
     amount_wht_total = fields.Monetary(
-        string="หัก ณ ที่จ่าย", compute="_compute_amount_wht_total",
+        string="หัก ณ ที่จ่าย", compute="_compute_amount_wht_total", store=True,
         help="ยอด WHT รวมทั้งใบ (ใบเสร็จ + บิลตั้งหนี้ที่ดึงมา) — "
         "หักจริงตอนจ่าย เงินสดที่ออกจากกองจึงเป็นยอดใช้จ่ายจริงหักด้วยยอดนี้")
     amount_net_cash = fields.Monetary(
-        string="เงินสดจ่ายสุทธิ", compute="_compute_amount_wht_total",
-        help="ยอดใช้จ่ายจริง − หัก ณ ที่จ่าย = เงินสดที่ออกจากกองจริง")
+        string="เงินสดจ่ายสุทธิ", compute="_compute_amount_wht_total", store=True,
+        help="ยอดใช้จ่ายจริง − หัก ณ ที่จ่าย = เงินสดที่ออกจากกองจริง "
+        "(ใช้คิดเงินทอน/จ่ายคืน ยอดคงเหลือกอง และยอดขอเติมเงิน)")
 
+    # v1.10.2: เงินทอน/จ่ายคืน ยอดกอง และยอดเติมเงิน ใช้ยอดสุทธิหลังหัก WHT
+    # (เดิมใช้ amount_spent ยอดเต็ม → ใบที่มีบิลหัก ณ ที่จ่าย จ่ายคืน/เติมกองเกินเท่า WHT
+    #  เคส PCC 9 ต.ค. 2569: Spent 18,958 / WHT 90 → Reimburse ต้องเป็น 18,868)
+    # amount_wht_total/amount_net_cash เก็บลงฐาน (store) เพื่อให้ replenish/fund depends ได้
+    # — ใบเก่าที่ยังไม่เคยคำนวณจะถูกเติมค่าตอน upgrade (ฟิลด์ใหม่ในฐาน) แต่ amount_return
+    #   ของใบเก่าไม่ถูกคำนวณใหม่ (เป็นฟิลด์เดิม) ตามที่ตกลงให้ใบที่เติมเงินแล้วคงยอดเดิม
     @api.depends("line_ids.amount_wht", "existing_bill_ids.petty_wht_amount",
                  "amount_spent")
     def _compute_amount_wht_total(self):
@@ -80,6 +88,11 @@ class PettyCashClearing(models.Model):
                 + sum(rec._bill_sign(bill) * bill.petty_wht_amount
                       for bill in rec.existing_bill_ids))
             rec.amount_net_cash = rec.amount_spent - rec.amount_wht_total
+
+    @api.depends("amount_advance", "amount_net_cash")
+    def _compute_amount_return(self):
+        for rec in self:
+            rec.amount_return = rec.amount_advance - rec.amount_net_cash
 
     bill_ids = fields.One2many(
         "account.move", "petty_clearing_id", string="Vendor Bills")
@@ -117,7 +130,6 @@ class PettyCashClearing(models.Model):
             rec.amount_advance = sum(rec.request_ids.mapped("amount"))
             rec.amount_spent = (
                 sum(rec.line_ids.mapped("amount_total")) + rec.amount_existing)
-            rec.amount_return = rec.amount_advance - rec.amount_spent
 
     existing_bills_locked = fields.Boolean(
         compute="_compute_existing_bills_locked",

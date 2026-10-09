@@ -44,6 +44,10 @@
                             <field name="date" readonly="state != 'draft'" />
                         </group>
                         <group>
+                            <field name="amount_spent_total"
+                                invisible="amount_wht_total == 0" />
+                            <field name="amount_wht_total"
+                                invisible="amount_wht_total == 0" />
                             <field name="amount_total" />
                             <field name="transfer_ref" />
                             <field name="currency_id" invisible="1" />
@@ -57,6 +61,8 @@
                             <field name="date" />
                             <field name="amount_advance" />
                             <field name="amount_spent" sum="รวม" />
+                            <field name="amount_wht_total" sum="รวม" optional="show" />
+                            <field name="amount_net_cash" sum="รวม" optional="show" />
                             <field name="amount_return" />
                             <field name="state" />
                             <field name="currency_id" column_invisible="1" />

@@ -40,7 +40,7 @@ class PettyCashFund(models.Model):
 
     balance = fields.Monetary(
         string="เงินคงเหลือในกอง", compute="_compute_balance",
-        help="วงเงิน − ใบเบิกที่ยังไม่เคลียร์ − ยอดใช้จ่ายที่เคลียร์แล้วแต่ยังไม่ได้เติมเงิน",
+        help="วงเงิน − ใบเบิกที่ยังไม่เคลียร์ − เงินสดจ่ายสุทธิ (หลังหัก ณ ที่จ่าย) ที่เคลียร์แล้วแต่ยังไม่ได้เติมเงิน",
     )
     open_request_amount = fields.Monetary(
         string="เบิกค้างเคลียร์", compute="_compute_balance")
@@ -68,14 +68,15 @@ class PettyCashFund(models.Model):
                 )
 
     @api.depends("amount_limit", "request_ids.state", "request_ids.amount",
-                 "clearing_ids.state", "clearing_ids.amount_spent")
+                 "clearing_ids.state", "clearing_ids.amount_net_cash")
     def _compute_balance(self):
         for fund in self:
             open_req = sum(
                 fund.request_ids.filtered(lambda r: r.state == "paid").mapped("amount")
             )
+            # v1.10.2: เงินออกจากกองจริง = ยอดสุทธิหลังหัก WHT (ไม่ใช่ยอดเต็มของบิล)
             unrep = sum(
-                fund.clearing_ids.filtered(lambda c: c.state == "billed").mapped("amount_spent")
+                fund.clearing_ids.filtered(lambda c: c.state == "billed").mapped("amount_net_cash")
             )
             fund.open_request_amount = open_req
             fund.unreplenished_amount = unrep

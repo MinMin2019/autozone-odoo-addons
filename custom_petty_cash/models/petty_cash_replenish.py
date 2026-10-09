@@ -22,8 +22,14 @@ class PettyCashReplenish(models.Model):
         # (ไม่ใช่สร้างใหม่) — กรองเฉพาะกองเดียวกัน สร้างบิลแล้ว และยังไม่ถูกใบเติมเงินอื่นจอง
         domain="[('fund_id', '=', fund_id), ('state', '=', 'billed'),"
         " ('replenish_id', '=', False)]")
+    amount_spent_total = fields.Monetary(
+        string="ยอดใช้จ่ายรวม", compute="_compute_amount", store=True,
+        help="ยอดเต็มของใบเสร็จ + บิลตั้งหนี้ทุกใบเคลียร์ (ก่อนหัก ณ ที่จ่าย)")
+    amount_wht_total = fields.Monetary(
+        string="หัก ณ ที่จ่าย", compute="_compute_amount", store=True)
     amount_total = fields.Monetary(
-        string="ยอดขอเติมเงิน", compute="_compute_amount", store=True)
+        string="ยอดขอเติมเงิน", compute="_compute_amount", store=True,
+        help="เงินสดที่ออกจากกองจริง = ยอดใช้จ่ายรวม − หัก ณ ที่จ่าย")
     transfer_ref = fields.Char(
         string="อ้างอิงรายการโอน/JE",
         help="เลขที่ internal transfer หรือ JE ที่ฝ่ายบัญชีบันทึกการเติมเงิน")
@@ -32,10 +38,15 @@ class PettyCashReplenish(models.Model):
         [("draft", "ร่าง"), ("done", "เติมเงินแล้ว"), ("cancel", "ยกเลิก")],
         default="draft", tracking=True, copy=False)
 
-    @api.depends("clearing_ids.amount_spent")
+    # v1.10.2: ยอดขอเติมเงิน = เงินสดที่ออกจากกองจริง (หลังหัก ณ ที่จ่าย)
+    # ส่วน WHT บริษัทนำส่งสรรพากรเองจากบัญชีกลาง ไม่ใช่เงินของกอง
+    @api.depends("clearing_ids.amount_net_cash", "clearing_ids.amount_spent",
+                 "clearing_ids.amount_wht_total")
     def _compute_amount(self):
         for rec in self:
-            rec.amount_total = sum(rec.clearing_ids.mapped("amount_spent"))
+            rec.amount_spent_total = sum(rec.clearing_ids.mapped("amount_spent"))
+            rec.amount_wht_total = sum(rec.clearing_ids.mapped("amount_wht_total"))
+            rec.amount_total = sum(rec.clearing_ids.mapped("amount_net_cash"))
 
     def action_done(self):
         for rec in self:
