@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="az_sku_history_view_list" model="ir.ui.view">
+        <field name="name">az.sku.history.list</field>
+        <field name="model">az.sku.history</field>
+        <field name="arch" type="xml">
+            <list create="0" edit="0" delete="0">
+                <field name="date"/>
+                <field name="sku"/>
+                <field name="product_tmpl_id"/>
+                <field name="product_name" optional="hide"/>
+                <field name="action"/>
+                <field name="reason"/>
+                <field name="label_printed" optional="hide"/>
+                <field name="user_id"/>
+            </list>
+        </field>
+    </record>
+    <record id="az_sku_history_view_search" model="ir.ui.view">
+        <field name="name">az.sku.history.search</field>
+        <field name="model">az.sku.history</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="sku"/>
+                <field name="product_tmpl_id"/>
+                <filter name="retire" string="ออกรหัสใหม่" domain="[('action', '=', 'retire')]"/>
+                <filter name="group_action" string="รายการ" context="{'group_by': 'action'}"/>
+            </search>
+        </field>
+    </record>
+    <record id="az_sku_history_action" model="ir.actions.act_window">
+        <field name="name">ประวัติ SKU</field>
+        <field name="res_model">az.sku.history</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <record id="az_sku_sequence_view_list" model="ir.ui.view">
+        <field name="name">az.sku.sequence.list</field>
+        <field name="model">az.sku.sequence</field>
+        <field name="arch" type="xml">
+            <list create="0" edit="0" delete="0">
+                <field name="prefix"/>
+                <field name="dummy"/>
+                <field name="last_number"/>
+                <field name="write_date" string="ออกล่าสุด"/>
+            </list>
+        </field>
+    </record>
+    <record id="az_sku_sequence_action" model="ir.actions.act_window">
+        <field name="name">ตัวนับ SKU</field>
+        <field name="res_model">az.sku.sequence</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <menuitem id="menu_az_sku_history" action="az_sku_history_action"
+              parent="custom_product_classification.menu_classification_root" sequence="90"
+              groups="custom_product_sku.group_sku_manager"/>
+    <menuitem id="menu_az_sku_sequence" action="az_sku_sequence_action"
+              parent="custom_product_classification.menu_classification_root" sequence="95"
+              groups="custom_product_sku.group_sku_manager"/>
+</odoo>

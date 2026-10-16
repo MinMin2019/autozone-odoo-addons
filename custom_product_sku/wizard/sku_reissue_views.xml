@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="az_sku_reissue_view_form" model="ir.ui.view">
+        <field name="name">az.sku.reissue.form</field>
+        <field name="model">az.sku.reissue</field>
+        <field name="arch" type="xml">
+            <form>
+                <div class="alert alert-danger" role="alert" invisible="not label_printed">
+                    สินค้านี้พิมพ์ฉลาก SKU ติดของไปแล้ว — ออกรหัสใหม่แล้วต้องพิมพ์ฉลากใหม่และเปลี่ยนฉลากเดิมทั้งหมด
+                </div>
+                <div class="alert alert-info" role="alert" invisible="mode != 'cancel'">
+                    SKU จะถูกเอาออกจากสินค้า และติ๊ก "ไม่ออก SKU" ให้ — ระบบจะไม่ออก SKU ให้สินค้านี้อีก
+                    จนกว่าจะเอาติ๊กออก (ตอนนั้นได้เลขใหม่ ไม่ใช่เลขเดิม)
+                </div>
+                <div class="alert alert-warning" role="alert" invisible="not prefix_note">
+                    <field name="prefix_note" readonly="1"/>
+                </div>
+                <group>
+                    <field name="product_tmpl_id"/>
+                    <field name="old_sku"/>
+                    <field name="mode" invisible="1"/>
+                    <field name="new_prefix" invisible="mode == 'cancel'"/>
+                    <field name="reason" placeholder="เช่น จัดหมวดผิด / ใส่แบรนด์ผิด / สินค้านี้ไม่ต้องมี SKU"/>
+                    <field name="label_printed" invisible="1"/>
+                </group>
+                <p class="text-muted">SKU เดิมจะถูกเก็บไว้ในประวัติ และไม่ถูกนำกลับมาใช้อีก</p>
+                <footer>
+                    <button name="action_confirm" type="object" string="ออกรหัสใหม่" class="btn-primary"
+                            invisible="mode != 'reissue' or not new_prefix"/>
+                    <button name="action_confirm" type="object" string="ยกเลิก SKU" class="btn-danger"
+                            invisible="mode != 'cancel'"/>
+                    <button string="ปิด" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

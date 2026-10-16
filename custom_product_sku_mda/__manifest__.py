@@ -1,0 +1,14 @@
+{
+    "name": "Autozone Product SKU - Item Approver",
+    "version": "18.0.1.0.0",
+    "category": "Autozone/Inventory",
+    "author": "Autozone",
+    "summary": "ผู้อนุมัติ Item Code (custom_master_data_approval) ได้สิทธิ์ผู้ดูแลรหัสสินค้า SKU อัตโนมัติ "
+               "— โมดูลเชื่อม ติดตั้งเองเมื่อมีทั้งสองโมดูล",
+    "depends": ["custom_product_sku", "custom_master_data_approval"],
+    "data": ["security/security.xml"],
+    "auto_install": True,
+    "installable": True,
+    "application": False,
+    "license": "LGPL-3",
+}

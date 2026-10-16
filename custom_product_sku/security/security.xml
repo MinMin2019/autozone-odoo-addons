@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="group_sku_manager" model="res.groups">
+        <field name="name">ผู้ดูแลรหัสสินค้า (SKU)</field>
+        <field name="category_id" ref="base.module_category_inventory_inventory"/>
+        <field name="comment">ใส่รหัสหมวด SKU, ออกรหัส SKU ใหม่ (เมื่อจัดหมวด/แบรนด์ผิด), ดูประวัติและตัวนับ SKU</field>
+        <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+    </record>
+</odoo>

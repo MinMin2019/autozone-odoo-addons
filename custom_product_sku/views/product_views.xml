@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ฟอร์มสินค้า: SKU ใต้หมวด + ติ๊กดัมมี่ + ปุ่มออกรหัสใหม่ + แท็บประวัติ -->
+    <record id="product_template_form_view_sku" model="ir.ui.view">
+        <field name="name">product.template.form.az.sku</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_az_sku_reissue" type="object" string="ออกรหัส SKU ใหม่"
+                        groups="custom_product_sku.group_sku_manager" invisible="not az_sku"/>
+                <button name="action_az_sku_cancel" type="object" string="ยกเลิก SKU"
+                        groups="custom_product_sku.group_sku_manager" invisible="not az_sku"/>
+            </xpath>
+            <field name="categ_id" position="after">
+                <field name="az_sku" readonly="1" placeholder="ระบบออกให้เมื่อบันทึก"/>
+                <field name="az_sku_pending_reason" string=" " class="text-warning"
+                       invisible="az_sku or not az_sku_pending_reason"/>
+                <field name="az_is_dummy"/>
+                <field name="az_sku_exclude" readonly="az_sku"/>
+                <field name="az_sku_label_printed" invisible="not az_sku"
+                       groups="custom_product_sku.group_sku_manager"/>
+            </field>
+            <xpath expr="//notebook" position="inside">
+                <page name="az_sku_history" string="ประวัติ SKU" invisible="not az_sku_history_ids">
+                    <field name="az_sku_history_ids">
+                        <list create="0" delete="0">
+                            <field name="date"/>
+                            <field name="sku"/>
+                            <field name="action"/>
+                            <field name="reason"/>
+                            <field name="label_printed" optional="hide"/>
+                            <field name="user_id"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_template_list_view_sku" model="ir.ui.view">
+        <field name="name">product.template.list.az.sku</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view"/>
+        <field name="arch" type="xml">
+            <field name="default_code" position="before">
+                <field name="az_sku" optional="show"/>
+            </field>
+            <field name="default_code" position="after">
+                <field name="az_is_dummy" optional="hide"/>
+                <field name="az_sku_exclude" optional="hide"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="product_product_list_view_sku" model="ir.ui.view">
+        <field name="name">product.product.list.az.sku</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_product_tree_view"/>
+        <field name="arch" type="xml">
+            <field name="default_code" position="before">
+                <field name="az_sku" optional="show"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="product_template_search_view_sku" model="ir.ui.view">
+        <field name="name">product.template.search.az.sku</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_search_view"/>
+        <field name="arch" type="xml">
+            <field name="name" position="attributes">
+                <attribute name="filter_domain">['|', '|', '|', '|', ('default_code', 'ilike', self), ('product_variant_ids.default_code', 'ilike', self), ('name', 'ilike', self), ('barcode', 'ilike', self), ('az_sku', 'ilike', self)]</attribute>
+            </field>
+            <field name="name" position="after">
+                <field name="az_sku"/>
+            </field>
+            <filter name="inactive" position="before">
+                <filter name="az_dummy" string="สินค้าดัมมี่" domain="[('az_is_dummy', '=', True)]"/>
+                <filter name="az_no_sku" string="ยังไม่มี SKU (หมวดมีรหัส)"
+                        domain="[('az_sku', '=', False), ('az_sku_exclude', '=', False), ('categ_id.az_sku_code', '!=', False)]"/>
+                <filter name="az_sku_exclude" string="ติ๊กไม่ออก SKU" domain="[('az_sku_exclude', '=', True)]"/>
+                <separator/>
+            </filter>
+        </field>
+    </record>
+
+    <record id="product_product_search_view_sku" model="ir.ui.view">
+        <field name="name">product.product.search.az.sku</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_search_form_view"/>
+        <field name="arch" type="xml">
+            <field name="name" position="attributes">
+                <attribute name="filter_domain">['|', '|', '|', ('default_code', 'ilike', self), ('name', 'ilike', self), ('barcode', 'ilike', self), ('product_tmpl_id.az_sku', 'ilike', self)]</attribute>
+            </field>
+            <field name="name" position="after">
+                <field name="az_sku" filter_domain="[('product_tmpl_id.az_sku', 'ilike', self)]"/>
+            </field>
+        </field>
+    </record>
+</odoo>

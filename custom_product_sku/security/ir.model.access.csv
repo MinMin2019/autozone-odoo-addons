@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_az_sku_history_user,az.sku.history user,model_az_sku_history,base.group_user,1,0,0,0
+access_az_sku_sequence_manager,az.sku.sequence manager,model_az_sku_sequence,group_sku_manager,1,0,0,0
+access_az_sku_reissue_manager,az.sku.reissue manager,model_az_sku_reissue,group_sku_manager,1,1,1,1
+access_az_sku_categ_code_manager,az.sku.categ.code manager,model_az_sku_categ_code,group_sku_manager,1,1,1,1
+access_az_sku_rules_manager,az.sku.rules manager,model_az_sku_rules,group_sku_manager,1,1,1,1

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ฟอร์มหมวด: แสดงรหัส + ปุ่มตั้งรหัส (แก้ผ่าน wizard เพื่อไม่ต้องให้สิทธิ์แก้หมวด/บัญชี) -->
+    <record id="product_category_form_view_sku" model="ir.ui.view">
+        <field name="name">product.category.form.az.sku</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_form_view"/>
+        <field name="arch" type="xml">
+            <field name="parent_id" position="after">
+                <label for="az_sku_code"/>
+                <div class="o_row">
+                    <field name="az_sku_code" readonly="1" placeholder="ว่าง = หมวดนี้ไม่ออก SKU"/>
+                    <button name="action_az_sku_set_code" type="object" string="ตั้งรหัส SKU" class="btn-link"
+                            icon="fa-pencil" groups="custom_product_sku.group_sku_manager"/>
+                </div>
+                <field name="az_sku_skip" readonly="1" invisible="not az_sku_skip"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="product_category_list_view_sku" model="ir.ui.view">
+        <field name="name">product.category.list.az.sku</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_list_view"/>
+        <field name="arch" type="xml">
+            <field name="display_name" position="after">
+                <field name="az_sku_code" optional="show"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- หน้า "รหัสหมวด SKU": หมวดย่อยล่างสุดทั้งหมด + จำนวนสินค้า/SKU + ปุ่มตั้งรหัส -->
+    <record id="product_category_view_list_az_sku_codes" model="ir.ui.view">
+        <field name="name">product.category.list.az.sku.codes</field>
+        <field name="model">product.category</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <list create="0" delete="0" edit="0" default_order="complete_name">
+                <header>
+                    <button name="action_az_sku_rules" type="object" string="กติกาการตั้งรหัส"
+                            icon="fa-info-circle" display="always"/>
+                </header>
+                <field name="complete_name" string="หมวด"/>
+                <field name="az_sku_code" string="รหัส"/>
+                <field name="az_sku_code_suggest" optional="show"/>
+                <field name="az_sku_skip" optional="show"/>
+                <field name="activity_ids" widget="list_activity" optional="show"/>
+                <field name="product_count" string="สินค้า"/>
+                <field name="az_sku_done_count"/>
+                <field name="az_sku_todo_count"/>
+                <field name="az_sku_exclude_count" optional="show"/>
+                <button name="action_az_sku_set_code" type="object" string="ตั้งรหัส" icon="fa-pencil"/>
+                <button name="action_az_sku_view_products" type="object" string="ดูสินค้า" icon="fa-cubes"/>
+            </list>
+        </field>
+    </record>
+    <record id="product_category_view_search_az_sku_codes" model="ir.ui.view">
+        <field name="name">product.category.search.az.sku.codes</field>
+        <field name="model">product.category</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="complete_name" string="หมวด"/>
+                <field name="az_sku_code" string="รหัส"/>
+                <filter name="has_code" string="มีรหัส (ออก SKU)" domain="[('az_sku_code', '!=', False)]"/>
+                <filter name="no_code" string="ไม่มีรหัส (ไม่ออก SKU)" domain="[('az_sku_code', '=', False)]"/>
+                <separator/>
+                <filter name="needs_code" string="มีสินค้าแต่ยังไม่มีรหัส" domain="[('az_sku_needs_code', '=', True)]"/>
+                <filter name="skip" string="ตั้งใจไม่ออก SKU" domain="[('az_sku_skip', '=', True)]"/>
+            </search>
+        </field>
+    </record>
+    <record id="action_az_sku_category_codes" model="ir.actions.act_window">
+        <field name="name">รหัสหมวด SKU</field>
+        <field name="res_model">product.category</field>
+        <field name="view_mode">list</field>
+        <field name="domain">[('child_id', '=', False)]</field>
+        <field name="search_view_id" ref="product_category_view_search_az_sku_codes"/>
+        <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'list', 'view_id': ref('product_category_view_list_az_sku_codes')})]"/>
+        <field name="help" type="html">
+            <p>หมวดย่อยล่างสุดทั้งหมด — กด "ตั้งรหัส" เพื่อใส่/เปลี่ยน/ลบรหัสหมวด SKU</p>
+            <p>สร้างหมวดใหม่ที่ คลังสินค้า › การตั้งค่า › Product Categories (ต้องตั้งบัญชีสต็อก/ค่าใช้จ่ายด้วย) แล้วค่อยมาใส่รหัสที่นี่</p>
+        </field>
+    </record>
+    <menuitem id="menu_az_sku_category_codes" action="action_az_sku_category_codes"
+              parent="custom_product_classification.menu_classification_root" sequence="85"
+              groups="custom_product_sku.group_sku_manager"/>
+</odoo>

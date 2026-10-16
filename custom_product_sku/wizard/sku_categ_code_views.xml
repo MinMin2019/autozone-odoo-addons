@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="az_sku_categ_code_view_form" model="ir.ui.view">
+        <field name="name">az.sku.categ.code.form</field>
+        <field name="model">az.sku.categ.code</field>
+        <field name="arch" type="xml">
+            <form>
+                <div class="alert alert-warning" role="alert" invisible="not code_warning">
+                    <field name="code_warning" readonly="1"/>
+                </div>
+                <group>
+                    <group>
+                        <field name="categ_id"/>
+                        <field name="current_code" invisible="not current_code"/>
+                        <field name="suggest" invisible="not suggest or current_code"/>
+                        <field name="code" placeholder="เช่น 3104 — ว่าง = ไม่ออก SKU"/>
+                        <field name="skip" invisible="code"/>
+                        <field name="todo_count" invisible="not code or current_code"/>
+                        <field name="done_count" invisible="not done_count"/>
+                    </group>
+                    <group string="หมวดข้างเคียงที่มีรหัสแล้ว">
+                        <field name="sibling_info" nolabel="1" colspan="2" readonly="1"/>
+                    </group>
+                </group>
+                <div class="border rounded p-2 bg-light">
+                    <strong>รหัสหมวด 4 หลัก = กลุ่ม (1) + หมวดระดับ 2 (1) + หมวดระดับ 3 (2)</strong>
+                    <ul class="mb-1">
+                        <li>หลัก 1 กลุ่ม: 1 สีและเคมีภัณฑ์ · 2 วัสดุสิ้นเปลืองโรงงาน · 3 วัสดุสิ้นเปลืองทั่วไป · 6 อะไหล่รถยนต์</li>
+                        <li>หลัก 2 หมวดระดับ 2: 1–9 เรียงตามหมวดในกลุ่ม (หมวดระดับ 2 เดียวกันใช้เลขเดียวกัน)</li>
+                        <li>หลัก 3–4 หมวดระดับ 3: 01–98 · 99 สงวนไว้ให้หมวดรวม (เช่น วัสดุสิ้นเปลือง / วัสดุสิ้นเปลือง = 2199)</li>
+                    </ul>
+                    <div class="text-muted">กติกาทั้งหมด (รวมรหัสแบรนด์และลำดับ): ปุ่ม "กติกาการตั้งรหัส" บนหน้ารหัสหมวด SKU</div>
+                </div>
+                <div class="text-muted mt-2">
+                    <p class="mb-1">ใส่รหัส = สินค้าในหมวดนี้ที่ยังไม่มี SKU ได้ SKU ทันที (ยกเว้นตัวที่ติ๊ก "ไม่ออก SKU")</p>
+                    <p class="mb-1">ลบรหัส = สินค้าใหม่ในหมวดนี้ไม่ได้ SKU — ตัวที่มี SKU แล้วยังคงเดิม</p>
+                    <p class="mb-0">เปลี่ยนรหัส = มีผลกับ SKU ที่ออกหลังจากนี้เท่านั้น SKU เดิมไม่เปลี่ยน</p>
+                </div>
+                <footer>
+                    <button name="action_confirm" type="object" string="บันทึก" class="btn-primary"/>
+                    <button string="ปิด" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="az_sku_rules_view_form" model="ir.ui.view">
+        <field name="name">az.sku.rules.form</field>
+        <field name="model">az.sku.rules</field>
+        <field name="arch" type="xml">
+            <form string="กติกาการตั้งรหัส SKU">
+                <div>
+                    <h4>โครงสร้าง SKU 11 หลัก</h4>
+                    <p><code>1101 002 0042</code> = รหัสหมวด 4 หลัก + รหัสแบรนด์ 3 หลัก + ลำดับ 4 หลัก</p>
+
+                    <h5 class="mt-3">รหัสหมวด 4 หลัก (ตั้งที่หน้านี้)</h5>
+                    <table class="table table-sm table-bordered">
+                        <thead><tr><th>หลัก</th><th>ความหมาย</th><th>ค่าที่ใช้</th></tr></thead>
+                        <tbody>
+                            <tr><td>1</td><td>กลุ่ม</td>
+                                <td>1 สีและเคมีภัณฑ์ · 2 วัสดุสิ้นเปลืองโรงงาน · 3 วัสดุสิ้นเปลืองทั่วไป · 6 อะไหล่รถยนต์<br/>
+                                    7 วัสดุตัดจ่ายทันที และ 9 บริการ สงวนไว้ (ตอนนี้ไม่ออก SKU) · 4 5 8 ว่างไว้ขยาย</td></tr>
+                            <tr><td>2</td><td>หมวดระดับ 2</td><td>1–9 เรียงตามหมวดในกลุ่ม หมวดระดับ 2 เดียวกันใช้เลขเดียวกันเสมอ</td></tr>
+                            <tr><td>3–4</td><td>หมวดระดับ 3</td><td>01–98 เรียงต่อจากเลขล่าสุดในหมวดระดับ 2 นั้น · 99 สงวนไว้ให้หมวดรวม</td></tr>
+                        </tbody>
+                    </table>
+                    <p>ตัวอย่าง: สีและเคมีภัณฑ์ (1) › สีพ่น (1) › สีน้ำ (01) = <code>1101</code> ·
+                       วัสดุสิ้นเปลืองทั่วไป (3) › วัสดุ (1) › อุปกรณ์เซฟตี้ (02) = <code>3102</code></p>
+
+                    <h5 class="mt-3">ข้อควรจำ</h5>
+                    <ul>
+                        <li>ใส่รหัสได้เฉพาะหมวดย่อยล่างสุด — หมวดแม่ไม่ต้องมีรหัส</li>
+                        <li>รหัสที่เคยใช้แล้ว ห้ามนำไปใช้กับหมวดอื่น แม้หมวดเดิมจะเลิกใช้</li>
+                        <li>หมวดที่ไม่ต้องออก SKU ให้เว้นรหัสว่าง · สินค้าบางตัวที่ไม่ต้องมี SKU ให้ติ๊ก "ไม่ออก SKU" ที่สินค้า</li>
+                        <li>สร้างหมวดใหม่ที่ คลังสินค้า › การตั้งค่า › Product Categories (ต้องตั้งบัญชีสต็อก/ค่าใช้จ่ายด้วย) แล้วค่อยมาใส่รหัสที่หน้านี้</li>
+                        <li>เปลี่ยนหรือลบรหัสหมวด ไม่กระทบ SKU ที่ออกไปแล้ว</li>
+                    </ul>
+
+                    <h5 class="mt-3">รหัสแบรนด์ 3 หลัก (ตั้งที่ จัดกลุ่มสินค้า › แบรนด์)</h5>
+                    <p>000 ไม่ระบุยี่ห้อ · 001–099 สีและเคมีภัณฑ์ · 101–199 วัสดุสิ้นเปลืองและเครื่องมือ ·
+                       201–299 ยี่ห้อรถ · 301–399 แบรนด์บริษัท · 400 ขึ้นไปสงวนไว้<br/>
+                       ยี่ห้อเดิมแต่เปลี่ยนผู้ขาย ใช้รหัสเดิม ห้ามสร้างรหัสใหม่</p>
+
+                    <h5 class="mt-3">ลำดับ 4 หลัก (ระบบออกให้เอง)</h5>
+                    <p>นับแยกต่อ หมวด + แบรนด์ · สินค้าปกติ 0001–9000 · สินค้าดัมมี่ 9001–9999 ·
+                       เลขที่ออกแล้วไม่นำกลับมาใช้ (แม้ลบ เก็บถาวร ยกเลิก หรือออกรหัสใหม่)</p>
+                </div>
+                <footer>
+                    <button string="ปิด" special="cancel" class="btn-primary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

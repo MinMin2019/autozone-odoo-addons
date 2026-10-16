@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ผู้อนุมัติ Item Code = ผู้ดูแลรหัสสินค้า (SKU): ใส่คนในกลุ่มผู้อนุมัติแล้วได้สิทธิ์ SKU ไปด้วย -->
+    <record id="custom_master_data_approval.group_mda_approver_product" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('custom_product_sku.group_sku_manager'))]"/>
+    </record>
+</odoo>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="mail_activity_type_sku_code" model="mail.activity.type">
+        <field name="name">ตั้งรหัสหมวด SKU</field>
+        <field name="summary">ตั้งรหัสหมวด SKU</field>
+        <field name="res_model">product.category</field>
+        <field name="icon">fa-barcode</field>
+        <field name="delay_count">1</field>
+    </record>
+</odoo>
