@@ -1,0 +1,25 @@
+# -*- coding: utf-8 -*-
+{
+    "name": "Autozone Invoice Notice (ใบแจ้งหนี้)",
+    "version": "18.0.1.1.1",
+    "summary": "ใบแจ้งหนี้ (ไม่ใช่ใบกำกับภาษี) จากใบสั่งขาย/ใบขาย: หัก ณ ที่จ่ายเฉพาะค่าบริการ + บัญชีธนาคารรับโอน; ออก IV วันรับเงิน",
+    "category": "Autozone/Accounting",
+    "author": "Autozone",
+    "license": "LGPL-3",
+    "depends": ["account", "sale", "custom_invoice_print", "autozone_report_fonts", "autozone_base_address"],
+    "data": [
+        "views/res_partner_views.xml",
+        "views/res_partner_bank_views.xml",
+        "views/res_company_views.xml",
+        "report/paperformat.xml",
+        "report/report_invoice_notice.xml",
+        "report/report_action.xml",
+        "views/account_move_views.xml",
+        "report/report_invoice_notice_so.xml",
+        "views/sale_order_views.xml",
+    ],
+    "post_init_hook": "post_init_hook",
+    "installable": True,
+    "application": False,
+    "auto_install": False,
+}

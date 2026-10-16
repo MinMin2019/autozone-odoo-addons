@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- การ์ดลูกค้า แท็บ Sales & Purchase: ติ๊กหัก ณ ที่จ่าย + อัตรา -->
+    <record id="view_partner_form_inherit_invoice_notice" model="ir.ui.view">
+        <field name="name">res.partner.form.inherit.invoice.notice</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="account.view_partner_property_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='fiscal_information']" position="after">
+                <group string="ใบแจ้งหนี้ (Invoice Notice)" name="az_invoice_notice">
+                    <field name="az_wht_deduct"/>
+                    <field name="az_wht_percent" invisible="not az_wht_deduct"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

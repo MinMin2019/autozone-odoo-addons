@@ -1,6 +1,6 @@
 {
     "name": "AR Due Forecast (คาดรับเงินลูกหนี้รายวัน)",
-    "version": "18.0.1.8.0",
+    "version": "18.0.1.9.1",
     "category": "Autozone/Accounting",
     "author": "Autozone",
     "summary": "สรุปยอดรายได้ที่คาดว่าจะได้รับ ตามวันครบกำหนดชำระ ลูกค้า x วันที่ในเดือน + Export Excel",
@@ -22,7 +22,7 @@
 * PDF A4 แนวนอน แสดงเฉพาะลูกค้า/วันที่/คอลัมน์ที่มียอด
 * Excel มีสูตร SUM/หักเหมือนต้นฉบับ + ชีทรายละเอียดรายใบสำหรับตรวจสอบ
     """,
-    "depends": ["account", "autozone_report_fonts", "custom_billing_note"],
+    "depends": ["account", "autozone_report_fonts", "custom_billing_note", "custom_invoice_notice"],
     "data": [
         "security/ir.model.access.csv",
         "views/account_move_views.xml",

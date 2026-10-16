@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_company_form_inherit_invoice_notice" model="ir.ui.view">
+        <field name="name">res.company.form.inherit.invoice.notice</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='general_info']//group[@name='social_media']" position="before">
+                <group string="ใบแจ้งหนี้ (Invoice Notice)" name="az_invoice_notice">
+                    <field name="az_notice_default_bank_id"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

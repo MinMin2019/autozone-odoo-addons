@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ไม่ผูกเมนู Print เพราะ binding กรอง move_type ไม่ได้ -> เรียกผ่านปุ่ม "พิมพ์ใบแจ้งหนี้" บนฟอร์ม -->
+    <record id="action_report_invoice_notice" model="ir.actions.report">
+        <field name="name">ใบแจ้งหนี้</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">custom_invoice_notice.report_invoice_notice</field>
+        <field name="report_file">custom_invoice_notice.report_invoice_notice</field>
+        <field name="print_report_name">'ใบแจ้งหนี้ %s' % (object.name or '')</field>
+        <field name="paperformat_id" ref="custom_invoice_notice.paperformat_invoice_notice"/>
+    </record>
+    <record id="action_report_invoice_notice_so" model="ir.actions.report">
+        <field name="name">ใบแจ้งหนี้ (จากใบสั่งขาย)</field>
+        <field name="model">sale.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">custom_invoice_notice.report_invoice_notice_so</field>
+        <field name="report_file">custom_invoice_notice.report_invoice_notice_so</field>
+        <field name="print_report_name">'ใบแจ้งหนี้ %s' % (object.name or '')</field>
+        <field name="paperformat_id" ref="custom_invoice_notice.paperformat_invoice_notice"/>
+    </record>
+</odoo>

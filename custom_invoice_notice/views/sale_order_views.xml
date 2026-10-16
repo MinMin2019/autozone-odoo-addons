@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_order_form_inherit_invoice_notice" model="ir.ui.view">
+        <field name="name">sale.order.form.inherit.invoice.notice</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_print_invoice_notice" type="object"
+                        string="พิมพ์ใบแจ้งหนี้"
+                        invisible="state != 'sale' or invoice_status == 'invoiced'"/>
+            </xpath>
+            <!-- หัวใบ: วันที่ใบแจ้งหนี้ + วันครบกำหนด ถัดจาก Payment Terms (user ขอ 16 ต.ค. 2026) -->
+            <xpath expr="//field[@name='payment_term_id']" position="after">
+                <field name="az_notice_date" invisible="state not in ('sale', 'done')"/>
+                <field name="az_notice_due_date" invisible="state not in ('sale', 'done')"/>
+            </xpath>
+            <xpath expr="//page[@name='other_information']" position="inside">
+                <group string="ใบแจ้งหนี้ (Invoice Notice)" name="az_invoice_notice">
+                    <group>
+                        <field name="az_notice_state"/>
+                        <field name="az_notice_bank_id"/>
+                        <field name="az_notice_hide_wht"/>
+                    </group>
+                    <group>
+                        <field name="az_notice_amount_total"/>
+                        <field name="az_notice_service_base"/>
+                        <field name="az_notice_wht_amount"/>
+                        <field name="az_notice_net_amount"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_order_tree_inherit_invoice_notice" model="ir.ui.view">
+        <field name="name">sale.order.tree.inherit.invoice.notice</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='invoice_status']" position="after">
+                <field name="az_notice_state" optional="hide"/>
+                <field name="az_notice_date" optional="hide"/>
+                <field name="az_notice_due_date" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

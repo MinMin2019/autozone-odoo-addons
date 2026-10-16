@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        [จากใบสั่งขาย - แบบ B] ใบแจ้งหนี้ (ไม่ใช่ใบกำกับภาษี) 2 ชุด/ใบ: ต้นฉบับ (ลูกค้า) + สำเนา (บัญชี)
+        โครงเดียวกับชุด 5 ใบของ custom_invoice_print (หัวบิลทุกหน้า, fill-front pagination)
+        ต่างตรง: กล่องขวาบน = ช่องทางชำระเงิน, ตารางยอดมีหัก ณ ที่จ่าย + ยอดสุทธิ,
+        กล่องหมายเหตุ (50 ทวิ / ออกใบเสร็จเมื่อรับเงิน), ลายเซ็น ผู้รับใบแจ้งหนี้-ผู้จัดทำ-ผู้มีอำนาจ
+        ความจุหน้าสุดท้าย: footer สูงกว่าชุด 5 ใบ ~3 แถว -> per_last = per_single = 17 (เลข 17 ในบล็อกเติมแถวว่างต้องตรงกัน)
+    -->
+    <template id="report_invoice_notice_so">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-foreach="o.az_notice_copies()" t-as="copy_title">
+                    <t t-call="custom_invoice_notice.invoice_notice_so_layout" t-lang="o.partner_id.lang">
+                        <t t-set="ct" t-value="copy_title"/>
+                    </t>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <template id="invoice_notice_so_layout">
+        <t t-call="web.basic_layout">
+            <style>
+                .page { font-family: Sarabun, 'Droid Sans Fallback', Tahoma, sans-serif; font-size: 13px; color: #000; position: relative; }
+                .signature-footer { width: 100%; margin-top: 20px; page-break-inside: avoid; }
+                .items-table tbody tr { page-break-inside: avoid; }
+                .az-note { border: 1px dashed #999; padding: 6px 8px; font-size: 11px; line-height: 1.45; margin-top: 8px; }
+            </style>
+            <div class="page">
+                <t t-set="PER_LAST" t-value="17"/>
+                <t t-set="report_pages" t-value="o.az_notice_pages(per_first=33, per_cont=33, per_last=PER_LAST, per_single=PER_LAST)"/>
+                <t t-set="wht" t-value="o.az_notice_wht_amount"/>
+                <t t-set="cust" t-value="o.partner_invoice_id or o.partner_id"/>
+                <t t-set="bank" t-value="o.az_notice_bank_id"/>
+                <t t-foreach="report_pages" t-as="pinfo">
+                <div t-attf-style="#{'page-break-before: always;' if not pinfo_first else ''}">
+
+                    <!-- ==================== HEADER ==================== -->
+                    <table class="table table-bordered" style="margin-bottom: 15px; border: 1px solid #ffffff;">
+                        <tr>
+                            <td style="width: 1%; white-space: nowrap; padding-right: 15px; vertical-align: middle;">
+                                <img t-if="o.company_id.logo" t-att-src="image_data_uri(o.company_id.logo)"
+                                     style="max-height: 55px; width: auto;" alt="Logo"/>
+                            </td>
+                            <td style="vertical-align: middle;">
+                                <strong style="font-size: 18px;"><span t-field="o.company_id.name"/></strong>
+                                <div style="font-size: 12px; line-height: 1.3;">
+                                    <span t-out="o.company_id.partner_id.get_thai_address()"/><br/>
+                                    <span style="font-size: 9px;">Head Office: 4/2 Moo 6 S.Sukhaphiban 12, T.Bansuan, A.Muangchonburi, Chonburi 20000 Thailand</span><br/>
+                                    <span>Tel: </span><span style="font-size: 9px;" t-field="o.company_id.phone"/>
+                                    <span t-if="o.company_id.vat"> เลขประจำตัวผู้เสียภาษี: <span style="font-size: 9px;" t-field="o.company_id.vat"/></span>
+                                </div>
+                            </td>
+                            <td style="width: 35%; vertical-align: middle; text-align: right;">
+                                <div style="border: 2px solid #000; padding: 5px 10px; border-radius: 5px; text-align: center; display: block; min-width: 260px; margin-left: auto;">
+                                    <div style="font-size: 20px; font-weight: 700; line-height: 1.2;">
+                                        <span>&#160;</span><span t-esc="ct['th']"/><span>&#160;</span>
+                                    </div>
+                                    <div style="font-size: 12px; font-weight: bold;"><span t-esc="ct['en']"/></div>
+                                    <div style="font-size: 9px;">ไม่ใช่ใบกำกับภาษี / NOT A TAX INVOICE</div>
+                                    <div style="font-size: 8px;"><span t-esc="ct['sub']"/></div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- ==================== ADDRESS / PAYMENT ==================== -->
+                    <table class="table table-bordered" style="margin-bottom: 10px; border: 1px solid #ffffff">
+                        <tr>
+                            <td style="width: 49%; padding-right: 5px;">
+                                <div style="border: 1px solid #ccc; padding: 10px; border-radius: 4px; height: 135px;">
+                                    <strong>ลูกค้า / CUSTOMER</strong><br/>
+                                    <strong t-field="cust.name"/><br/>
+                                    <span style="display:inline-block; padding-left:3px;"><t t-out="cust.get_thai_address()"/></span><br/>
+                                    <span t-if="cust.vat">เลขผู้เสียภาษี: <span t-field="cust.vat"/><t t-if="cust.branch" t-out="' ' + cust.get_thai_branch_display()"/></span>
+                                </div>
+                            </td>
+                            <td style="width: 2%;"></td>
+                            <td style="width: 49%; padding-right: 5px;">
+                                <div style="border: 1px solid #ccc; padding: 10px; border-radius: 4px; height: 135px;">
+                                    <strong>ช่องทางการชำระเงิน / PAYMENT</strong><br/>
+                                    <span>&#160;โอนเข้าบัญชี </span><span t-field="o.company_id.name"/><br/>
+                                    <t t-if="bank">
+                                        <span>&#160;ธนาคาร </span><span t-esc="bank.bank_id.name or ''"/>
+                                        <t t-if="bank.az_branch_name"><span> สาขา </span><span t-esc="bank.az_branch_name"/></t><br/>
+                                        <span>&#160;เลขที่บัญชี </span><strong t-esc="bank.acc_number"/><br/>
+                                    </t>
+                                    <t t-else="">
+                                        <span>&#160;ธนาคาร ......................... สาขา .........................</span><br/>
+                                        <span>&#160;เลขที่บัญชี ..........................................</span><br/>
+                                    </t>
+                                    <span style="font-size: 11px;">&#160;หรือสั่งจ่ายเช็คขีดคร่อม "<span t-field="o.company_id.name"/>"</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- ==================== DOC INFO ==================== -->
+                    <table class="table table-bordered table-sm text-center mb-2" style="border-color: black; font-size: 12px;">
+                        <thead class="bg-light">
+                            <tr>
+                                <th width="20%" class="text-center">เลขที่ใบสั่งซื้อ<br/>PO No.</th>
+                                <th width="20%" class="text-center">เลขที่ใบรับสินค้า<br/>DO No.</th>
+                                <th width="20%" class="text-center">วันครบกำหนดชำระเงิน<br/>Due Date</th>
+                                <th width="20%" class="text-center">วันที่<br/>Date</th>
+                                <th width="20%" class="text-center">เลขที่<br/>Number</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span t-esc="o.client_order_ref or ''"/></td>
+                                <td></td>
+                                <td><span t-esc="o.az_notice_due_date and o.az_notice_due_date.strftime('%d/%m/%Y') or ''"/></td>
+                                <td><span t-esc="o.az_notice_date and o.az_notice_date.strftime('%d/%m/%Y') or ''"/></td>
+                                <td><strong><span t-esc="o.name"/></strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- ==================== BODY ==================== -->
+                    <div>
+                        <table class="table table-sm items-table" style="border: 1px solid #fff;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid #000;">
+                                    <th style="border:none;" class="text-start">รายการ<br/>Description</th>
+                                    <th style="border:none;" class="text-end">จำนวน<br/>Quantity</th>
+                                    <th style="border:none;" class="text-end">ราคาต่อหน่วย<br/>Unit Price</th>
+                                    <th style="border:none;" class="text-end">จำนวน (บาท)<br/>Amount (Baht)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="pinfo['lines']" t-as="line">
+                                    <tr t-if="not line.display_type">
+                                        <t t-set="amt" t-value="o._az_line_amounts(line)"/>
+                                        <td style="border:none;">
+                                            <t t-if="line.x_custom_name"><span t-out="line.env['az.font.util'].wrap_cjk(line.x_custom_name, nl2br=True)"/></t>
+                                            <t t-else=""><span t-out="line.env['az.font.util'].wrap_cjk(line.name or line.product_id.display_name, nl2br=True)"/></t>
+                                        </td>
+                                        <td style="border:none;" class="text-end"><span t-esc="'{:,.2f}'.format(line.qty_to_invoice)"/></td>
+                                        <td style="border:none;" class="text-end"><span t-esc="'{:,.2f}'.format(line.price_unit * (1 - (line.discount or 0.0) / 100.0))"/></td>
+                                        <td style="border:none;" class="text-end"><span t-esc="'{:,.2f}'.format(amt[0])"/></td>
+                                    </tr>
+                                    <tr t-elif="line.display_type == 'line_section'">
+                                        <td colspan="4" style="border:none; font-weight:bold; padding-top:8px;"><span t-out="line.env['az.font.util'].wrap_cjk(line.name, nl2br=True)"/></td>
+                                    </tr>
+                                    <tr t-elif="line.display_type == 'line_note'">
+                                        <td colspan="4" style="border:none; font-style:italic; color:#555;"><span t-out="line.env['az.font.util'].wrap_cjk(line.name, nl2br=True)"/></td>
+                                    </tr>
+                                </t>
+                                <!-- เติมแถวว่างหน้าสุดท้ายให้ครบ PER_LAST -> ยอดรวม/ลายเซ็นชิดล่าง -->
+                                <t t-if="pinfo_last">
+                                    <t t-set="pad" t-value="max(0, PER_LAST - pinfo['rows'])"/>
+                                    <t t-foreach="range(pad)" t-as="e">
+                                        <tr>
+                                            <td style="border:none;">&#160;</td>
+                                            <td style="border:none;"/>
+                                            <td style="border:none;"/>
+                                            <td style="border:none;"/>
+                                        </tr>
+                                    </t>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- ===== ยอดรวม + หมายเหตุ + ลายเซ็น: หน้าสุดท้าย ===== -->
+                    <t t-if="pinfo_last">
+                    <div class="signature-footer">
+                        <table class="table table-bordered" style="margin-bottom: 15px; border: 1px solid #ffffff; page-break-inside: avoid;">
+                            <tr>
+                                <td style="width: 60%; padding-right: 20px; vertical-align: top;">
+                                    <div style="border: 1px solid #ccc; padding: 8px; text-align: left; font-weight: bold;">
+                                        <span t-esc="o.env['account.move'].thai_baht_text(o.az_notice_net_amount)"/>
+                                        <t t-if="wht"><br/><span style="font-size: 10px; font-weight: normal;">จำนวนเงินที่ต้องชำระสุทธิ หลังหักภาษี ณ ที่จ่าย</span></t>
+                                    </div>
+                                    <div class="az-note">
+                                        <t t-if="wht">
+                                            • หักภาษี ณ ที่จ่าย <span t-esc="o.az_notice_pct_text()"/>% จากค่าบริการก่อน VAT
+                                            <span t-esc="'{:,.2f}'.format(o.az_notice_service_base)"/> บาท =
+                                            <span t-esc="'{:,.2f}'.format(wht)"/> บาท
+                                            กรุณาส่งหนังสือรับรองการหักภาษี ณ ที่จ่าย (50 ทวิ) มาพร้อมการชำระเงิน<br/>
+                                        </t>
+                                        • บริษัทฯ จะออกใบเสร็จรับเงิน / ใบกำกับภาษีให้ เมื่อได้รับชำระเงินแล้ว<br/>
+                                        <span style="font-size: 9px;">
+                                            <t t-if="wht">Withholding tax <span t-esc="o.az_notice_pct_text()"/>% on
+                                                <span t-esc="'{:,.2f}'.format(o.az_notice_service_base)"/> =
+                                                <span t-esc="'{:,.2f}'.format(wht)"/>. Please attach the WHT certificate with your payment.
+                                            </t>
+                                            A receipt / tax invoice will be issued upon payment.
+                                        </span>
+                                    </div>
+                                </td>
+                                <td style="width: 40%;">
+                                    <table class="table table-sm table-bordered" style="margin: 0;">
+                                        <tr>
+                                            <td>มูลค่าสินค้า/บริการ (Amount)</td>
+                                            <td class="text-end"><span t-esc="'{:,.2f}'.format(o.az_notice_amount_untaxed)"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td>ภาษีมูลค่าเพิ่ม (VAT)</td>
+                                            <td class="text-end"><span t-esc="'{:,.2f}'.format(o.az_notice_amount_tax)"/></td>
+                                        </tr>
+                                        <tr class="bg-light">
+                                            <td><strong>ยอดรวม (Total)</strong></td>
+                                            <td class="text-end"><strong><span t-esc="'{:,.2f}'.format(o.az_notice_amount_total)"/></strong></td>
+                                        </tr>
+                                        <tr t-if="wht">
+                                            <td>หักภาษี ณ ที่จ่าย <span t-esc="o.az_notice_pct_text()"/>%<br/><span style="font-size: 10px;">(Withholding Tax)</span></td>
+                                            <td class="text-end" style="vertical-align: middle;">(<span t-esc="'{:,.2f}'.format(wht)"/>)</td>
+                                        </tr>
+                                        <tr style="border-top: 2px solid #000; border-bottom: 3px double #000;">
+                                            <td><strong style="font-size: 14px;">ยอดชำระสุทธิ</strong><br/><span style="font-size: 10px;">(Net Payment)</span></td>
+                                            <td class="text-end" style="vertical-align: middle;"><strong style="font-size: 14px;"><span t-esc="'{:,.2f}'.format(o.az_notice_net_amount)"/></strong></td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- ==================== SIGNATURE ==================== -->
+                        <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 10px; page-break-inside: avoid;">
+                            <tr>
+                                <td style="width: 33.3%; border-right: 1px solid #000; vertical-align: top;">
+                                    <div style="height: 130px; position: relative; padding: 5px; text-align: center;">
+                                        <div style="font-size: 10px; margin-bottom: 5px;">ได้รับใบแจ้งหนี้ไว้ตรวจสอบแล้ว<br/>
+                                            <span style="font-size: 8px;">RECEIVED THE ABOVE INVOICE</span></div>
+                                        <div style="position: absolute; bottom: 5px; left: 0; width: 100%;">
+                                            <div style="border-bottom: 1px dotted #000; width: 80%; margin: 0 auto;"></div>
+                                            <div style="margin-top: 3px; font-weight: bold;">ผู้รับใบแจ้งหนี้</div>
+                                            <div style="font-size: 10px; margin-top: 2px;">วันที่ ....... / ....... / .......</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="width: 33.3%; border-right: 1px solid #000; vertical-align: top;">
+                                    <div style="height: 130px; position: relative; padding: 5px; text-align: center;">
+                                        <div style="position: absolute; bottom: 5px; left: 0; width: 100%;">
+                                            <img t-if="o.create_uid.x_sign_image" t-att-src="image_data_uri(o.create_uid.x_sign_image)"
+                                                 style="max-height: 45px; max-width: 80%; display: block; margin: 0 auto 2px auto;"/>
+                                            <div style="border-bottom: 1px dotted #000; width: 80%; margin: 0 auto;"></div>
+                                            <div style="margin-top: 3px; font-weight: bold;">ผู้จัดทำ</div>
+                                            <div style="font-size: 10px; margin-top: 2px;">วันที่ <span t-esc="(o.az_notice_date or o.date_order.date()).strftime('%d / %m / %Y')"/></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="width: 33.3%; vertical-align: top;">
+                                    <div style="height: 130px; position: relative; padding: 5px; text-align: center;">
+                                        <div style="font-size: 11px; font-weight: bold;"><span t-field="o.company_id.name"/><br/>
+                                            <span style="font-size: 9px;">AUTOZONE CO., LTD.</span></div>
+                                        <div style="position: absolute; bottom: 5px; left: 0; width: 100%;">
+                                            <div style="border-bottom: 1px dotted #000; width: 80%; margin: 0 auto;"></div>
+                                            <div style="margin-top: 3px; font-weight: bold;">ผู้มีอำนาจลงนาม</div>
+                                            <div style="font-size: 10px; margin-top: 2px;">วันที่ <span t-esc="(o.az_notice_date or o.date_order.date()).strftime('%d / %m / %Y')"/></div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- ==================== FOOTER ==================== -->
+                        <div style="position: relative; font-size: 9px; margin-top: 5px;">
+                            <div> ในกรณีที่มีการผิดนัดชำระเงินเมื่อถึงกำหนด ลูกค้าจะต้องเสียเบี้ยปรับในการชำระล่าช้าในอัตราไม่เกิน 18% ต่อปีของจำนวนเงินที่ต้องชำระ<br/>
+                                <span style="font-size: 8px;">LATE PAYMENT SERVICE CHARGE WILL BE CHARGED NOT EXCEEDING 18% PER ANNUM ON OVERDUE ACCOUNTS.</span>
+                            </div>
+                            <div style="position: absolute; bottom: 0; right: 0; font-weight: bold; font-size: 11px;">
+                                <span t-esc="ct['copy_type']"/>
+                            </div>
+                        </div>
+                    </div>
+                    </t>
+                </div>
+                </t>
+            </div>
+        </t>
+    </template>
+</odoo>

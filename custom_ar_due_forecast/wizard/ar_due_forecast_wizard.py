@@ -10,9 +10,12 @@
 * ค้างยกมา = amount_residual_signed ของใบที่ครบกำหนดก่อนวันแรกของเดือน และยังไม่จ่ายครบ
 * จำนวนเงิน (รับแล้ว) = amount_total_signed - amount_residual_signed ของใบในเดือน
   วันที่รับเงิน = วันที่ล่าสุดของรายการที่มาจับคู่ (account.partial.reconcile)
-* ลูกค้านิติบุคคล (is_company) ทุกช่องของลูกหนี้ = ยอดหลังหักภาษี ณ ที่จ่าย 3% ของยอดก่อน VAT
-  (ข้อมูลรับเงินปี 2569: ลูกค้าถูกหัก 3% คิดเป็น 98% ของยอดรับ; บุคคลธรรมดาไม่หัก)
-  คูณด้วย _wht_factor() = 1 - 3% x ยอดก่อน VAT / ยอดรวม ใช้กับทั้งยอดใบ / รับแล้ว / คงค้าง
+* หัก ณ ที่จ่าย (v1.9.0): ใช้สูตรเดียวกับใบแจ้งหนี้ (custom_invoice_notice.az_notice_wht_amount) =
+  ลูกค้าที่ติ๊ก "หักภาษี ณ ที่จ่าย" x อัตราของลูกค้า x เฉพาะค่าบริการก่อน VAT (ของไม่หัก)
+  คูณด้วย _wht_factor() = 1 - หัก / ยอดรวม ใช้กับทั้งยอดใบ / รับแล้ว / คงค้าง
+* ใบแจ้งหนี้จากใบสั่งขาย (v1.9.0, แบบ B): SO ที่กดพิมพ์ใบแจ้งหนี้แล้ว (az_notice_date) แต่ยังไม่ออก IV
+  เข้ารายงานเหมือนใบขาย 1 ใบ (ตัวแทน _NoticeProxy, id ติดลบ) วันคาดรับ = az_notice_due_date
+  ยอด = ส่วนที่ยังไม่ออก IV ทั้งก้อนเป็นค้างรับ; พอออก IV แล้วตัวแทนหายไป ใบ IV เข้าแทน
 * Due (วันเครดิต) = เงื่อนไขชำระเงินของลูกค้า ถ้าไม่ได้ตั้ง → ค่าที่พบบ่อยสุดของ
   (วันครบกำหนด - วันที่ใบ) ใน 12 เดือนล่าสุด; 0 = ไม่แสดง
 * แถวลูกค้า = ลูกค้าที่มีใบครบกำหนดในเดือน ∪ มีใบค้างยกมา ∪ มีใบเปิดอยู่ (ครบกำหนดเดือนหน้า)
@@ -43,6 +46,31 @@ THAI_MONTHS_SHORT = [
 def _be(d):
     """วันที่ → dd/mm/yy พ.ศ. (18/09/69)"""
     return "%02d/%02d/%02d" % (d.day, d.month, (d.year + 543) % 100)
+
+
+class _NoticeProxy:
+    """ใบแจ้งหนี้จากใบสั่งขาย (ยังไม่ออก IV) ทำตัวเหมือน account.move ให้รายงานใช้ชุดโค้ดเดียวกัน
+    id ติดลบ = ไม่ชนกับใบขายจริง (bn_map / pay_date / action_open_moves จะไม่เจอ ซึ่งถูกต้อง)"""
+
+    move_type = "out_invoice"
+    payment_state = "not_paid"
+
+    def __init__(self, so):
+        self.so = so
+        self.id = -so.id
+        self.name = "%s (ใบแจ้งหนี้)" % so.name
+        self.partner_id = so.partner_invoice_id or so.partner_id
+        self.commercial_partner_id = self.partner_id.commercial_partner_id
+        self.invoice_date = so.az_notice_date or so.az_notice_due_date
+        self.invoice_date_due = so.az_notice_due_date
+        self.amount_untaxed = so.az_notice_amount_untaxed
+        self.amount_untaxed_signed = so.az_notice_amount_untaxed
+        self.amount_total = so.az_notice_amount_total
+        self.amount_total_signed = so.az_notice_amount_total
+        self.amount_residual_signed = so.az_notice_amount_total
+        self.az_notice_wht_amount = so.az_notice_wht_amount
+        self.ref = so.client_order_ref or ""
+        self.invoice_origin = so.name
 
 
 class ArDueForecastWizard(models.TransientModel):
@@ -119,17 +147,16 @@ class ArDueForecastWizard(models.TransientModel):
 
     @staticmethod
     def _wht_factor(move):
-        """สัดส่วนเงินที่คาดว่าจะได้รับจริงต่อยอดใบ: นิติบุคคลหัก 3% ของยอดก่อน VAT, บุคคลธรรมดา = 1"""
-        if not move.commercial_partner_id.is_company or not move.amount_total:
+        """สัดส่วนเงินที่คาดว่าจะได้รับจริงต่อยอดใบ = 1 - หัก ณ ที่จ่าย (สูตรใบแจ้งหนี้) / ยอดรวม"""
+        if not move.amount_total:
             return 1.0
-        return 1.0 - WHT_RATE * move.amount_untaxed / move.amount_total
+        return 1.0 - (move.az_notice_wht_amount or 0.0) / move.amount_total
 
     @staticmethod
     def _wht_amount(move):
         """ยอดหัก ณ ที่จ่ายที่คาดไว้ของใบ (มีเครื่องหมายตามประเภทใบ)"""
-        if not move.commercial_partner_id.is_company:
-            return 0.0
-        return round(move.amount_untaxed_signed * WHT_RATE, 2)
+        sign = -1 if move.move_type == "out_refund" else 1
+        return round(sign * (move.az_notice_wht_amount or 0.0), 2)
 
     def _base_domain(self):
         domain = [
@@ -140,6 +167,19 @@ class ArDueForecastWizard(models.TransientModel):
         if self.partner_ids:
             domain.append(("partner_id", "in", self.partner_ids.ids))
         return domain
+
+    def _collect_notices(self):
+        """ใบแจ้งหนี้จาก SO ที่ยังไม่ออก IV -> list ของ _NoticeProxy"""
+        domain = [
+            ("company_id", "=", self.company_id.id),
+            ("state", "=", "sale"),
+            ("az_notice_due_date", "!=", False),
+            ("invoice_status", "!=", "invoiced"),
+        ]
+        if self.partner_ids:
+            domain.append(("partner_id", "in", self.partner_ids.ids))
+        orders = self.env["sale.order"].search(domain)
+        return [_NoticeProxy(so) for so in orders if so.az_notice_amount_total]
 
     def _collect_moves(self):
         """คืน (month_list, open_list, bn_map)
@@ -172,6 +212,12 @@ class ArDueForecastWizard(models.TransientModel):
             eff = self._expected_date(m, bn_map.get(m.id))
             if eff:
                 open_list.append((m, eff))
+        # ใบแจ้งหนี้จาก SO (ยังไม่ออก IV): ค้างรับทั้งก้อน วันคาดรับ = วันครบกำหนดบนใบแจ้งหนี้
+        for n in self._collect_notices():
+            eff = n.invoice_date_due
+            open_list.append((n, eff))
+            if start <= eff <= end:
+                month_list.append((n, eff))
         return month_list, open_list, bn_map
 
     def _fetch_data(self):
@@ -183,7 +229,7 @@ class ArDueForecastWizard(models.TransientModel):
 
         # 1) ใบที่คาดรับในเดือน  2) ใบเปิดอยู่ทั้งหมด (ค้างยกมา + เดือนถัดไป)
         month_list, open_list, bn_map = self._collect_moves()
-        month_moves = Move.browse([m.id for m, _e in month_list])
+        month_moves = Move.browse([m.id for m, _e in month_list if m.id > 0])
         # 3) ลูกค้าที่ออกใบใน N เดือนล่าสุด (แถวว่าง)
         recent_partner_ids = set()
         if self.recent_months > 0:
@@ -411,6 +457,19 @@ class ArDueForecastWizard(models.TransientModel):
             title = "คาดรับเดือน %s %d" % (THAI_MONTHS[start.month], start.year + 543)
         if partner_id:
             title = "%s: %s" % (self.env["res.partner"].browse(partner_id).name, title)
+        so_ids = [-i for i in ids if i < 0]
+        ids = [i for i in ids if i > 0]
+        if so_ids and not ids:
+            return {
+                "type": "ir.actions.act_window",
+                "name": title + " (ใบแจ้งหนี้จากใบสั่งขาย)",
+                "res_model": "sale.order",
+                "views": [(False, "list"), (False, "form")],
+                "domain": [("id", "in", so_ids)],
+                "context": {"create": False},
+            }
+        if so_ids:
+            title += " (+ใบแจ้งหนี้จาก SO %d ใบ ดูที่เมนู Sales)" % len(so_ids)
         return {
             "type": "ir.actions.act_window",
             "name": title,
