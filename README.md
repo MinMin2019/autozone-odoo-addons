@@ -104,7 +104,7 @@
 | โมดูล | คำอธิบาย |
 |---|---|
 | `custom_hr_loan` | ทะเบียนเงินกู้สวัสดิการพนักงาน (เลขที่ LCปี พ.ศ./NNN แก้ได้, เงินต้น/ตารางงวด/ยอดคงเหลือ) + ปุ่ม "หักเงินกู้พนักงาน" บน Payslip Batch ดันงวดที่ถึงกำหนดเป็น Other Input รหัส LOAN — เมนูอยู่ใต้ Accounting > เงินกู้พนักงาน |
-| `import_payslip_inputs` | นำเข้า Other Inputs (เบี้ยเลี้ยง/หักเงิน) จาก Excel เข้า Payslip Batch |
+| `import_payslip_inputs` | นำเข้า Other Inputs (เบี้ยเลี้ยง/หักเงิน) จาก Excel เข้า Payslip Batch — v3.4: กันกด Create Draft Entry ก่อนนำเข้ายอด + สลิปโครงสร้าง Legacy ลงใบสำคัญ 1 ใบต่อสาขา (Analytic บนสัญญาจ้าง) |
 | `custom_hr_attendance_sync` | ดึงเวลาตอกบัตรจากเครื่องสแกนนิ้ว (ฐาน BpControl บน SQL Server) เข้า Attendances อัตโนมัติทุกวัน — 1 วัน = สูงสุด 3 ช่วง (เช้า/บ่าย/เย็น), จับคู่ด้วย Registration Number, แปลงเวลาไทย→UTC, ดึงซ้ำไม่เกิดข้อมูลซ้ำ + เมนู "ดึงเวลาจากเครื่องสแกน" และ "ประวัติการดึงเวลา" ใต้ Attendances > Configuration |
 
 ## Autozone/Tools
