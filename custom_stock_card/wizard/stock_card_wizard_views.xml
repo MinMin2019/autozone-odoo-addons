@@ -71,6 +71,7 @@
                 <field name="location_id" optional="show"
                        column_invisible="not context.get('split_by_location')"/>
                 <field name="default_code"/>
+                <field name="az_sku" optional="show"/>
                 <field name="product_name"/>
                 <field name="categ_id" optional="hide"/>
                 <field name="uom_id"/>
@@ -113,6 +114,7 @@
         <field name="arch" type="xml">
             <search>
                 <field name="default_code"/>
+                <field name="az_sku"/>
                 <field name="product_name"/>
                 <field name="product_id"/>
                 <field name="warehouse_id"/>

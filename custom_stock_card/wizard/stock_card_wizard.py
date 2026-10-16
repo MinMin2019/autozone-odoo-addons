@@ -486,6 +486,7 @@ class StockCardWizard(models.TransientModel):
                     "wizard_id": self.id,
                     "product_id": pid,
                     "default_code": product.default_code or "",
+                    "az_sku": (product.az_sku if "az_sku" in product._fields else "") or "",
                     "product_name": product.name,
                     "categ_id": product.categ_id.id,
                     "uom_id": product.uom_id.id,
@@ -625,6 +626,7 @@ class StockCardWizard(models.TransientModel):
             ("สาขา", 14, lambda l: l.warehouse_id.name or "", "t"),
             ("ตำแหน่ง", 22, lambda l: l.location_id.complete_name if l.location_id else "", "t"),
             ("รหัสสินค้า", 14, lambda l: l.default_code or "", "t"),
+            ("SKU", 13, lambda l: l.az_sku or "", "t"),
             ("ชื่อสินค้า", 40, lambda l: l.product_name or "", "t"),
             ("หมวด", 22, lambda l: l.categ_id.complete_name or "", "t"),
             ("หน่วย", 8, lambda l: l.uom_id.name or "", "t"),
@@ -714,7 +716,7 @@ class StockCardWizard(models.TransientModel):
         wd.write(0, 0, "บัญชีคุมสินค้า (Stock Card) - รายละเอียดการเคลื่อนไหว", f_title)
         wd.write(1, 0, subtitle)
         dheads = [
-            ("สาขา", 14), ("ตำแหน่ง", 22), ("รหัสสินค้า", 14), ("ชื่อสินค้า", 36), ("หน่วย", 8),
+            ("สาขา", 14), ("ตำแหน่ง", 22), ("รหัสสินค้า", 14), ("SKU", 13), ("ชื่อสินค้า", 36), ("หน่วย", 8),
             ("วันที่", 11), ("เลขที่เอกสาร", 18), ("อ้างอิง", 18), ("ประเภท", 16), ("รายการ", 18),
             ("คู่ค้า / ตำแหน่งตรงข้าม", 28),
             ("รับ", 11), ("จ่าย", 11), ("คงเหลือ", 11), ("ต้นทุน/หน่วย", 12),
@@ -732,46 +734,47 @@ class StockCardWizard(models.TransientModel):
                 l.warehouse_id.name or "",
                 l.location_id.complete_name if l.location_id else "",
                 l.default_code or "",
+                l.az_sku or "",
                 l.product_name or "",
                 l.uom_id.name or "",
             ]
             # ยอดยกมา
             for c in range(ncol):
                 wd.write(r, c, base[c] if c < len(base) else "", f_open)
-            wd.write_datetime(r, 5, datetime.combine(self.date_from, time.min), f_date)
-            wd.write(r, 9, "ยอดยกมา", f_open)
-            wd.write_number(r, 13, l.opening_qty, f_open_n)
-            wd.write_number(r, 17, l.opening_value, f_open_n)
+            wd.write_datetime(r, 6, datetime.combine(self.date_from, time.min), f_date)
+            wd.write(r, 10, "ยอดยกมา", f_open)
+            wd.write_number(r, 14, l.opening_qty, f_open_n)
+            wd.write_number(r, 18, l.opening_value, f_open_n)
             r += 1
             for m in l.move_ids:
                 for c, v in enumerate(base):
                     wd.write(r, c, v, f_text)
                 local_dt = pytz.utc.localize(m.date).astimezone(tz).replace(tzinfo=None)
-                wd.write_datetime(r, 5, local_dt, f_date)
-                wd.write(r, 6, m.reference or "", f_text)
-                wd.write(r, 7, m.origin or "", f_text)
-                wd.write(r, 8, CAT_LABEL.get(m.category, ""), f_text)
-                wd.write(r, 9, m.kind or "", f_text)
-                wd.write(r, 10, m.counterpart or "", f_text)
-                wd.write_number(r, 11, m.in_qty, f_qty)
-                wd.write_number(r, 12, m.out_qty, f_qty)
-                wd.write_number(r, 13, m.balance_qty, f_qty)
-                wd.write_number(r, 14, m.unit_cost, f_val)
-                wd.write_number(r, 15, m.in_value, f_val)
-                wd.write_number(r, 16, m.out_value, f_val)
-                wd.write_number(r, 17, m.balance_value, f_val)
+                wd.write_datetime(r, 6, local_dt, f_date)
+                wd.write(r, 7, m.reference or "", f_text)
+                wd.write(r, 8, m.origin or "", f_text)
+                wd.write(r, 9, CAT_LABEL.get(m.category, ""), f_text)
+                wd.write(r, 10, m.kind or "", f_text)
+                wd.write(r, 11, m.counterpart or "", f_text)
+                wd.write_number(r, 12, m.in_qty, f_qty)
+                wd.write_number(r, 13, m.out_qty, f_qty)
+                wd.write_number(r, 14, m.balance_qty, f_qty)
+                wd.write_number(r, 15, m.unit_cost, f_val)
+                wd.write_number(r, 16, m.in_value, f_val)
+                wd.write_number(r, 17, m.out_value, f_val)
+                wd.write_number(r, 18, m.balance_value, f_val)
                 r += 1
             # ยอดยกไป (รับ/จ่ายรวมของทุกประเภท แม้กรองประเภทอยู่)
             for c in range(ncol):
                 wd.write(r, c, base[c] if c < len(base) else "", f_tot)
-            wd.write_datetime(r, 5, datetime.combine(self.date_to, time.min), f_date)
-            wd.write(r, 9, "ยอดยกไป (รวมทุกประเภท)" if flt else "ยอดยกไป", f_tot)
-            wd.write_number(r, 11, l.in_qty, f_tot_n)
-            wd.write_number(r, 12, l.out_qty, f_tot_n)
-            wd.write_number(r, 13, l.closing_qty, f_tot_n)
-            wd.write_number(r, 15, l.in_value, f_tot_n)
-            wd.write_number(r, 16, l.out_value, f_tot_n)
-            wd.write_number(r, 17, l.closing_value, f_tot_n)
+            wd.write_datetime(r, 6, datetime.combine(self.date_to, time.min), f_date)
+            wd.write(r, 10, "ยอดยกไป (รวมทุกประเภท)" if flt else "ยอดยกไป", f_tot)
+            wd.write_number(r, 12, l.in_qty, f_tot_n)
+            wd.write_number(r, 13, l.out_qty, f_tot_n)
+            wd.write_number(r, 14, l.closing_qty, f_tot_n)
+            wd.write_number(r, 16, l.in_value, f_tot_n)
+            wd.write_number(r, 17, l.out_value, f_tot_n)
+            wd.write_number(r, 18, l.closing_value, f_tot_n)
             r += 1
         wd.autofilter(hr, 0, max(r - 1, hr), len(dheads) - 1)
 
@@ -839,6 +842,7 @@ class StockCardLine(models.TransientModel):
     name = fields.Char(compute="_compute_name")
     product_id = fields.Many2one("product.product", "สินค้า", required=True)
     default_code = fields.Char("รหัสสินค้า")
+    az_sku = fields.Char("SKU", help="รหัส SKU 11 หลัก (custom_product_sku) — ว่างถ้าไม่ได้ติดตั้งโมดูล SKU")
     product_name = fields.Char("ชื่อสินค้า")
     categ_id = fields.Many2one("product.category", "หมวด")
     uom_id = fields.Many2one("uom.uom", "หน่วย")

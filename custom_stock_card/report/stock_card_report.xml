@@ -105,6 +105,7 @@
                                     <th rowspan="2">สาขา</th>
                                     <th rowspan="2" t-if="split">ตำแหน่ง</th>
                                     <th rowspan="2">รหัส</th>
+                                    <th rowspan="2">SKU</th>
                                     <th rowspan="2">สินค้า</th>
                                     <th rowspan="2">หน่วย</th>
                                     <th rowspan="2">ยกมา</th>
@@ -131,6 +132,7 @@
                                     <td><t t-esc="l.warehouse_id.name"/></td>
                                     <td t-if="split"><t t-esc="l.location_id.complete_name"/></td>
                                     <td><t t-esc="l.default_code"/></td>
+                                    <td><t t-esc="l.az_sku"/></td>
                                     <td><t t-esc="l.product_name"/></td>
                                     <td><t t-esc="l.uom_id.name"/></td>
                                     <td class="num"><t t-esc="'{:,.2f}'.format(l.opening_qty)"/></td>
@@ -147,7 +149,7 @@
                                     <t t-set="t_close_qty" t-value="t_close_qty + l.closing_qty"/>
                                 </tr>
                                 <tr class="tot">
-                                    <td t-att-colspan="16 if split else 15">รวม</td>
+                                    <td t-att-colspan="17 if split else 16">รวม</td>
                                     <td t-att-class="'num neg' if t_close_qty &lt; 0 else 'num'"><t t-esc="'{:,.2f}'.format(t_close_qty)"/></td>
                                     <td class="num"><t t-esc="'{:,.2f}'.format(t_open)"/></td>
                                     <td class="num"><t t-esc="'{:,.2f}'.format(t_in)"/></td>
@@ -165,6 +167,7 @@
                                     <t t-if="split"> / <t t-esc="l.location_id.complete_name"/></t>
                                     &#160;&#160;
                                     <t t-if="l.default_code">[<t t-esc="l.default_code"/>] </t><t t-esc="l.product_name"/>
+                                    <t t-if="l.az_sku">&#160;&#160; SKU: <t t-esc="l.az_sku"/></t>
                                     &#160;&#160; หน่วย: <t t-esc="l.uom_id.name"/>
                                     &#160;&#160; ช่วง <t t-esc="o.thai_date(o.date_from)"/> - <t t-esc="o.thai_date(o.date_to)"/>
                                 </div>
