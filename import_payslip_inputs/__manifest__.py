@@ -1,6 +1,6 @@
 {
     'name': 'Custom Import Payslip Other Inputs',
-    'version': '18.0.3.3.1',
+    'version': '18.0.3.4.0',
     'category': 'Autozone/HR',
     'summary': 'Import Other Inputs (Allowance/Deduction) from Excel into Payslip Batch',
     'description': """
