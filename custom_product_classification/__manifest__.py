@@ -1,6 +1,6 @@
 {
     "name": "Autozone Product Classification",
-    "version": "18.0.1.2.0",
+    "version": "18.0.1.2.1",
     "category": "Autozone/Inventory",
     "author": "Autozone",
     "summary": "Classification fields on products (brand, sub-type, product owner, part, "
