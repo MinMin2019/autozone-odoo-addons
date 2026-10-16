@@ -12,6 +12,12 @@ class AccountAsset(models.Model):
         index='btree_not_null',
         help='พนักงานผู้ถือครอง/รับผิดชอบทรัพย์สินชิ้นนี้',
     )
+    custodian_code = fields.Char(
+        string='Custodian Code',
+        compute='_compute_custodian_code',
+        search='_search_custodian_code',
+        help='รหัสพนักงานของผู้ถือครอง (ใช้ค้นหาในลิสต์)',
+    )
 
     main_analytic_account_id = fields.Many2one(
         'account.analytic.account',
@@ -26,6 +32,19 @@ class AccountAsset(models.Model):
         string='Main Analytic Plan',
         store=True,
     )
+
+    @api.depends('custodian_id')
+    def _compute_custodian_code(self):
+        # registration_number จำกัดกลุ่ม HR → อ่านแบบ sudo เฉพาะรหัส
+        for asset in self:
+            asset.custodian_code = asset.custodian_id.sudo().registration_number or False
+
+    def _search_custodian_code(self, operator, value):
+        if operator not in ('ilike', '=ilike', 'like', '=like', '=') or not value:
+            return [('id', 'in', [])]  # ไม่รองรับ operator อื่น → ไม่พบ
+        employees = self.env['hr.employee'].sudo().with_context(active_test=False).search(
+            [('registration_number', operator, value)])
+        return [('custodian_id', 'in', employees.ids)]
 
     @api.depends('analytic_distribution')
     def _compute_main_analytic_account_id(self):

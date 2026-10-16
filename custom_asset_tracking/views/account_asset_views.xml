@@ -10,7 +10,8 @@
             </xpath>
             <xpath expr="//field[@name='x_asset_repository']" position="after">
                 <field name="custodian_id" invisible="state == 'model'"
-                       options="{'no_create': True}"/>
+                       options="{'no_create': True}"
+                       context="{'az_employee_code_search': True}"/>
             </xpath>
         </field>
     </record>
@@ -42,7 +43,8 @@
         <field name="inherit_id" ref="account_asset.view_account_asset_search"/>
         <field name="arch" type="xml">
             <field name="model_id" position="after">
-                <field name="custodian_id"/>
+                <field name="custodian_id" string="Custodian (name or code)"
+                       filter_domain="['|', ('custodian_id', 'ilike', self), ('custodian_code', 'ilike', self)]"/>
                 <field name="main_analytic_account_id"/>
             </field>
             <filter name="closed" position="after">
