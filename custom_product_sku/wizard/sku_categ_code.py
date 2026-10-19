@@ -12,29 +12,46 @@ class AzSkuCategCode(models.TransientModel):
     _description = "ตั้งรหัสหมวด SKU"
 
     categ_id = fields.Many2one("product.category", "หมวด", required=True, readonly=True)
-    current_code = fields.Char(related="categ_id.az_sku_code", string="รหัสปัจจุบัน")
-    suggest = fields.Char(related="categ_id.az_sku_code_suggest", string="รหัสที่ว่างถัดไป")
+    # computed from the saved category (not related): in the web form the category arrives as a
+    # draft copy whose fields are not reliable, so everything is read back from the database
+    current_code = fields.Char("รหัสปัจจุบัน", compute="_compute_categ_info")
+    suggest = fields.Char("รหัสที่ว่างถัดไป", compute="_compute_categ_info")
     code = fields.Char("รหัสใหม่ (4 หลัก)", size=4, help="ว่าง = หมวดนี้ไม่ออก SKU ให้สินค้าใหม่")
     skip = fields.Boolean("หมวดนี้ไม่ออก SKU (ตั้งใจ)",
                           default=lambda self: self.env["product.category"].browse(
                               self.env.context.get("default_categ_id")).az_sku_skip,
                           help="ติ๊กเมื่อหมวดนี้ไม่ต้องมี SKU — ระบบจะไม่เตือนให้ตั้งรหัสอีก")
-    todo_count = fields.Integer(related="categ_id.az_sku_todo_count", string="สินค้าที่จะได้ SKU")
-    done_count = fields.Integer(related="categ_id.az_sku_done_count", string="มี SKU แล้ว")
+    todo_count = fields.Integer("สินค้าที่จะได้ SKU", compute="_compute_categ_info")
+    done_count = fields.Integer("มี SKU แล้ว", compute="_compute_categ_info")
     sibling_info = fields.Text("หมวดข้างเคียงที่มีรหัสแล้ว", compute="_compute_sibling_info")
     code_warning = fields.Char(compute="_compute_code_warning")
 
-    def _siblings(self):
+    def _categ(self):
+        """The saved category behind the wizard (never the form's draft copy)."""
         self.ensure_one()
-        parent = self.categ_id.parent_id
-        if not parent:
+        return self.env["product.category"].sudo().browse(self.categ_id._origin.id or self.categ_id.id)
+
+    def _siblings(self):
+        categ = self._categ()
+        if not categ.parent_id:
             return self.env["product.category"]
-        return parent.sudo().child_id.filtered(lambda c: c.az_sku_code and c != self.categ_id).sorted("az_sku_code")
+        return self.env["product.category"].sudo().search(
+            [("parent_id", "=", categ.parent_id.id), ("id", "!=", categ.id), ("az_sku_code", "!=", False)],
+            order="az_sku_code")
+
+    @api.depends("categ_id")
+    def _compute_categ_info(self):
+        for wiz in self:
+            categ = wiz._categ() if wiz.categ_id else self.env["product.category"]
+            wiz.current_code = categ.az_sku_code
+            wiz.suggest = categ.az_sku_code_suggest
+            wiz.todo_count = categ.az_sku_todo_count
+            wiz.done_count = categ.az_sku_done_count
 
     @api.depends("categ_id")
     def _compute_sibling_info(self):
         for wiz in self:
-            sibs = wiz._siblings()
+            sibs = wiz._siblings() if wiz.categ_id else []
             wiz.sibling_info = "\n".join(f"{c.az_sku_code}  {c.name}" for c in sibs) or \
                 "(ยังไม่มีหมวดในระดับเดียวกันที่มีรหัส — ดูกติกาหลัก 1-2 ด้านล่าง)"
 
@@ -52,13 +69,13 @@ class AzSkuCategCode(models.TransientModel):
                     if code[0] not in GROUP_DIGITS:
                         msg.append(f"หลักแรก {code[0]} ไม่ใช่กลุ่มที่ออก SKU (1/2/3/6)")
                     sibs = wiz._siblings()
-                    heads = set(sibs.mapped(lambda c: c.az_sku_code[:2]))
+                    heads = {c.az_sku_code[:2] for c in sibs if c.az_sku_code}
                     if heads and code[:2] not in heads:
                         msg.append("2 หลักแรกไม่ตรงกับหมวดข้างเคียง (%s) — ตรวจอีกครั้ง"
                                    % ", ".join(h + "xx" for h in sorted(heads)))
                     if code[2:] == "00":
                         msg.append("หลัก 3-4 ต้องเป็น 01-99 (00 ไม่ใช้)")
-                    if code in used and used[code] != wiz.categ_id.complete_name:
+                    if code in used and used[code] != wiz._categ().complete_name:
                         msg.append(f"รหัสนี้ใช้แล้วกับ {used[code]}")
             wiz.code_warning = " / ".join(msg) or False
 
@@ -72,7 +89,7 @@ class AzSkuCategCode(models.TransientModel):
         if not self.env.user.has_group("custom_product_sku.group_sku_manager"):
             raise UserError("เฉพาะผู้ดูแลรหัสสินค้า (SKU) เท่านั้น")
         code = (self.code or "").strip() or False
-        categ = self.categ_id.sudo()
+        categ = self._categ()
         skip = bool(self.skip and not code)
         if code == categ.az_sku_code and skip == categ.az_sku_skip:
             return {"type": "ir.actions.act_window_close"}

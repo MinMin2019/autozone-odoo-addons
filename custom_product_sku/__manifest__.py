@@ -1,6 +1,6 @@
 {
     "name": "Autozone Product SKU",
-    "version": "18.0.1.3.0",
+    "version": "18.0.1.3.1",
     "category": "Autozone/Inventory",
     "author": "Autozone",
     "summary": "รหัสสินค้า SKU 11 หลัก (หมวด 4 + แบรนด์ 3 + ลำดับ 4) ออกอัตโนมัติ, สินค้าดัมมี่ลำดับ 9001+, "
