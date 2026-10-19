@@ -129,6 +129,9 @@ class ProductCategory(models.Model):
         res = super().write(vals)
         if vals.get("az_sku_code") or vals.get("az_sku_skip"):
             self._az_sku_close_code_activities()
+        elif {"az_sku_code", "az_sku_skip", "parent_id"} & set(vals):
+            # code cleared / "no SKU" unticked / category moved: remind if products now wait for a code
+            self._az_sku_notify_missing_code()
         if vals.get("az_sku_code") and not self.env.context.get("az_sku_no_auto"):
             # products already in the category get their SKU once the category gets a code
             self.env["product.template"].search(
