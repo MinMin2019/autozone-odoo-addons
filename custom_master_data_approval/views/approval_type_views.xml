@@ -7,8 +7,7 @@
             <list>
                 <field name="name"/>
                 <field name="model_id"/>
-                <field name="approver_group_id"/>
-                <field name="approver_role_ids" widget="many2many_tags"/>
+                <field name="approver_user_ids" widget="many2many_tags"/>
                 <field name="active" widget="boolean_toggle"/>
             </list>
         </field>
@@ -22,11 +21,15 @@
                 <sheet>
                     <widget name="web_ribbon" title="ปิดใช้งาน" bg_color="text-bg-danger"
                             invisible="active"/>
+                    <div class="alert alert-warning" role="alert" invisible="not approver_warning">
+                        <field name="approver_warning" nolabel="1"/>
+                    </div>
                     <group>
                         <field name="name"/>
                         <field name="model_id"/>
-                        <field name="approver_group_id"/>
-                        <field name="approver_role_ids" widget="many2many_tags"/>
+                        <field name="approver_user_ids" widget="many2many_tags"
+                               options="{'no_create': True}"/>
+                        <field name="approver_group_id" groups="base.group_no_one"/>
                         <field name="free_field_prefixes" placeholder="เช่น az_"/>
                         <field name="active" invisible="1"/>
                     </group>

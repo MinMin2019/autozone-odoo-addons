@@ -3,7 +3,6 @@ from . import approval_mixin
 from . import res_partner
 from . import product_template
 from . import res_users
-from . import access_role
 from . import account_move
 from . import account_payment
 from . import account_payment_register

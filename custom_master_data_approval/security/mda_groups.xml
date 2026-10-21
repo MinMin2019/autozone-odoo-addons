@@ -9,13 +9,13 @@
         <field name="name">ผู้อนุมัติ Vendor/Customer Master</field>
         <field name="category_id" ref="module_category_mda"/>
         <field name="comment">อนุมัติ/ตีกลับ และแก้ไขข้อมูลลูกค้า-ผู้ขายได้ทุกสถานะ
-(ปกติได้รับอัตโนมัติจาก role "หัวหน้าบัญชี" ของ role builder)</field>
+(กำหนดรายชื่อที่เมนู อนุมัติข้อมูลหลัก > ประเภทการอนุมัติ)</field>
     </record>
 
     <record id="group_mda_approver_product" model="res.groups">
         <field name="name">ผู้อนุมัติ Item Code</field>
         <field name="category_id" ref="module_category_mda"/>
         <field name="comment">อนุมัติ/ตีกลับ และแก้ไขข้อมูลสินค้าได้ทุกสถานะ
-(ปกติได้รับอัตโนมัติจาก role "ผู้จัดการบัญชี" ของ role builder)</field>
+(กำหนดรายชื่อที่เมนู อนุมัติข้อมูลหลัก > ประเภทการอนุมัติ)</field>
     </record>
 </odoo>

@@ -21,10 +21,15 @@ class AzApprovalType(models.Model):
         "res.groups", string="กลุ่มผู้อนุมัติ", required=True,
         help="สมาชิกกลุ่มนี้กดอนุมัติ/ตีกลับได้ และเป็นกลุ่มเดียวที่แก้ไขข้อมูล"
              "หลังส่งอนุมัติได้")
-    approver_role_ids = fields.Many2many(
-        "access.role", string="Role ผู้อนุมัติ (role builder)",
-        help="ผูกกับ role ของ Access Role Builder: คนใน role เหล่านี้จะได้กลุ่มผู้อนุมัติ"
-             "อัตโนมัติ (ผ่าน implied group) ทุกครั้งที่กด Apply role")
+    approver_user_ids = fields.Many2many(
+        "res.users", string="ผู้อนุมัติ",
+        compute="_compute_approver_user_ids", inverse="_inverse_approver_user_ids",
+        domain=[("share", "=", False)],
+        help="รายชื่อผู้อนุมัติของประเภทนี้ — เพิ่ม/ลบที่นี่ ระบบจะใส่/ถอด user "
+             "ออกจากกลุ่มผู้อนุมัติให้เอง (admin ของระบบอนุมัติได้เสมอเป็นทางสำรอง). "
+             "ให้ทั้ง role ได้สิทธิ์: ไปที่ role แล้วใส่กลุ่มผู้อนุมัติในช่อง Extra Permissions "
+             "— คนใน role จะขึ้นชื่อที่นี่เอง (คนที่มาจาก role ให้ถอดที่ role)")
+    approver_warning = fields.Char(compute="_compute_approver_user_ids")
     free_field_prefixes = fields.Char(
         string="ฟิลด์ที่แก้ได้โดยไม่ต้องอนุมัติ (คำนำหน้า)",
         help="คำนำหน้าชื่อฟิลด์ คั่นด้วยจุลภาค เช่น az_ — ฟิลด์ที่ชื่อขึ้นต้นแบบนี้แก้ได้ทุกสถานะ "
@@ -59,28 +64,26 @@ class AzApprovalType(models.Model):
         return self.approver_group_id in user.groups_id
 
     # ------------------------------------------------------------------
-    # role builder integration
+    # ผู้อนุมัติ = สมาชิกกลุ่มผู้อนุมัติ (จุดเช็คสิทธิ์ทุกที่ยังดูที่กลุ่มเหมือนเดิม)
     # ------------------------------------------------------------------
-    def _sync_role_implied(self):
-        """เติมกลุ่มผู้อนุมัติเป็น implied ของกลุ่มที่ role builder generate
-        — action_apply ของ role builder เขียนทับ implied_ids ทั้งชุดทุกครั้ง
-        จึงต้องเรียกซ้ำหลัง apply เสมอ (ดู inherit ใน access_role.py)"""
-        for t in self.sudo():
-            for role in t.approver_role_ids:
-                if role.group_id and t.approver_group_id not in role.group_id.implied_ids:
-                    role.group_id.write({"implied_ids": [(4, t.approver_group_id.id)]})
+    @api.depends("approver_group_id", "approver_group_id.users")
+    def _compute_approver_user_ids(self):
+        for t in self:
+            users = t.approver_group_id.sudo().users.filtered("active")
+            t.approver_user_ids = users
+            if not users:
+                t.approver_warning = ("ยังไม่มีผู้อนุมัติ — ตอนนี้มีแต่ admin ของระบบที่อนุมัติได้")
+            elif len(users) < 2:
+                t.approver_warning = ("มีผู้อนุมัติคนเดียว — ถ้าคนนี้ลา/ไม่อยู่ งานหน้าบ้านจะติด "
+                                      "แนะนำให้มีอย่างน้อย 2 คน")
+            else:
+                t.approver_warning = False
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        records = super().create(vals_list)
-        records._sync_role_implied()
-        return records
-
-    def write(self, vals):
-        res = super().write(vals)
-        if "approver_role_ids" in vals or "approver_group_id" in vals:
-            self._sync_role_implied()
-        return res
+    def _inverse_approver_user_ids(self):
+        for t in self:
+            if t.approver_group_id:
+                t.approver_group_id.sudo().write(
+                    {"users": [(6, 0, t.approver_user_ids.ids)]})
 
     # ------------------------------------------------------------------
     # transaction gates — จุดบล็อกทุกที่เรียก 2 เมธอดนี้
