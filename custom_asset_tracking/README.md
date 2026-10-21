@@ -10,6 +10,7 @@
 - Group by **Analytic** / **Analytic Plan** ในลิสต์ ผ่านช่องซ่อน `main_analytic_account_id` (stored) = analytic ที่ % สูงสุดใน Analytic Distribution (v1.3.0) — สินทรัพย์ที่แบ่งหลายสาขาจะอยู่กลุ่มของสาขาที่ % มากสุด
 - ช่อง Custodian มี tracking ใน chatter → เห็นประวัติเปลี่ยนคนถือ
 - ค้นหาผู้ถือครองด้วย **รหัสพนักงาน** ได้ (v1.6.0): ดรอปดาวน์ช่อง Custodian แสดง "[รหัส] ชื่อ" + พิมพ์รหัสค้นได้, ช่องค้นหาลิสต์ "Custodian (name or code)" — `registration_number` ติดกลุ่ม HR จึงค้นแบบ sudo คืนแค่ id/รหัส ใช้ได้กับ user ที่ไม่มีสิทธิ์ HR; มีผลเฉพาะช่อง Custodian (context `az_employee_code_search`) ไม่เปลี่ยนการค้นพนักงานที่อื่น
+- **รูปเพิ่มเติมหลายรูป** (v1.7.0): แท็บ **Images** บนฟอร์มทรัพย์สิน เพิ่มได้ไม่จำกัด + คำอธิบายรูป + ลากเรียงลำดับ + เห็นผู้/วันที่อัปโหลด (โมเดล `az.asset.image`, image.mixin ย่อไม่เกิน 1920px) — รูปหลัก (`image_1920` ของ asset_module) ใช้เหมือนเดิม และรายงานตรวจเช็คยังแสดงเฉพาะรูปหลัก; สิทธิ์: Accountant ขึ้นไปเพิ่ม/ลบได้, Read-only ดูได้อย่างเดียว
 
 ## รายงานตรวจเช็คทรัพย์สิน (v1.4.0)
 - เมนู **Accounting › Accounting › Asset Check Report** หรือติ๊กรายการในลิสต์สินทรัพย์ → Print › Asset Check Report

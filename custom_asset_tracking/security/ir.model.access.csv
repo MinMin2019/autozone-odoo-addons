@@ -1,2 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_az_asset_check_report_wizard,az.asset.check.report.wizard,model_az_asset_check_report_wizard,account.group_account_readonly,1,1,1,1
+access_az_asset_image_readonly,az.asset.image readonly,model_az_asset_image,account.group_account_readonly,1,0,0,0
+access_az_asset_image_user,az.asset.image user,model_az_asset_image,account.group_account_user,1,1,1,1

@@ -9,7 +9,7 @@
 ตอนติดตั้งจะย้ายชื่อเดิมที่ตรงกับพนักงานให้อัตโนมัติ (ตัดคำนำหน้า/ช่องว่างก่อนเทียบ)
 ชื่อที่จับคู่ไม่ได้ปล่อยว่าง ให้ฝ่ายบัญชีเลือกเอง
 """,
-    'version': '18.0.1.6.0',
+    'version': '18.0.1.7.0',
     'category': 'Autozone/Accounting',
     'author': 'Autozone',
     'website': 'https://www.autozonegroup.com',
@@ -22,6 +22,7 @@
     'data': [
         'security/ir.model.access.csv',
         'views/account_asset_views.xml',
+        'views/asset_image_views.xml',
         'report/asset_check_report.xml',
         'wizard/asset_check_report_wizard_views.xml',
     ],

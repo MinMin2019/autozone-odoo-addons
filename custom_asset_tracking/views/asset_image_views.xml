@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ใช้จาก One2many บนฟอร์มทรัพย์สินเท่านั้น (asset_id เติมให้อัตโนมัติ) -->
+    <record id="view_az_asset_image_form" model="ir.ui.view">
+        <field name="name">az.asset.image.form</field>
+        <field name="model">az.asset.image</field>
+        <field name="arch" type="xml">
+            <form string="Asset Image">
+                <field name="sequence" invisible="1"/>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="name"/>
+                        <h3><field name="name" placeholder="e.g. Front side, Serial plate, Damage"/></h3>
+                        <div class="text-muted small mt-3" invisible="not id">
+                            Uploaded by <field name="create_uid" readonly="1" class="d-inline"/>
+                            on <field name="create_date" readonly="1" class="d-inline"/>
+                        </div>
+                    </div>
+                    <div class="col-md-8 text-center">
+                        <field name="image_1920" widget="image" required="1"
+                               options="{'preview_image': 'image_1024'}"/>
+                    </div>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_az_asset_image_kanban" model="ir.ui.view">
+        <field name="name">az.asset.image.kanban</field>
+        <field name="model">az.asset.image</field>
+        <field name="arch" type="xml">
+            <kanban string="Asset Images" default_order="sequence">
+                <field name="sequence" widget="handle"/>
+                <templates>
+                    <t t-name="card" class="p-0">
+                        <div class="text-center bg-light" style="height: 160px; overflow: hidden;">
+                            <field name="image_512" widget="image"
+                                   options="{'size': [0, 160], 'zoom': true, 'zoom_delay': 300}"/>
+                        </div>
+                        <div class="p-2 small">
+                            <field name="name" class="fw-bold text-truncate d-block"/>
+                            <span class="text-muted">
+                                <field name="create_uid" widget="many2one_avatar_user"/>
+                                <field name="create_date" widget="date" class="ms-1"/>
+                            </span>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_account_asset_form_images" model="ir.ui.view">
+        <field name="name">account.asset.form.images</field>
+        <field name="model">account.asset</field>
+        <field name="inherit_id" ref="account_asset.view_account_asset_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook/page[@name='main_page']" position="after">
+                <page string="Images" name="az_images">
+                    <field name="az_image_ids" mode="kanban" nolabel="1"
+                           add-label="Add Image"
+                           context="{'kanban_view_ref': 'custom_asset_tracking.view_az_asset_image_kanban',
+                                     'form_view_ref': 'custom_asset_tracking.view_az_asset_image_form'}"/>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
