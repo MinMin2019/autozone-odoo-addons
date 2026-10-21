@@ -1,6 +1,6 @@
 {
     "name": "Custom Access Role Builder",
-    "version": "18.0.1.0.0",
+    "version": "18.0.1.1.0",
     "summary": "Build user access by clicking (role = a set of capability bricks)",
     "description": """
 Access Role Builder

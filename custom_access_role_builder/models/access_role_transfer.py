@@ -33,6 +33,7 @@ class AccessRoleExport(models.TransientModel):
                 "include_foundation": role.include_foundation,
                 "exclusive_membership": role.exclusive_membership,
                 "users": role.user_ids.mapped("login"),
+                "extra_groups": [x for x in role.extra_group_ids.get_external_id().values() if x],
                 "lines": [{
                     "app": line.catalog_id.app or "",
                     "section": line.catalog_id.section or "",
@@ -152,12 +153,26 @@ class AccessRoleImport(models.TransientModel):
                 missing_users = sorted(set(logins) - set(found.mapped("login")))
                 role.user_ids = [(6, 0, found.ids)] if logins else [(5, 0, 0)]
 
+            # สิทธิ์เพิ่มเติม (อ้างด้วย xmlid) — ไฟล์เก่าไม่มี key นี้ = ไม่แตะของเดิม
+            missing_groups = []
+            if "extra_groups" in data:
+                extra = self.env["res.groups"]
+                for xmlid in data.get("extra_groups") or []:
+                    grp = self.env.ref(xmlid, raise_if_not_found=False)
+                    if grp and grp._name == "res.groups":
+                        extra |= grp
+                    else:
+                        missing_groups.append(xmlid)
+                role.extra_group_ids = [(6, 0, extra.ids)]
+
             msg = "%s role '%s': %s line(s)" % (
                 "CREATED" if created else "UPDATED", role.name, added)
             if missing_cat:
                 msg += "\n  !! catalog not found (skipped): " + "; ".join(missing_cat)
             if missing_users:
                 msg += "\n  !! user login not found (skipped): " + ", ".join(missing_users)
+            if missing_groups:
+                msg += "\n  !! extra group not found (skipped): " + ", ".join(missing_groups)
             report.append(msg)
 
         report.append(_("Done — review each role, then press Apply to activate."))

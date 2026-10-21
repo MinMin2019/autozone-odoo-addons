@@ -137,6 +137,15 @@ class AccessRole(models.Model):
     )
 
     user_ids = fields.Many2many("res.users", string="Users with this role")
+    extra_group_ids = fields.Many2many(
+        "res.groups", "access_role_extra_group_rel", "role_id", "group_id",
+        string="Extra Permissions",
+        domain=[("arb_generated", "=", False)],
+        help="กลุ่มสิทธิ์อื่นที่ให้คนใน role นี้ได้ด้วย เช่น ผู้อนุมัติ Item Code — "
+             "Apply แล้วไม่หาย (ถูกรวมเข้า role ทุกครั้ง) และแก้ช่องนี้บน role ที่ Apply แล้ว "
+             "มีผลทันทีไม่ต้องกด Apply ซ้ำ. หมายเหตุ: เอากลุ่มออกจากช่องนี้ "
+             "คนที่เคยได้ยังอยู่ในกลุ่มนั้น ต้องถอดที่หน้าของกลุ่ม/โมดูลนั้นเอง",
+    )
     line_ids = fields.One2many("access.role.line", "role_id", string="Access Lines")
 
     group_id = fields.Many2one("res.groups", string="Role group (generated)", readonly=True, copy=False)
@@ -173,6 +182,20 @@ class AccessRole(models.Model):
             if grp:
                 groups |= grp
         return groups
+
+    def write(self, vals):
+        if "extra_group_ids" not in vals:
+            return super().write(vals)
+        old = {role.id: role.extra_group_ids for role in self}
+        res = super().write(vals)
+        # role ที่ Apply แล้ว: เติม/ถอด implied ตามส่วนต่างทันที ไม่ต้องกด Apply ซ้ำ
+        for role in self.filtered(lambda r: r.state == "applied" and r.group_id):
+            added = role.extra_group_ids - old[role.id]
+            removed = old[role.id] - role.extra_group_ids
+            cmds = [(4, g.id) for g in added] + [(3, g.id) for g in removed]
+            if cmds:
+                role.group_id.sudo().write({"implied_ids": cmds})
+        return res
 
     # ------------------------------------------------------------------- apply
     def action_apply(self):
@@ -212,6 +235,10 @@ class AccessRole(models.Model):
                 cross_models = CROSS_APP_READ.get(app)
                 if cross_models:
                     implied |= self._get_cross_app_foundation(app, cross_models)
+
+        # สิทธิ์เพิ่มเติมที่ admin เลือกเอง (เช่น ผู้อนุมัติ master data) — ต้องรวมไว้ที่นี่
+        # เพราะบรรทัดล่างเขียนทับ implied ทั้งชุด
+        implied |= self.extra_group_ids
 
         # ผูกอิฐเข้า role (แทนที่ของเดิมทั้งหมด = sync)
         role_group.write({"implied_ids": [(6, 0, implied.ids)]})

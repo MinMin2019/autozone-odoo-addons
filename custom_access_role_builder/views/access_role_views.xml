@@ -46,6 +46,8 @@
                             <field name="code" placeholder="ap_accountant (set once)"/>
                             <field name="include_foundation"/>
                             <field name="exclusive_membership"/>
+                            <field name="extra_group_ids" widget="many2many_tags"
+                                   options="{'no_create': True}"/>
                         </group>
                         <group>
                             <field name="last_apply" readonly="1"/>
