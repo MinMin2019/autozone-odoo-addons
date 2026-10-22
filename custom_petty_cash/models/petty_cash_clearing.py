@@ -576,7 +576,9 @@ class PettyCashClearingLine(models.Model):
         "res.partner", string="ร้านค้า", required=True,
         default=lambda self: self.env.ref(
             "custom_petty_cash.partner_no_receipt", raise_if_not_found=False),
-        domain="[('supplier_rank', '>', 0)]")
+        # v1.10.3: คู่ค้าที่สร้างใหม่จาก Contacts มี supplier_rank = 0 จนกว่าจะมีบิลใบแรก
+        # → ค้นในใบเคลียร์ไม่เจอทั้งที่สร้าง Bill เจอ; เปิดให้เห็นทุกคนที่ไม่ใช่ลูกค้าล้วน
+        domain="['|', ('supplier_rank', '>', 0), ('customer_rank', '=', 0)]")
     receipt_ref = fields.Char(
         string="เลขที่ใบเสร็จ/ใบกำกับ",
         help="ร้านเดียวกัน+เลขที่เดียวกัน จะรวมเป็น vendor bill ใบเดียว")
