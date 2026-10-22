@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        สัญญาจ้างแรงงาน (ไม่มีกำหนดระยะเวลา) และ สัญญาจ้างลูกจ้างชั่วคราว (มีกำหนดระยะเวลา)
+        ถอดข้อความจากไฟล์ "สัญญาจ้างงาน.pdf" และ "สัญญาลูกจ้างชั่วคราว.pdf" ของ HR คำต่อคำ
+        รวมถึงคำที่สะกดตามต้นฉบับ (เช่น "ขอนายจ้าง" ข้อ 5.2) — แก้ข้อความที่นี่เมื่อ HR แก้ต้นฉบับ
+        ช่องที่ยังไม่มีข้อมูลพิมพ์เป็นเส้นจุดไว้เขียนมือ เหมือนฟอร์มกระดาษ
+    -->
+    <record id="paperformat_employment_contract" model="report.paperformat">
+        <field name="name">Autozone Employment Contract (A4)</field>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">32</field>
+        <field name="margin_bottom">20</field>
+        <field name="margin_left">22</field>
+        <field name="margin_right">20</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">26</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_employment_contract" model="ir.actions.report">
+        <field name="name">สัญญาจ้าง</field>
+        <field name="model">hr.contract</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">autozone_hr_employee.report_employment_contract</field>
+        <field name="report_file">autozone_hr_employee.report_employment_contract</field>
+        <field name="print_report_name">'สัญญาจ้าง - %s' % (object.employee_id.name or '')</field>
+        <field name="paperformat_id" ref="paperformat_employment_contract"/>
+        <field name="binding_model_id" ref="hr_contract.model_hr_contract"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- A value on a dotted line; an empty one leaves the dotted line to write on. -->
+    <template id="az_fill">
+        <span class="az-fill" t-att-style="'min-width: %smm' % (w or 25)"><t t-esc="v or ''"/></span>
+    </template>
+
+    <template id="report_employment_contract">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-set="o" t-value="o.sudo()"/>
+                <t t-set="emp" t-value="o.employee_id"/>
+                <t t-set="fixed" t-value="o.term_type == 'fixed'"/>
+                <t t-set="company" t-value="o.company_id or res_company"/>
+
+                <div class="header">
+                    <style>
+                        .az-head { font-family: 'Sarabun', sans-serif; }
+                        .az-head img { height: 60px; }
+                        .az-rule { border-top: 3px solid #8c8c8c; border-bottom: 1px solid #8c8c8c;
+                                   height: 2px; width: 80%; margin: 6px auto 0 auto; }
+                    </style>
+                    <div class="az-head">
+                        <img t-if="company.logo" t-att-src="image_data_uri(company.logo)"/>
+                        <div class="az-rule"/>
+                    </div>
+                </div>
+
+                <div class="article" t-att-data-oe-model="o._name" t-att-data-oe-id="o.id">
+                    <style>
+                        .az-doc { font-family: 'Sarabun', sans-serif; font-size: 14.5px; line-height: 1.75; color: #000; }
+                        .az-doc h2 { text-align: center; font-size: 17px; font-weight: 700; margin: 4px 0 2px 0; }
+                        .az-doc p { margin: 0 0 2px 0; text-align: left; }
+                        .az-doc .ind { text-indent: 14mm; }
+                        .az-doc .ind2 { padding-left: 14mm; }
+                        .az-doc .ind3 { padding-left: 26mm; }
+                        .az-doc .gap { margin-top: 10px; }
+                        .az-doc .right { text-align: right; }
+                        .az-fill { display: inline-block; border-bottom: 1px dotted #000; text-align: center;
+                                   padding: 0 4px; line-height: 1.3; text-indent: 0; }
+                        .az-sign, .az-sign tbody, .az-sign tr, .az-sign td { border: 0 none !important; border-collapse: collapse; }
+                        .az-sign td { padding: 14px 4px 0 4px; vertical-align: top; text-align: center; }
+                        .az-avoid { page-break-inside: avoid; }
+                    </style>
+                    <div class="az-doc">
+                        <h2 t-if="not fixed">สัญญา​จ้างแรงงาน</h2>
+                        <h2 t-if="fixed">สัญญาจ้าง​ลูกจ้างชั่วคราว</h2>
+                        <p class="right"><b>เขียน​ที่</b> <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.sign_place"/><t t-set="w" t-value="60"/></t></p>
+
+                        <p class="ind gap"><b>สัญญา​ฉบับ​นี้​ทำ​ขึ้น​เมื่อ วันที่</b>
+                            <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.az_thai_date(o.sign_date)"/><t t-set="w" t-value="35"/></t>
+                            ระหว่าง <b>บริษัท ออโต้​โซน จำกัด</b> โดย นาย​ธวัช สวัสดิ​วร และ นาง​ภาวนา สวัสดิ​วร กรรมการ​ผู้มีอำนาจ
+                            สำนักงาน​ตั้งอยู่​เลขที่ 4/2 หมู่ 6 ซอย​สุขาภิบาล 12 ถนน​เศรษฐกิจ ตำบล​บ้านสวน อำเภอ​เมือง​ชลบุรี จังหวัด​ชลบุรี
+                            ซึ่ง​ต่อไปนี้​ใน​สัญญา​นี้​เรียก​ว่า <b>“นายจ้าง”</b> ฝ่าย​หนึ่ง</p>
+
+                        <t t-set="addr" t-value="o.az_private_address()"/>
+                        <p class="ind">กับ <t t-if="not o.az_employee_title()">นาย/นาง/นางสาว</t>
+                            <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="(o.az_employee_title() + ' ' + (emp.name or '')).strip()"/><t t-set="w" t-value="65"/></t>
+                            <t t-if="fixed">
+                                เกิด​เมื่อ​วันที่ <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.az_thai_date(emp.birthday)"/><t t-set="w" t-value="32"/></t>
+                                อายุ <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.az_employee_age()"/><t t-set="w" t-value="12"/></t> ปี
+                                บัตรประจำตัวประชาชน​เลขที่ <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="emp.identification_id"/><t t-set="w" t-value="42"/></t>
+                            </t>
+                            <t t-if="addr">
+                                อยู่​บ้าน​เลขที่ <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="addr"/><t t-set="w" t-value="90"/></t>
+                            </t>
+                            <t t-else="">
+                                อยู่​บ้าน​เลขที่ <t t-call="autozone_hr_employee.az_fill"/> หมู่​ที่ <t t-call="autozone_hr_employee.az_fill"><t t-set="w" t-value="12"/></t>
+                                ซอย <t t-call="autozone_hr_employee.az_fill"/> ถนน <t t-call="autozone_hr_employee.az_fill"/>
+                                ตำบล <t t-call="autozone_hr_employee.az_fill"/> อำเภอ <t t-call="autozone_hr_employee.az_fill"/>
+                                จังหวัด <t t-call="autozone_hr_employee.az_fill"/>
+                            </t>
+                            <t t-if="fixed">
+                                โทรศัพท์ <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="emp.private_phone"/><t t-set="w" t-value="30"/></t>
+                                ออก​ให้ ณ <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="emp.id_card_issue_place"/><t t-set="w" t-value="28"/></t>
+                                วัน​ออก​บัตร วันที่ <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.az_thai_date(emp.id_card_issue_date)"/><t t-set="w" t-value="28"/></t>
+                                บัตร​หมดอายุ​เมื่อ​วันที่ <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.az_thai_date(emp.id_card_expiry_date)"/><t t-set="w" t-value="28"/></t>
+                            </t>
+                            ซึ่ง​ต่อไปนี้​ใน​สัญญา​จะ​เรียก​ว่า <b>“ลูกจ้าง”</b> ฝ่าย​หนึ่ง คู่สัญญา​ทั้งสอง​ตกลง​กัน​ตาม​รายละเอียด​และ​เงื่อนไข​ดังนี้</p>
+
+                        <!-- ===================== ไม่มีกำหนดระยะเวลา ===================== -->
+                        <t t-if="not fixed">
+                            <p class="ind gap"><b>ข้อ 1. นายจ้าง​ตกลง​จ้าง​ลูกจ้าง​ปฏิบัติงาน​ใน​ตำแหน่ง</b>
+                                <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.job_id.name or emp.job_title"/><t t-set="w" t-value="60"/></t>
+                                <b>ระดับ​งาน</b> <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.job_id.job_level if 'job_level' in o.job_id._fields else ''"/><t t-set="w" t-value="12"/></t>
+                                <b>สังกัด</b> <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.department_id.name"/><t t-set="w" t-value="12"/></t>
+                                <b>มี​ใน​วัน​ทำสัญญา​นี้​ลูกจ้าง​ได้​ทราบ​กฎ ระเบียบ ข้อบังคับ การทำงาน​ของ​นายจ้าง​เป็นที่​เข้าใจ​ดีแล้ว​ให้​ลูกจ้าง​เริ่ม​ปฏิบัติงาน​ตั้งแต่​วันที่</b>
+                                <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.az_thai_date(o.date_start)"/><t t-set="w" t-value="35"/></t></p>
+                            <p class="ind">ข้อ 2. นายจ้าง​ตกลง​ให้​ค่าจ้าง และ​ลูกจ้าง​ตกลง​รับ​ค่าจ้าง​ดังนี้ ใน​ระหว่าง​ปฏิบัติงาน จะ​จ่ายเงินเดือน​ให้​ลูกจ้าง​ใน​อัตรา<b>เดือน​ละ</b>
+                                <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="'{:,.2f}'.format(o.wage) if o.wage else ''"/><t t-set="w" t-value="30"/></t>
+                                <b>บาท (</b> <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.az_baht_text(o.wage)"/><t t-set="w" t-value="40"/></t> <b>)</b>
+                                กำหนด​วัน​จ่าย​ทุก​วันที่ 30 ของ​เดือน โดย​โอน​ผ่าน​ระบบ​บัญชี​ธนาคาร​ตามที่​บริษัทฯ ได้​กำหนด​ไว้ โดย​มี​กำหนด​ทั้งหมด 119 วัน นับ​จาก​วัน​ทำสัญญา​นี้​เป็นต้นไป</p>
+                            <p class="ind">ข้อ 3. ลูกจ้าง​ให้สัญญา​แก่​นายจ้าง​ว่า งาน​ใน​ตำแหน่งหน้าที่​ซึ่ง​รับจ้าง​ตาม​สัญญา​นี้​ลูกจ้าง​มีความรู้​ความสามารถ และ​ตกลง​ว่า​จะ​ปฏิบัติหน้าที่​จาก​การทำงาน​ด้วย​ความระมัดระวัง​เพื่อ​ป้องกัน​มิ​ให้​นายจ้าง​ได้รับ​ความเสียหาย​อัน​เกิด​จาก​ความ​บกพร่อง และ​จะ​ต้อง​ใช้​ความระมัดระวัง​เพื่อ​ความปลอดภัย​ต่อ​ร่างกาย​และ​ทรัพย์สิน​ของ​บุคคล​อื่น โดย​ลูกจ้าง​จะ​ต้อง​รับผิด​ใน​ผล​แห่ง​ละเมิด​ที่​ได้​กระ​ทำต่อ​นายจ้าง และ​บุคคล​อื่น ตลอดทั้ง​จะ​ไม่​ละเลย​ทอดทิ้ง​งาน​หรือ​ทำให้​นายจ้าง​เสื่อม​เสียชื่อเสียง​เกียรติคุณ ลูกจ้าง​ตกลง​จะ​ปฏิบัติงาน​ต่าง ๆ ตามที่​นายจ้าง​มอบหมาย​ให้​สำเร็จ​ลุล่วง​ด้วยดี ลูกจ้าง​ให้สัญญา​ว่า​จะ​ไม่​นำ​ความลับ​ที่​ล่วงรู้​ไม่​ว่า​โดย​ทางตรง​หรือ​ทางอ้อม​ไป​เปิดเผย​ให้​กับ​บุคคลภายนอก</p>
+                            <p class="ind gap">ข้อ 4. ใน​ระหว่าง​การ​จ้างงาน​ตาม​สัญญา​นี้ นายจ้าง​ตกลง​จะ​ให้​สวัสดิการ​และ​คุ้มครอง​แก่​ลูกจ้าง ดังนี้</p>
+                            <p class="ind2">(ก) ค่าครองชีพ​เมื่อ​ผ่าน​ทดลอง​งาน 500.-บาท/เดือน และ เบี้ย​ขยัน​ตาม​ขั้นบันได</p>
+                            <p class="ind2">(ข) ค่ารักษาพยาบาล​เจ็บป่วย​อันเนื่องมาจาก​การทำงาน​ตาม​สวัสดิการ​กองทุน​เงิน​ทดแทน​ซึ่ง​ทาง​บริษัทฯ เป็น​ผู้ดำเนินการ​ส่ง​เงินสมทบ​ให้​ตามกฎหมาย​กำหนด</p>
+                            <p class="ind2">(ค) สวัสดิการ​ประกันสังคม​ตามกฎหมาย​กำหนด</p>
+                            <p class="ind2">(ง) วันหยุด​พักผ่อน 6 วัน เมื่อ​ได้​ทำงาน​ครบ 1 ปี​แล้ว โดย​ได้รับ​เงินค่าจ้าง​ตามปกติ​เท่ากับ​วันหยุด​ดังกล่าว</p>
+                        </t>
+
+                        <!-- ===================== มีกำหนดระยะเวลา (ลูกจ้างชั่วคราว) ===================== -->
+                        <t t-if="fixed">
+                            <p class="ind gap"><b>ข้อ 1. นายจ้าง​ตกลง​จ้าง​ลูกจ้าง​ปฏิบัติงาน​ใน​ตำแหน่ง</b>
+                                <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.job_id.name or emp.job_title"/><t t-set="w" t-value="45"/></t>
+                                <b>ระดับ​งาน</b> <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.job_id.job_level if 'job_level' in o.job_id._fields else ''"/><t t-set="w" t-value="12"/></t>
+                                <b>สังกัด</b> <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.department_id.name"/><t t-set="w" t-value="12"/></t>
+                                <b>มี​กำหนด​อายุ​สัญญา</b> <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.az_contract_years()"/><t t-set="w" t-value="12"/></t>
+                                <b>ปี นับตั้งแต่​วันที่</b> <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.az_thai_date(o.date_start)"/><t t-set="w" t-value="30"/></t>
+                                <b>ซึ่ง​เป็น​วัน​เริ่ม​ปฏิบัติงาน​เป็นต้นไป ถึง​วันที่</b> <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.az_thai_date(o.date_end)"/><t t-set="w" t-value="30"/></t>
+                                <b>ลูกจ้าง​จะ​ได้รับ​ค่าจ้าง​เป็น​เงิน​จำนวน​เดือน​ละ</b>
+                                <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="'{:,.2f}'.format(o.wage) if o.wage else ''"/><t t-set="w" t-value="28"/></t>
+                                <b>บาท (</b> <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.az_baht_text(o.wage)"/><t t-set="w" t-value="40"/></t> <b>)</b>
+                                <b>โดย​นายจ้าง​จะ​จ่าย​ค่าจ้าง​เป็น​รายเดือน​ทุก​วันที่ 30 ของ​เดือน ใน​วัน​ทำสัญญา​นี้​ลูกจ้าง​ได้​ทราบ กฎ ระเบียบ ข้อบังคับ การทำงาน​ของ​นายจ้าง​เป็นที่​เข้าใจ​ดีแล้ว และ​ลูกจ้าง​ยิน​ยอมให้​นายจ้าง​หัก​ภาษีเงินได้ เงิน​ประกันสังคม และ​เงินสะสม​จาก​ค่าจ้าง​ดังกล่าว (ถ้า​มี)</b></p>
+                            <p class="ind gap"><b>ข้อ 2. กรณี​ลูกจ้าง​เริ่ม​ปฏิบัติงาน​ใน​ปี​แรก จะ​ต้อง​ปฏิบัติงาน​ใน​ระยะ​ทดลอง​งาน​เป็นเวลา</b>
+                                <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.probation_days or ''"/><t t-set="w" t-value="12"/></t> <b>วัน (</b><t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.az_thai_number(o.probation_days)"/><t t-set="w" t-value="12"/></t><b>)</b>
+                                <b>และ​หาก​นายจ้าง​เห็นสมควร​ขยาย​ระยะเวลา​ทดลอง​งาน ลูกจ้าง​ยิน​ยอมให้​นายจ้าง​ขยาย​ระยะเวลา​การทดลอง​งาน​ออก​ไป​อีก​ได้ แต่​รวม​ระยะเวลา​ทดลอง​งาน​เดิม​แล้ว ต้อง​ไม่​เกิน 119 วัน ใน​ระหว่าง​นี้ ลูกจ้าง​จะ​ต้อง​รับ​การประเมินผล​การ​ปฏิบัติงาน​ทุก</b>
+                                <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.eval_probation_days or ''"/><t t-set="w" t-value="22"/></t>
+                                <b>วัน ตาม​แบบ​ประเมิน​ของ​นายจ้าง หาก​ลูกจ้าง​ไม่​ผ่าน​การทดลอง​งาน หรือไม่​ผ่าน​การประเมินผล​การ​ปฏิบัติงาน​ให้​สัญญาจ้าง​สิ้นสุดลง​ทันที การประเมินผล​การทดลอง หรือ​การ​ปฏิบัติงาน​ของ​นายจ้าง​ให้​ถือเป็น​ที่สุด</b></p>
+                            <p class="ind gap"><b>ข้อ 3. ลูกจ้าง​ที่​ผ่าน​การทดลอง​งาน​ตาม​ข้อ 2 แล้ว​ถือว่า​เป็น ลูกจ้างชั่วคราว​ของ บริษัทฯ และ​ลูกจ้าง​จะ​ต้อง​รับ​การประเมินผล​การ​ปฏิบัติงาน ตาม​แบบ​ประเมิน​ของ นายจ้าง​ทุก</b>
+                                <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.eval_after_days or ''"/><t t-set="w" t-value="22"/></t>
+                                <b>วัน ทั้งนี้ ถ้า​ลูกจ้าง​ผ่าน​การประเมินผล​การ​ปฏิบัติงาน​แล้ว จะ​ได้รับ​การ​ต่อ​สัญญาจ้าง​เป็น​คราว ๆ ไป คราว​ละ</b>
+                                <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.renew_years or ''"/><t t-set="w" t-value="10"/></t> <b>(</b><t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.az_thai_number(o.renew_years)"/><t t-set="w" t-value="10"/></t><b>) ปี แต่​ไม่​เกิน</b>
+                                <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.renew_max_years or ''"/><t t-set="w" t-value="10"/></t> <b>(</b><t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.az_thai_number(o.renew_max_years)"/><t t-set="w" t-value="10"/></t><b>) ปี ต่อเนื่อง</b>
+                                ลูกจ้าง​ให้สัญญา​แก่​นายจ้าง​ว่า งาน​ใน​ตำแหน่งหน้าที่​ซึ่ง​รับจ้าง​ตาม​สัญญา​นี้ ลูกจ้าง​มีความรู้​ความสามารถ และ​ตกลง​ว่า​จะ​ปฏิบัติหน้าที่​จาก​การทำงาน​ด้วย​ความระมัดระวัง เพื่อ​ป้องกัน​มิ​ให้​นายจ้าง​ได้รับ​ความเสียหาย​อัน​เกิด​จาก​ความ​บกพร่อง และ​จะ​ต้อง​ใช้​ความระมัดระวัง เพื่อ​ความปลอดภัย​ต่อ​ร่างกาย และ​ทรัพย์สิน​ของ​บุคคล​อื่น โดย​ลูกจ้าง​จะ​ต้อง​รับผิด​ใน​ผล​แห่ง​ละเมิด​ที่​ได้​กระ​ทำต่อ​นายจ้าง และ​บุคคล​อื่น ตลอดทั้ง​จะ​ไม่​ละเลย​ทอดทิ้ง​งาน​หรือ​ทำให้​นายจ้าง​เสื่อม​เสียชื่อเสียง​เกียรติคุณ ลูกจ้าง​ตกลง​จะ​ปฏิบัติงาน​ต่าง ๆ ตามที่​นายจ้าง​มอบหมาย​ให้​สำเร็จ​ลุล่วง​ด้วยดี ลูกจ้าง​ให้สัญญา​ว่า จะ​ไม่​นำ​ความลับ​ที่​ล่วงรู้​ไม่​ว่า​โดย​ทางตรง หรือ​ทางอ้อม​ไป​เปิดเผย​ให้​กับ​บุคคลภายนอก</p>
+                            <p class="ind gap">ข้อ 4. ใน​ระหว่าง​การ​จ้างงาน​ตาม​สัญญา​นี้ นายจ้าง​ตกลง​จะ​ให้​สวัสดิการ​และ​คุ้มครอง​แก่​ลูกจ้าง ดังนี้</p>
+                            <p class="ind2">(ก) ค่าครองชีพ​เมื่อ​ผ่าน​ทดลอง​งาน 119 วัน จำนวน 500.-บาท/เดือน และ เบี้ย​ขยัน​ตาม​ขั้นบันได</p>
+                            <p class="ind2">(ข) ค่ารักษาพยาบาล​เจ็บป่วย​อันเนื่องมาจาก​การทำงาน ตาม​สวัสดิการ​กองทุน​เงิน​ทดแทน​ซึ่ง​ทาง​บริษัทฯ เป็น​ผู้ดำเนินการ​ส่ง​เงินสมทบ​ให้​ตามกฎหมาย​กำหนด</p>
+                            <p class="ind2">(ค) สวัสดิการ​กองทุน​สงเคราะห์​ลูกจ้าง</p>
+                        </t>
+
+                        <!-- ===================== ข้อ 5–9 ใช้ร่วมกัน ===================== -->
+                        <p class="ind gap">ข้อ 5. นายจ้าง​มี​สิทธิ ดังต่อไปนี้</p>
+                        <p class="ind">5.1 กำหนด​แก้ไข เปลี่ยนแปลง ยกเลิก หรือ​เพิ่มเติม​วัน และ​เวลาทำงาน​ปกติ วันหยุด เวลา​พัก และ หรือ​สวัสดิการ​ต่าง ๆ ให้​เป็นไปตาม​กฎหมายแรงงาน</p>
+                        <p class="ind">5.2 กำหนด​หรือ​เปลี่ยนแปลง​ระเบียบ​ข้อบังคับ​เกี่ยวกับ​การทำงาน สภาพการจ้าง​งาน รวมถึง​การ​โอนย้าย​หน้าที่​งาน หรือ​โยกย้าย​สถานที่ทำงาน​ซึ่ง​เป็น​สาขา​ย่อย​ของ​บริษัทฯ​ตาม​เห็นสมควร​โดย​ลูกจ้าง​พร้อม​ที่จะ​ปฏิบัติงาน​ให้​ตามคำสั่ง​ขอ​นายจ้าง</p>
+                        <p class="ind">5.3 การ​ที่​นายจ้าง​ตกลง​รับ​ลูกจ้าง​เข้าทำงาน​กับ​บริษัทฯ ตาม​สัญญา​นี้ เนื่องมาจาก​ลูกจ้าง​ได้​แสดงหลักฐาน หรือ​ให้​คำรับรอง​ใน​รายละเอียด​ต่าง ๆ ตาม​คุณสมบัติ​ที่​ระบุ​ไว้​ซึ่ง​ตรง​ตาม​ความต้องการ​ของ​บริษัทฯ และ​หาก​ปรากฏ​ใน​ภายหลัง​ไม่​ว่า​กรณี​ใด ๆ ก็ตาม​ว่า​ลูกจ้าง​ได้​ให้​ข้อมูล​และ​หลักฐาน​ใน​คุณสมบัติ​ของ​ตนเอง​เป็น​เท็จ หรือ​ปกปิด​ข้อความ​ที่​มี​ผลเสียหาย​ต่อ​การทำงาน​ของ​ลูกจ้าง ซึ่ง​ถือ​เป็นการ​ผิดสัญญา และ​จงใจ​ทำให้​นายจ้าง​และ​บริษัทฯ เกิด​ความเสียหาย ลูกจ้าง​ยิน​ยอมให้​นายจ้าง​มี​สิทธิ​บอกเลิก​สัญญาจ้าง และ​เลิกจ้าง​ในทันที โดย​ลูกจ้าง​ไม่​มี​สิทธิเรียกร้อง​ค่าชดเชย​ใด ๆ จาก​นายจ้าง​และ​บริษัทฯ ทั้งสิ้น</p>
+                        <p class="ind">5.4 หาก​ลูกจ้าง​ปฏิบัติหน้าที่ ที่​ตน​รับผิดชอบ​ตาม​ลักษณะ​งาน​ที่​ได้​รับมอบหมาย และ หรือ​กระ​ทำให้​บริษัทฯ ได้รับ​ความเสื่อมเสีย​ทั้ง​ใน​ด้าน​ผลประกอบการ​ที่​ไม่​เป็นไปตาม​เป้าหมาย และ​นโยบาย​ที่​บริษัทฯ กำหนด​ไว้ ลูกจ้าง​ยิน​ยอมให้​นายจ้าง​บอกเลิก​สัญญา​นี้ และ​พิจารณา​ผลงาน​ตนเอง​โดย​การเขียน​ใบลาออก​ได้​ในทันที โดย​ลูกจ้าง​ไม่​มี​สิทธิเรียกร้อง​ค่าชดเชย​ใด ๆ จาก​นายจ้าง​และ​บริษัทฯ ทั้งสิ้น</p>
+                        <p class="ind">5.5 หาก​ขณะ​ปฏิบัติงาน​ลูกจ้าง​ได้​รับมอบหมาย​ให้​ดูแล​วัสดุ​อุปกรณ์​อันเป็น​ของ​ส่วนบุคคล​และ​หรือ​ส่วนรวม​ซึ่ง​เป็น​ทรัพย์สิน​ของ​บริษัทฯ เกิด​ความ​ชำรุด​หรือ​สูญหาย​ไม่​ว่า​จะ​เกิด​จาก​ความผิดพลาด​ของ​ลูกจ้าง​หรือไม่​ก็ตาม ลูกจ้าง​ตกลง​เป็น​ผู้รับผิดชอบ ดำเนินการ​แก้ไข หรือ​จัดหา​มา​ทดแทน หรือ​ชดใช้​ค่าเสียหาย​แก่​นายจ้าง​ตามความเป็นจริง ซึ่ง​เป็นที่​ตกลง​ยอมรับ​กัน​ทั้งสองฝ่าย</p>
+                        <p class="ind">5.6 ลูกจ้าง​จะ​ไม่​แสวงหาผลประโยชน์ จาก​การ​เป็น​พนักงาน​บริษัทฯ ไม่​ว่า​จะ​เป็น​ทางตรง​หรือ​ทางอ้อม เพื่อ​ตนเอง​หรือ​เพื่อ​ผู้อื่น โดย​การนำ​ข้อมูล​สำคัญ​ของ​บริษัทฯ เปิดเผย​ต่อ​บุคคล​อื่น ซึ่ง​ไม่​ได้​มีส่วน​เกี่ยวข้อง​ใด ๆ กับ​นายจ้าง​หรือ​บริษัทฯ อัน​มีผลกระทบ​กับ​บริษัทฯ​หาก​ลูกจ้าง​มี​การกระทำ​ดังกล่าว​จะ​ยิน​ยอมให้​บริษัทฯ​ปลด​ให้​พ้น​สภาพ​จาก​การ​เป็น​พนักงาน และ​เรียกร้อง​ค่าชดเชย​จาก​ลูกจ้าง​ได้​ตาม​ความเหมาะสม​และ​หรือ​ให้​มีผล​ทางกฎหมาย​ใน​การ​ดำเนินการ​เรียกร้อง​ค่าเสียหาย​ใน​ลำดับ​ต่อไป</p>
+                        <p class="ind">5.7 ลูกจ้าง​ตกลง​ให้​บรรดา​ลิขสิทธิ์ และ​หรือ​สิทธิบัตร รวมถึง​ทรัพย์สินทางปัญญา ที่​เกิดขึ้น​ขณะที่​เป็น​ลูกจ้าง​ของ​บริษัทฯ ให้​ตกเป็นของ​นายจ้าง​แต่​เพียงผู้เดียว และ​หาก​มี​การ​ละเมิด​ต่อ​นายจ้าง ซึ่ง​เป็นผล​ทำให้​นายจ้าง​ได้รับ​ความเสียหาย บริษัทฯ มี​สิทธิ​ดำเนินการ​กับ​ลูกจ้าง​ได้​ตาม​ข้อกฎหมาย​ว่าด้วย​เรื่อง​การ​ละเมิดลิขสิทธิ์​ในทันที</p>
+                        <p class="ind">5.8 ห้าม​มิ​ให้​ลูกจ้าง​ใช้ประโยชน์​จาก​การ​เป็น​พนักงาน หา​ผลประโยชน์​ให้​กับ​ตนเอง เช่น การ​ใช้​เวลาทำงาน​ของ​บริษัทฯ ใน​การ​ปฏิบัติงาน​ให้​กับ​บุคคล​อื่น หรือ​องค์กร​อื่น ซึ่ง​มิใช่​บริษัทฯ <t t-if="fixed">ของ​นายจ้าง</t><t t-else="">ของ​ผู้ว่าจ้าง</t>ตาม​สัญญา​นี้ หาก​มี​การกระทำ​ดังกล่าว บริษัทฯ สามารถ​ดำเนินการ​ขั้นสูงสุด​โดย​ให้​ลูกจ้าง​นั้น​พ้น​สภาพ​การ​เป็น​พนักงาน​ได้​ทันที</p>
+
+                        <p class="ind gap">ข้อ 6. ลูกจ้าง​สัญญา​ว่า​จะ​เชื่อฟัง​และ​ปฏิบัติ​ตามคำสั่ง​ของ​หัวหน้างาน​หรือ​ผู้จัดการ​และ​ปฏิบัติตาม​ข้อบังคับ​เกี่ยวกับ​การทำงาน​อัน​ชอบด้วยกฎหมาย​ของ​นายจ้าง ทั้งที่​ได้​บัญญัติ​ไว้​แล้ว​ใน​ขณะนี้​หรือ​จะ​ได้​บัญญัติ​ขึ้น​ต่อไป​ใน​ภายหน้า​ด้วย และ​นายจ้าง​และ​ลูกจ้าง​ตกลง​ให้​ถือ​ข้อบังคับ​เกี่ยวกับ​การทำงาน​ดังกล่าว​เป็น​ส่วนหนึ่ง​ของ​สัญญา​นี้ หาก​มี​บทบัญญัติ​ใดๆ ขัด​หรือ​แย้ง​กับ​หนังสือสัญญา​ฉบับ​นี้ ให้​นำ​เอา​บทบัญญัติ​ของ​สัญญา​นี้​ใช้​บังคับ</p>
+
+                        <p class="ind gap">ข้อ 7. กรณี​ที่​ลูกจ้าง​ฝ่าฝืน​ระเบียบ ข้อบังคับ​การทำงาน ในกรณีที่​ลูกจ้าง​ไม่​ปฏิบัติ​ตามระเบียบ กฎ ข้อบังคับ​การทำงาน​ที่​ได้​ตกลง​ไว้​กับ​นายจ้าง นายจ้าง​จะ​ใช้​สิทธิ​ดังต่อไปนี้</p>
+                        <p class="ind3">1) มี​หนังสือ​แจ้ง​เตือน และ​เรียก​มา​ว่ากล่าว​ตักเตือน และ​ให้​ลูกจ้าง​ลง​ราย​มือ​ชื่อ​รับทราบ</p>
+                        <p class="ind3">2) มี​หนังสือ​แจ้ง​เตือน​ครั้ง​ที่สอง​ใน​กรณี​กระ​ทำซ้ำ​หลังจากที่​เตือน​แล้ว หรือ​กระทำความผิด​อย่าง​อื่น</p>
+                        <p class="ind3">3) มี​หนังสือ​แจ้ง​เลิกจ้าง โดย​จะ​ไม่​จ่าย​เงิน​ค่า​บอกกล่าว​ล่วงหน้า​ก่อน​เลิกจ้าง และ​ค่าทดแทน ใน​กรณี​กระทำความผิด​อย่าง​ร้ายแรง​ตามกฎหมาย​คุ้มครอง​แรงงาน</p>
+
+                        <p class="ind gap">ข้อ 8. หลักประกัน​ตาม​สัญญา</p>
+                        <p class="ind">เพื่อให้​เป็นหลักประกัน​การ​ปฏิบัติงาน ตลอดจน​ความรับผิดชอบ และ​หนี้สิน​อื่น​ใด​ของ​ลูกจ้าง ลูกจ้าง​ตกลง​ให้​หัก​เงิน​ค้ำประกัน​แรก​เข้างาน จำนวน 1,000.- บาท และ​เมื่อ​ลูกจ้าง​ปฏิบัติงาน​ครบ 1 ปี​นับ​จาก​วันที่​ระบุ​ใน​สัญญา​จ้างงาน และ​ได้​เขียน​ใบลาออก​ถูก​ต้องตาม​กฎระเบียบ​บริษัทฯ กล่าวคือ ต้อง​เขียน​ใบลาออก และ​ได้รับ​อนุมัติ​จาก​ผู้บังคับบัญชา​ล่วงหน้า อย่าง​น้อย 30 วันทำงาน บริษัทฯ จะ​คืนเงิน​จำนวน​ดังกล่าว​ให้​กับ​พนักงาน (กรณี​ไม่​มี​ความเสียหาย​ใด ๆ เกิดขึ้น ณ วันสุดท้าย​ของ​การ​ปฏิบัติงาน)</p>
+
+                        <p class="ind gap">ข้อ 9 กรณี​ลูกจ้าง​กระทำ​ผิดสัญญา</p>
+                        <p class="ind">หาก​ลูกจ้าง​มี​การกระทำ​อัน​นอกเหนือ​ไป​จาก​สัญญา​นี้ ลูกจ้าง​ตกลง​ยิน​ยอมให้​นายจ้าง​บอกเลิก​สัญญา และ​หรือ​มี​สิทธิ​เรียกค่าเสียหาย​จาก​ลูกจ้าง โดย​ให้​นายจ้าง​หัก​ค่าเสียหาย​จาก​ค่าจ้าง ค่าล่วงเวลา และ​รายได้​อื่น ๆ ที่​ยังคง​เหลืออยู่​ของ​ลูกจ้าง​เพื่อ​ชำระ​คืนให้​แก่​นายจ้าง​ตาม​มูลค่า​ความเสียหาย​ที่​เกิดขึ้น​จริง</p>
+
+                        <div class="az-avoid">
+                            <p class="ind gap">สัญญา​นี้​ได้​ทำ​ขึ้น​ซึ่ง​คู่สัญญา​ทั้งสองฝ่าย​ได้​อ่าน และ​เข้าใจ​ข้อความ​แห่ง​สัญญา​นี้​โดยตลอด​แล้ว จึง​ลงลายมือชื่อ​ไว้​เป็นสำคัญ​ต่อหน้า​พยาน</p>
+                            <p class="ind">รายละเอียด​เพิ่มเติม​แนบท้าย​สัญญา</p>
+                            <t t-if="o.notes">
+                                <div class="ind2" t-out="o.notes"/>
+                            </t>
+                            <t t-else="">
+                                <p><span class="az-fill" style="width: 100%"/></p>
+                                <p><span class="az-fill" style="width: 100%"/></p>
+                            </t>
+
+                            <t t-set="employer" t-value="'นายธวัช สวัสดิวร, นางภาวนา สวัสดิวร'"/>
+                            <table class="az-sign" border="0" cellspacing="0" style="width: 100%; margin-top: 18px;">
+                                <t t-if="not fixed">
+                                    <tr><td style="width: 35%"/><td>ลงชื่อ <span class="az-fill" style="min-width: 70mm"/> <b>นายจ้าง</b><br/><b>( <t t-esc="employer"/> )</b></td></tr>
+                                    <tr><td/><td>ลงชื่อ <span class="az-fill" style="min-width: 70mm"/> <b>ลูกจ้าง</b><br/>( <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="emp.name"/><t t-set="w" t-value="50"/></t> )</td></tr>
+                                    <tr><td/><td>ลงชื่อ <span class="az-fill" style="min-width: 70mm"/> <b>พยาน</b><br/>( <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.witness_1"/><t t-set="w" t-value="50"/></t> )</td></tr>
+                                    <tr><td/><td>ลงชื่อ <span class="az-fill" style="min-width: 70mm"/> <b>พยาน</b><br/>( <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.witness_2"/><t t-set="w" t-value="50"/></t> )</td></tr>
+                                </t>
+                                <t t-else="">
+                                    <tr>
+                                        <td style="width: 50%">ลงชื่อ <span class="az-fill" style="min-width: 48mm"/> <b>ลูกจ้าง</b><br/>( <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="emp.name"/><t t-set="w" t-value="50"/></t> )</td>
+                                        <td>ลงชื่อ <span class="az-fill" style="min-width: 48mm"/> <b>นายจ้าง</b><br/><b>( <t t-esc="employer"/> )</b></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding-top: 26px">ลงชื่อ <span class="az-fill" style="min-width: 48mm"/> <b>พยาน</b><br/>( <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.witness_1"/><t t-set="w" t-value="45"/></t> )</td>
+                                        <td style="padding-top: 26px">ลงชื่อ <span class="az-fill" style="min-width: 48mm"/> <b>พยาน</b><br/>( <t t-call="autozone_hr_employee.az_fill"><t t-set="v" t-value="o.witness_2"/><t t-set="w" t-value="45"/></t> )</td>
+                                    </tr>
+                                </t>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="footer">
+                    <style>.az-foot, .az-foot tbody, .az-foot tr, .az-foot td { border: 0 none !important; }</style>
+                    <table class="az-foot" border="0" cellspacing="0" style="width: 100%; font-family: 'Sarabun', sans-serif; border-collapse: collapse; border: none;">
+                        
+                        <tr>
+                            <td style="width: 30%"/>
+                            <td style="width: 40%; text-align: center; font-size: 13px;">- <span class="page"/> -</td>
+                            <td style="width: 30%; text-align: right; font-size: 9px; color: #555;">(เอกสารสำคัญ​นี้​ห้าม​เปิดเผย​ต่อ​บุคคลภายนอก​โดย​เด็ดขาด)</td>
+                        </tr>
+                    </table>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

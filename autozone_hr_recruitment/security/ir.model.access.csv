@@ -1,0 +1,10 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_manpower_request_user,hr.manpower.request.user,model_hr_manpower_request,base.group_user,1,1,1,0
+access_manpower_request_hr,hr.manpower.request.hr,model_hr_manpower_request,hr_recruitment.group_hr_recruitment_user,1,1,1,1
+access_manpower_request_reject_user,hr.manpower.request.reject.user,model_hr_manpower_request_reject,base.group_user,1,1,1,0
+access_cand_work_history_user,hr.candidate.work.history.user,model_hr_candidate_work_history,hr_recruitment.group_hr_recruitment_user,1,1,1,1
+access_cand_work_history_int,hr.candidate.work.history.interviewer,model_hr_candidate_work_history,hr_recruitment.group_hr_recruitment_interviewer,1,0,0,0
+access_cand_language_user,hr.candidate.language.user,model_hr_candidate_language,hr_recruitment.group_hr_recruitment_user,1,1,1,1
+access_cand_language_int,hr.candidate.language.interviewer,model_hr_candidate_language,hr_recruitment.group_hr_recruitment_interviewer,1,0,0,0
+access_cand_relative_user,hr.candidate.relative.user,model_hr_candidate_relative,hr_recruitment.group_hr_recruitment_user,1,1,1,1
+access_cand_relative_int,hr.candidate.relative.interviewer,model_hr_candidate_relative,hr_recruitment.group_hr_recruitment_interviewer,1,0,0,0

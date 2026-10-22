@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Job positions carry three things the department tree used to: หน่วย,
+        กลุ่มงาน and Job Level. With 272 positions across 52 departments the
+        list is the working surface, so the columns and the group-bys are what
+        matter — not the kanban Odoo opens by default.
+    -->
+
+    <record id="view_hr_job_tree_autozone" model="ir.ui.view">
+        <field name="name">hr.job.list.autozone</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr.view_hr_job_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="unit_id" optional="show"/>
+                <field name="work_group" optional="show"/>
+                <field name="job_level" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_hr_job_form_autozone" model="ir.ui.view">
+        <field name="name">hr.job.form.autozone</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr.view_hr_job_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='department_id']" position="attributes">
+                <attribute name="context">{'list_view_ref': 'autozone_org_chart.view_department_list_select'}</attribute>
+            </xpath>
+            <xpath expr="//field[@name='department_id']" position="after">
+                <field name="unit_id"/>
+                <field name="work_group"/>
+                <field name="job_level"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_hr_job_filter_autozone" model="ir.ui.view">
+        <field name="name">hr.job.search.autozone</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr.view_job_filter"/>
+        <field name="arch" type="xml">
+            <search position="inside">
+                <field name="unit_id"/>
+                <field name="job_level"/>
+                <!--
+                    The four positions FM-HR-36 marks ว่าง are the only ones
+                    with a recruitment target. Everything else was loaded at 0
+                    deliberately: the source spreadsheet's HeadCount/OnHand
+                    columns track dual-hatted people, not establishment, so it
+                    cannot say how many seats a job is meant to have.
+                -->
+                <filter name="az_open" string="ที่ตั้งเป้ารับ"
+                        domain="[('no_of_recruitment', '&gt;', 0)]"/>
+                <filter name="az_unfilled" string="ยังไม่มีผู้ดำรงตำแหน่ง"
+                        domain="[('no_of_employee', '=', 0)]"/>
+                <separator/>
+                <filter name="az_group_unit" string="หน่วย" context="{'group_by': 'unit_id'}"/>
+                <filter name="az_group_wg" string="กลุ่มงาน" context="{'group_by': 'work_group'}"/>
+                <filter name="az_group_level" string="Job Level" context="{'group_by': 'job_level'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!--
+        แผนอนุมัติอัตรากำลัง — the establishment plan, which lived in
+        "01-แผนอนุมัติอัตรากำลังคน ปี 2569.xlsx" until 2026-09.
+
+        The spreadsheet's ปัจจุบัน column had to be retyped every time someone
+        joined or left. Here it is no_of_employee, which Odoo counts, so the
+        gap is live. The spreadsheet's per-branch and per-ฝ่าย ยอดรวม rows are
+        Odoo's own group subtotals — nothing to maintain.
+    -->
+    <record id="view_hr_job_headcount_tree" model="ir.ui.view">
+        <field name="name">hr.job.headcount.list</field>
+        <field name="model">hr.job</field>
+        <field name="arch" type="xml">
+            <list string="แผนอนุมัติอัตรากำลัง" create="false" default_order="department_id, name"
+                  decoration-danger="headcount_gap &lt; 0" decoration-muted="headcount_gap &gt; 0">
+                <field name="division_id" optional="show" string="ฝ่าย"/>
+                <field name="department_id" string="สังกัด"/>
+                <field name="unit_id" string="หน่วย" optional="show"/>
+                <field name="name" string="ตำแหน่ง"/>
+                <field name="job_level" string="Job Level" optional="show"/>
+                <field name="work_group" optional="hide"/>
+                <field name="no_of_employee" string="ปัจจุบัน" sum="ปัจจุบัน"/>
+                <field name="approved_headcount" string="อัตราที่อนุมัติ" sum="อนุมัติ"/>
+                <field name="headcount_gap" string="ขาด/เกิน" sum="ขาด/เกิน"/>
+                <field name="new_positions" string="ตั้งใหม่" sum="ตั้งใหม่" optional="show"/>
+                <field name="no_of_recruitment" string="กำลังรับ" sum="กำลังรับ"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_hr_job_headcount_pivot" model="ir.ui.view">
+        <field name="name">hr.job.headcount.pivot</field>
+        <field name="model">hr.job</field>
+        <field name="arch" type="xml">
+            <pivot string="อัตรากำลัง" sample="0">
+                <field name="division_id" type="row"/>
+                <field name="department_id" type="row"/>
+                <field name="job_level" type="col"/>
+                <field name="approved_headcount" type="measure"/>
+                <field name="no_of_employee" type="measure"/>
+                <field name="headcount_gap" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_hr_job_headcount_search" model="ir.ui.view">
+        <field name="name">hr.job.headcount.search</field>
+        <field name="model">hr.job</field>
+        <field name="arch" type="xml">
+            <search string="แผนอนุมัติอัตรากำลัง">
+                <field name="name" string="ตำแหน่ง"/>
+                <field name="department_id" string="สังกัด"/>
+                <field name="unit_id"/>
+                <field name="job_level"/>
+                <filter name="hc_short" string="ขาดคน" domain="[('headcount_gap', '&lt;', 0)]"/>
+                <filter name="hc_over" string="เกินอัตรา" domain="[('headcount_gap', '&gt;', 0)]"/>
+                <filter name="hc_new" string="อัตราตั้งใหม่" domain="[('new_positions', '&gt;', 0)]"/>
+                <separator/>
+                <!-- ตำแหน่งที่ไม่มีในแผน คือช่องว่างของแผน ไม่ใช่ของระบบ -->
+                <filter name="hc_unplanned" string="ยังไม่มีในแผนอัตรากำลัง"
+                        domain="[('approved_headcount', '=', 0)]"/>
+                <separator/>
+                <filter name="hc_g_div" string="ฝ่าย" context="{'group_by': 'division_id'}"/>
+                <filter name="hc_g_dept" string="สังกัด" context="{'group_by': 'department_id'}"/>
+                <filter name="hc_g_unit" string="หน่วย" context="{'group_by': 'unit_id'}"/>
+                <filter name="hc_g_level" string="Job Level" context="{'group_by': 'job_level'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_hr_job_headcount" model="ir.actions.act_window">
+        <field name="name">แผนอนุมัติอัตรากำลัง</field>
+        <field name="res_model">hr.job</field>
+        <field name="view_mode">list,pivot,form</field>
+        <field name="search_view_id" ref="view_hr_job_headcount_search"/>
+        <field name="context">{'search_default_hc_g_div': 1, 'search_default_hc_g_dept': 1}</field>
+    </record>
+
+    <record id="action_hr_job_headcount_list" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_hr_job_headcount_tree"/>
+        <field name="act_window_id" ref="action_hr_job_headcount"/>
+    </record>
+
+    <record id="action_hr_job_headcount_pivot" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">pivot</field>
+        <field name="view_id" ref="view_hr_job_headcount_pivot"/>
+        <field name="act_window_id" ref="action_hr_job_headcount"/>
+    </record>
+
+    <menuitem id="menu_hr_job_headcount"
+              name="แผนอนุมัติอัตรากำลัง"
+              parent="hr.menu_hr_root"
+              action="action_hr_job_headcount"
+              sequence="45"
+              groups="hr.group_hr_user"/>
+
+    <!-- หน่วย is small enough to manage inline; no kanban, no form of its own. -->
+    <record id="view_hr_job_unit_tree" model="ir.ui.view">
+        <field name="name">hr.job.unit.list</field>
+        <field name="model">hr.job.unit</field>
+        <field name="arch" type="xml">
+            <list string="หน่วย" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="job_count" string="ตำแหน่งงาน"/>
+                <field name="active" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_hr_job_unit" model="ir.actions.act_window">
+        <field name="name">หน่วย</field>
+        <field name="res_model">hr.job.unit</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">เพิ่มหน่วยงานย่อย</p>
+            <p>หน่วย คือกลุ่มงานย่อยภายในสาขาหรือแผนก เช่น หน่วยซ่อมสีและตัวถัง หน่วยสำนักงาน
+               ใช้กับตำแหน่งงาน ไม่ใช่โครงสร้างแผนก</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_hr_job_unit"
+              name="หน่วย"
+              parent="hr.menu_human_resources_configuration"
+              action="action_hr_job_unit"
+              sequence="25"
+              groups="hr.group_hr_manager"/>
+
+</odoo>

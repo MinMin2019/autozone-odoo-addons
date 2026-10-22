@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        The org chart card ships as: name (bold) + presence icon on one row,
+        job_title underneath. FM-HR-36 reads the other way round.
+
+        Both views below carry byte-identical card markup. hr.employee is what
+        an HR officer sees; hr.employee.public is what everyone else sees.
+        Patch one only and the org chart changes shape depending on who is
+        logged in — so both are patched the same way here.
+    -->
+
+    <record id="hr_employee_hierarchy_autozone" model="ir.ui.view">
+        <field name="name">hr.employee.hierarchy.autozone</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr_org_chart.hr_employee_hierarchy_view"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//hierarchy/field[@name='department_id']" position="after">
+                <field name="second_role_label"/>
+            </xpath>
+
+            <xpath expr="//t[@t-name='hierarchy-box']/div[2]" position="replace">
+                <div class="d-flex flex-column text-center">
+                    <field name="job_title" class="small text-muted"/>
+                    <div class="d-flex">
+                        <field class="fw-bold w-100" name="name"/>
+                        <field name="hr_icon_display" class="flex-shrink-0" widget="hr_presence_status"/>
+                    </div>
+                    <span t-if="record.second_role_label.raw_value"
+                          class="badge text-bg-light border fw-normal mt-1 text-truncate"
+                          t-att-title="record.second_role_label.value">
+                        <t t-out="record.second_role_label.value"/>
+                    </span>
+                </div>
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="hr_employee_public_hierarchy_autozone" model="ir.ui.view">
+        <field name="name">hr.employee.public.hierarchy.autozone</field>
+        <field name="model">hr.employee.public</field>
+        <field name="inherit_id" ref="hr_org_chart.hr_employee_public_hierarchy_view"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//hierarchy/field[@name='department_id']" position="after">
+                <field name="second_role_label"/>
+            </xpath>
+
+            <xpath expr="//t[@t-name='hierarchy-box']/div[2]" position="replace">
+                <div class="d-flex flex-column text-center">
+                    <field name="job_title" class="small text-muted"/>
+                    <div class="d-flex">
+                        <field class="fw-bold w-100" name="name"/>
+                        <field name="hr_icon_display" class="flex-shrink-0" widget="hr_presence_status"/>
+                    </div>
+                    <span t-if="record.second_role_label.raw_value"
+                          class="badge text-bg-light border fw-normal mt-1 text-truncate"
+                          t-att-title="record.second_role_label.value">
+                        <t t-out="record.second_role_label.value"/>
+                    </span>
+                </div>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- The second role is worth seeing on the record itself, not only on the chart. -->
+    <record id="hr_employee_form_autozone" model="ir.ui.view">
+        <field name="name">hr.employee.form.autozone</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='parent_id']" position="after">
+                <field name="second_role_label" invisible="not second_role_label" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!--
+        The Job Position dropdown on the employee form offers only the positions
+        of the department picked above it, and follows that field as it
+        changes. 6 of 440 people (five ฝ่าย managers and IT) hold a post that
+        lives on the ฝ่าย above their แผนก on purpose — for them, and for any
+        other exception, Search More… still reaches every position.
+    -->
+    <record id="view_employee_form_job_by_department" model="ir.ui.view">
+        <field name="name">hr.employee.form.job.by.department</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='department_id']" position="attributes">
+                <attribute name="context">{'list_view_ref': 'autozone_org_chart.view_department_list_select'}</attribute>
+            </xpath>
+            <xpath expr="//field[@name='job_id']" position="attributes">
+                <attribute name="domain">department_id and [('department_id', '=', department_id), '|', ('company_id', '=', False), ('company_id', '=', company_id)] or ['|', ('company_id', '=', False), ('company_id', '=', company_id)]</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

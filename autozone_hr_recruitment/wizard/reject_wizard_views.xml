@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_manpower_request_reject_form" model="ir.ui.view">
+        <field name="name">hr.manpower.request.reject.form</field>
+        <field name="model">hr.manpower.request.reject</field>
+        <field name="arch" type="xml">
+            <form string="ไม่อนุมัติ">
+                <p>ใบขอจะกลับไปหาผู้ขอเพื่อทบทวนใหม่ พร้อมเหตุผลนี้</p>
+                <field name="request_id" invisible="1"/>
+                <field name="reason" placeholder="เช่น ให้ใช้คนจากสาขาใกล้เคียงชั่วคราวก่อน"/>
+                <footer>
+                    <button name="action_confirm" type="object" string="ไม่อนุมัติ" class="btn-primary"/>
+                    <button special="cancel" string="ยกเลิก"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

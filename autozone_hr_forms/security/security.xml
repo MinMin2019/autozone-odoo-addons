@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- A resignation is seen by the person resigning, the approvers on it, and HR. -->
+    <record id="rule_resignation_involved" model="ir.rule">
+        <field name="name">ใบลาออก: เฉพาะที่เกี่ยวข้อง</field>
+        <field name="model_id" ref="model_hr_resignation"/>
+        <field name="domain_force">['|', '|', '|', '|',
+            ('create_uid', '=', user.id),
+            ('employee_id.user_id', '=', user.id),
+            ('manager_user_id', '=', user.id),
+            ('gm_user_id', '=', user.id),
+            ('md_user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    <record id="rule_resignation_hr" model="ir.rule">
+        <field name="name">ใบลาออก: ฝ่ายบุคคลเห็นทั้งหมด</field>
+        <field name="model_id" ref="model_hr_resignation"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+    </record>
+    <!-- Supervisors evaluate their own people's OJT and skills; HR sees all. -->
+    <record id="rule_ojt_evaluator" model="ir.rule">
+        <field name="name">OJT: ผู้ประเมินเห็นของตัวเอง</field>
+        <field name="model_id" ref="model_hr_ojt_evaluation"/>
+        <field name="domain_force">['|', ('evaluator_id', '=', user.id), ('create_uid', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+    <record id="rule_ojt_hr" model="ir.rule">
+        <field name="name">OJT: ฝ่ายบุคคลเห็นทั้งหมด</field>
+        <field name="model_id" ref="model_hr_ojt_evaluation"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+    </record>
+    <record id="rule_skillmap_evaluator" model="ir.rule">
+        <field name="name">Skill Map: ผู้ประเมินเห็นของตัวเอง</field>
+        <field name="model_id" ref="model_hr_skillmap_evaluation"/>
+        <field name="domain_force">['|', ('evaluator_id', '=', user.id), ('create_uid', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+    <record id="rule_skillmap_hr" model="ir.rule">
+        <field name="name">Skill Map: ฝ่ายบุคคลเห็นทั้งหมด</field>
+        <field name="model_id" ref="model_hr_skillmap_evaluation"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+    </record>
+</odoo>

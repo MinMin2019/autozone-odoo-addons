@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_employee_form_blacklist" model="ir.ui.view">
+        <field name="name">hr.employee.form.blacklist</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <div class="alert alert-danger mb-0 text-center" role="alert"
+                     invisible="not no_rehire" groups="hr.group_hr_user">
+                    <strong>ติด Blacklist ห้ามรับกลับเข้าทำงาน</strong>
+                    — <field name="no_rehire_reason" readonly="1" class="d-inline"/>
+                </div>
+            </xpath>
+            <xpath expr="//group[@name='departure']" position="inside">
+                <field name="no_rehire" groups="hr.group_hr_user"/>
+                <field name="no_rehire_reason" groups="hr.group_hr_user"
+                       invisible="not no_rehire" required="no_rehire"/>
+                <field name="no_rehire_date" groups="hr.group_hr_user"
+                       invisible="not no_rehire" readonly="1"/>
+                <field name="no_rehire_user_id" groups="hr.group_hr_user"
+                       invisible="not no_rehire" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_employee_filter_blacklist" model="ir.ui.view">
+        <field name="name">hr.employee.search.blacklist</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='message_needaction']" position="before">
+                <filter string="ติด Blacklist" name="no_rehire" domain="[('no_rehire', '=', True)]"
+                        groups="hr.group_hr_user"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_employee_blacklist" model="ir.actions.act_window">
+        <field name="name">Blacklist ห้ามรับกลับ</field>
+        <field name="res_model">hr.employee</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('no_rehire', '=', True)]</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">ยังไม่มีใครติด Blacklist</p>
+            <p>ติดได้ตอนลงพนักงานลาออก (Archive) โดยติ๊ก "ติด Blacklist ห้ามรับกลับ"</p>
+        </field>
+    </record>
+
+    <record id="view_employee_blacklist_list" model="ir.ui.view">
+        <field name="name">hr.employee.list.blacklist</field>
+        <field name="model">hr.employee</field>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="registration_number"/>
+                <field name="name"/>
+                <field name="identification_id"/>
+                <field name="department_id"/>
+                <field name="job_title"/>
+                <field name="departure_date"/>
+                <field name="no_rehire_reason"/>
+                <field name="no_rehire_date"/>
+                <field name="no_rehire_user_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_employee_blacklist_view_list" model="ir.actions.act_window.view">
+        <field name="sequence">1</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_employee_blacklist_list"/>
+        <field name="act_window_id" ref="action_employee_blacklist"/>
+    </record>
+
+    <menuitem id="menu_employee_blacklist"
+              name="Blacklist ห้ามรับกลับ"
+              action="action_employee_blacklist"
+              parent="hr.menu_hr_employee_payroll"
+              groups="hr.group_hr_user"
+              sequence="50"/>
+</odoo>

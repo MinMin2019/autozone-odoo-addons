@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_manpower_request_form" model="ir.ui.view">
+        <field name="name">hr.manpower.request.form</field>
+        <field name="model">hr.manpower.request</field>
+        <field name="arch" type="xml">
+            <form string="ใบขออัตรากำลัง">
+                <header>
+                    <button name="action_submit" type="object" string="ส่งอนุมัติ" class="btn-primary"
+                            invisible="state not in ('draft', 'rejected')"/>
+                    <button name="action_approve" type="object" string="อนุมัติ" class="btn-primary"
+                            invisible="state not in ('division', 'line')"/>
+                    <button name="action_open_reject" type="object" string="ไม่อนุมัติ…"
+                            invisible="state not in ('division', 'line')"/>
+                    <button name="action_hr_accept" type="object" string="รับเรื่อง เปิดรับสมัคร" class="btn-primary"
+                            invisible="state != 'hr'" groups="hr_recruitment.group_hr_recruitment_user"/>
+                    <button name="action_acknowledge" type="object" string="หน่วยงานรับทราบ" class="btn-primary"
+                            invisible="acknowledged or hired_count == 0"/>
+                    <button name="action_reset_draft" type="object" string="แก้ไขส่งใหม่"
+                            invisible="state not in ('rejected', 'cancel')"/>
+                    <button name="action_cancel" type="object" string="ยกเลิกใบขอ"
+                            invisible="state in ('done', 'cancel')"
+                            confirm="ยกเลิกใบขอนี้? ถ้ากำลังรับสมัคร จำนวนที่ยังไม่ได้จะถูกหักออกจากตำแหน่ง"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,division,line,hr,recruiting,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="%(hr_recruitment.crm_case_categ0_act_job)d" type="action" class="oe_stat_button"
+                                icon="fa-users" context="{'search_default_manpower_request_id': id, 'default_job_id': job_id}"
+                                groups="hr_recruitment.group_hr_recruitment_user,hr_recruitment.group_hr_recruitment_interviewer">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value"><field name="applicant_count"/></span>
+                                <span class="o_stat_text">ผู้สมัคร</span>
+                            </div>
+                        </button>
+                        <div class="oe_stat_button">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value"><field name="hired_count"/> / <field name="quantity" readonly="1" class="d-inline"/></span>
+                                <span class="o_stat_text">จ้างแล้ว</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger" role="alert" invisible="state != 'rejected'">
+                        <strong>ไม่อนุมัติ:</strong> <field name="reject_reason" class="d-inline"/>
+                    </div>
+                    <div class="alert alert-warning" role="alert" invisible="not is_my_turn">
+                        <strong>ใบขอนี้รอคุณอนุมัติ</strong>
+                    </div>
+                    <div class="oe_title">
+                        <span class="text-muted">ใบขออัตรากำลัง</span>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="request_type" widget="radio" options="{'horizontal': true}" readonly="state not in ('draft', 'rejected')"/>
+                            <field name="department_id" readonly="state not in ('draft', 'rejected')"
+                                   context="{'list_view_ref': 'autozone_org_chart.view_department_list_select'}"/>
+                            <field name="job_id" readonly="state not in ('draft', 'rejected')"
+                                   context="{'default_department_id': department_id}"/>
+                            <field name="quantity" readonly="state not in ('draft', 'rejected')"/>
+                            <field name="replace_employee_ids" widget="many2many_tags"
+                                   invisible="request_type != 'replacement'" readonly="state not in ('draft', 'rejected')"
+                                   domain="[('department_id', '=', department_id)]"/>
+                        </group>
+                        <group>
+                            <field name="requester_id" readonly="state not in ('draft', 'rejected')"/>
+                            <field name="date_request"/>
+                            <field name="date_required" readonly="state not in ('draft', 'rejected')"/>
+                            <field name="term_type" readonly="state not in ('draft', 'rejected')"/>
+                            <field name="job_level"/>
+                        </group>
+                    </group>
+                    <group string="แผนอัตรากำลังของตำแหน่งนี้ (ประกอบการพิจารณา)" invisible="not job_id">
+                        <group>
+                            <field name="job_approved_headcount"/>
+                            <field name="job_no_of_employee"/>
+                        </group>
+                        <group>
+                            <field name="job_headcount_gap" decoration-danger="job_headcount_gap &lt; 0"/>
+                            <field name="job_no_of_recruitment"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="reason" readonly="state not in ('draft', 'rejected')" placeholder="ทำไมต้องการคนเพิ่ม/ทดแทน งานอะไรที่กระทบ"/>
+                    </group>
+                    <notebook>
+                        <page string="ผู้อนุมัติ" name="approvals">
+                            <group>
+                                <group>
+                                    <field name="division_approver_id"/>
+                                    <field name="division_approved_date"/>
+                                </group>
+                                <group>
+                                    <field name="line_approver_id" invisible="request_type != 'new'"/>
+                                    <field name="line_approved_date" invisible="request_type != 'new'"/>
+                                    <field name="hr_user_id"/>
+                                    <field name="current_approver_id" invisible="state not in ('division', 'line', 'hr')"/>
+                                </group>
+                            </group>
+                            <div class="text-muted">ผู้อนุมัติหาจากผังองค์กรตอนกดส่งอนุมัติ: ผู้จัดการฝ่ายของแผนกนี้ และ (อัตราเพิ่มใหม่) ผู้บริหารสายงาน</div>
+                        </page>
+                        <page string="ผู้สมัคร" name="applicants" groups="hr_recruitment.group_hr_recruitment_user,hr_recruitment.group_hr_recruitment_interviewer">
+                            <field name="applicant_ids" readonly="1">
+                                <list>
+                                    <field name="partner_name"/>
+                                    <field name="stage_id"/>
+                                    <field name="az_score_total"/>
+                                    <field name="az_hire_state"/>
+                                    <field name="az_start_date"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                    <field name="acknowledged" invisible="1"/>
+                    <field name="is_my_turn" invisible="1"/>
+                    <field name="company_id" invisible="1"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_manpower_request_list" model="ir.ui.view">
+        <field name="name">hr.manpower.request.list</field>
+        <field name="model">hr.manpower.request</field>
+        <field name="arch" type="xml">
+            <list string="ใบขออัตรากำลัง" decoration-danger="date_required and date_required &lt; current_date and state not in ('done', 'cancel', 'rejected')">
+                <field name="name"/>
+                <field name="request_type"/>
+                <field name="department_id"/>
+                <field name="job_id"/>
+                <field name="quantity"/>
+                <field name="hired_count"/>
+                <field name="requester_id"/>
+                <field name="date_request"/>
+                <field name="date_required"/>
+                <field name="current_approver_id" optional="show"/>
+                <field name="state" widget="badge" decoration-info="state in ('division', 'line', 'hr')"
+                       decoration-success="state == 'done'" decoration-warning="state == 'recruiting'"
+                       decoration-danger="state == 'rejected'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_manpower_request_kanban" model="ir.ui.view">
+        <field name="name">hr.manpower.request.kanban</field>
+        <field name="model">hr.manpower.request</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" group_create="false" group_delete="false" quick_create="false"
+                    records_draggable="false">
+                <field name="state"/>
+                <field name="date_required"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex justify-content-between">
+                            <field name="name" class="fw-bold"/>
+                            <field name="request_type" widget="badge"/>
+                        </div>
+                        <field name="job_id" class="fw-bold fs-6"/>
+                        <field name="department_id" class="text-muted"/>
+                        <div class="d-flex justify-content-between mt-1">
+                            <span>จ้างแล้ว <field name="hired_count"/> / <field name="quantity"/></span>
+                            <span t-if="record.date_required.raw_value">ภายใน <field name="date_required"/></span>
+                        </div>
+                        <div t-if="record.current_approver_id.raw_value" class="small text-warning-emphasis">
+                            รอ <field name="current_approver_id"/>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_manpower_request_search" model="ir.ui.view">
+        <field name="name">hr.manpower.request.search</field>
+        <field name="model">hr.manpower.request</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="job_id"/>
+                <field name="department_id" operator="child_of"/>
+                <field name="requester_id"/>
+                <filter string="รอฉันอนุมัติ" name="my_turn" domain="[('is_my_turn', '=', True)]"/>
+                <filter string="ยังไม่ปิด" name="open" domain="[('state', 'not in', ('done', 'cancel'))]"/>
+                <filter string="เลยกำหนด" name="late"
+                        domain="[('date_required', '&lt;', context_today().strftime('%Y-%m-%d')), ('state', 'not in', ('done', 'cancel', 'rejected'))]"/>
+                <separator/>
+                <filter string="อัตราทดแทน" name="replacement" domain="[('request_type', '=', 'replacement')]"/>
+                <filter string="อัตราเพิ่มใหม่" name="new" domain="[('request_type', '=', 'new')]"/>
+                <group expand="0" string="จัดกลุ่ม">
+                    <filter string="สถานะ" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="แผนก" name="group_department" context="{'group_by': 'department_id'}"/>
+                    <filter string="ประเภท" name="group_type" context="{'group_by': 'request_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_manpower_request_pivot" model="ir.ui.view">
+        <field name="name">hr.manpower.request.pivot</field>
+        <field name="model">hr.manpower.request</field>
+        <field name="arch" type="xml">
+            <pivot string="ใบขออัตรากำลัง">
+                <field name="department_id" type="row"/>
+                <field name="state" type="col"/>
+                <field name="quantity" type="measure"/>
+                <field name="hired_count" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_manpower_request_graph" model="ir.ui.view">
+        <field name="name">hr.manpower.request.graph</field>
+        <field name="model">hr.manpower.request</field>
+        <field name="arch" type="xml">
+            <graph string="ใบขออัตรากำลัง" type="bar">
+                <field name="state"/>
+                <field name="quantity" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_manpower_request" model="ir.actions.act_window">
+        <field name="name">ใบขออัตรากำลัง</field>
+        <field name="res_model">hr.manpower.request</field>
+        <field name="view_mode">kanban,list,form,pivot,graph</field>
+        <field name="context">{'search_default_open': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">สร้างใบขออัตรากำลังใบแรก</p>
+            <p>แผนกขออัตราทดแทนหรืออัตราเพิ่มใหม่ ระบบส่งให้ผู้จัดการฝ่ายและผู้บริหารตามผังองค์กรอนุมัติ แล้ว HR เปิดรับสมัคร</p>
+        </field>
+    </record>
+
+    <record id="action_manpower_request_my_turn" model="ir.actions.act_window">
+        <field name="name">รอฉันอนุมัติ</field>
+        <field name="res_model">hr.manpower.request</field>
+        <field name="view_mode">list,form,kanban</field>
+        <field name="context">{'search_default_my_turn': 1}</field>
+    </record>
+</odoo>

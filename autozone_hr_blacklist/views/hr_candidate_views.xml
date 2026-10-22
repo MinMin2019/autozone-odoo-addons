@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_candidate_view_form_blacklist" model="ir.ui.view">
+        <field name="name">hr.candidate.form.blacklist</field>
+        <field name="model">hr.candidate</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_candidate_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <div class="alert alert-danger mb-0" role="alert" invisible="not is_blacklisted">
+                    <strong>ผู้สมัครคนนี้ตรงกับคนติด Blacklist ห้ามรับกลับเข้าทำงาน</strong>
+                    <field name="blacklist_note" readonly="1" class="d-block" style="white-space: pre-line"/>
+                </div>
+            </xpath>
+            <xpath expr="//field[@name='partner_phone']" position="after">
+                <field name="identification_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="hr_candidate_view_search_blacklist" model="ir.ui.view">
+        <field name="name">hr.candidate.search.blacklist</field>
+        <field name="model">hr.candidate</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_candidate_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='my_candidates']" position="before">
+                <filter string="ติด Blacklist" name="is_blacklisted" domain="[('is_blacklisted', '=', True)]"/>
+                <separator/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="hr_applicant_view_form_blacklist" model="ir.ui.view">
+        <field name="name">hr.applicant.form.blacklist</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_applicant_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <div class="alert alert-danger mb-0" role="alert" invisible="not is_blacklisted">
+                    <strong>ผู้สมัครคนนี้ตรงกับคนติด Blacklist ห้ามรับกลับเข้าทำงาน</strong>
+                    <field name="blacklist_note" readonly="1" class="d-block" style="white-space: pre-line"/>
+                </div>
+            </xpath>
+            <xpath expr="//field[@name='email_from']" position="before">
+                <field name="identification_id"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

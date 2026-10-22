@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inside the Recruitment app, for HR and for the approvers/interviewers. -->
+    <menuitem id="menu_manpower_request_root" name="ใบขออัตรากำลัง"
+              parent="hr_recruitment.menu_hr_recruitment_root" sequence="1"/>
+    <menuitem id="menu_manpower_request_all" name="ใบขออัตรากำลัง" action="action_manpower_request"
+              parent="menu_manpower_request_root" sequence="1"/>
+    <menuitem id="menu_manpower_request_my_turn" name="รอฉันอนุมัติ" action="action_manpower_request_my_turn"
+              parent="menu_manpower_request_root" sequence="2"/>
+
+    <!-- Department heads who request but neither interview nor approve have no
+         Recruitment app; they file requests from the Employees app instead. -->
+    <menuitem id="menu_manpower_request_employees" name="ใบขออัตรากำลัง" action="action_manpower_request"
+              parent="hr.menu_hr_root" sequence="90"/>
+</odoo>

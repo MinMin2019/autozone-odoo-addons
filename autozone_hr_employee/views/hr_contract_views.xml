@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_contract_view_form_term_type" model="ir.ui.view">
+        <field name="name">hr.contract.form.term_type</field>
+        <field name="model">hr.contract</field>
+        <field name="inherit_id" ref="hr_contract.hr_contract_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='date_start']" position="before">
+                <field name="term_type" widget="radio" options="{'horizontal': true}"/>
+            </xpath>
+            <xpath expr="//header" position="inside">
+                <button name="%(autozone_hr_employee.action_report_employment_contract)d" type="action"
+                        string="พิมพ์สัญญาจ้าง" icon="fa-print"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="พิมพ์สัญญา" name="az_contract_print">
+                    <group>
+                        <group string="การทำสัญญา">
+                            <field name="sign_date"/>
+                            <field name="sign_place"/>
+                            <field name="witness_1"/>
+                            <field name="witness_2"/>
+                        </group>
+                        <group string="ทดลองงาน / ต่อสัญญา">
+                            <field name="probation_days"/>
+                            <field name="trial_date_end" string="สิ้นสุดทดลองงาน"/>
+                            <field name="eval_probation_days" invisible="term_type != 'fixed'"/>
+                            <field name="eval_after_days" invisible="term_type != 'fixed'"/>
+                            <field name="renew_years" invisible="term_type != 'fixed'"/>
+                            <field name="renew_max_years" invisible="term_type != 'fixed'"/>
+                        </group>
+                    </group>
+                    <div class="text-muted">
+                        ไม่มีกำหนดระยะเวลา พิมพ์เป็น "สัญญาจ้างแรงงาน" / มีกำหนดระยะเวลา พิมพ์เป็น "สัญญาจ้างลูกจ้างชั่วคราว"
+                        — ช่องที่ยังว่างจะพิมพ์เป็นเส้นจุดไว้เขียนมือ รายละเอียดเพิ่มเติมแนบท้ายสัญญาใช้ช่อง Notes ในแท็บ Details
+                    </div>
+                </page>
+            </xpath>
+            <xpath expr="//field[@name='date_end']" position="attributes">
+                <attribute name="required">term_type == 'fixed'</attribute>
+                <attribute name="placeholder">ใส่เมื่อเป็นสัญญามีกำหนดระยะเวลา</attribute>
+            </xpath>
+            <!-- Odoo's own Contract Type (Permanent / Temporary / Seasonal …, ten of
+                 them, none ever used here) would read as a second answer to the
+                 same question. It appears twice, once per access group. -->
+            <xpath expr="//field[@name='contract_type_id'][@groups='!hr_contract.group_hr_contract_manager']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='contract_type_id'][@groups='hr_contract.group_hr_contract_manager']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="hr_contract_view_tree_term_type" model="ir.ui.view">
+        <field name="name">hr.contract.list.term_type</field>
+        <field name="model">hr.contract</field>
+        <field name="inherit_id" ref="hr_contract.hr_contract_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='contract_type_id']" position="replace">
+                <field name="term_type" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="hr_contract_view_search_term_type" model="ir.ui.view">
+        <field name="name">hr.contract.search.term_type</field>
+        <field name="model">hr.contract</field>
+        <field name="inherit_id" ref="hr_contract.hr_contract_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='running']" position="before">
+                <filter string="มีกำหนดระยะเวลา" name="term_fixed" domain="[('term_type', '=', 'fixed')]"/>
+                <filter string="ไม่มีกำหนดระยะเวลา" name="term_indefinite" domain="[('term_type', '=', 'indefinite')]"/>
+                <separator/>
+                <filter string="ครบกำหนดภายใน 30 วัน" name="ending_soon"
+                        domain="[('term_type', '=', 'fixed'), ('state', '=', 'open'),
+                                 ('date_end', '&lt;=', (context_today() + relativedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

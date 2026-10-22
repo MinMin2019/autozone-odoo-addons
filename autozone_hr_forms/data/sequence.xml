@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- The Buddhist year in RS-2569-0001 / OJT-2569-0001 is added in create(). -->
+    <record id="seq_resignation" model="ir.sequence">
+        <field name="name">ใบลาออก</field>
+        <field name="code">hr.resignation</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+    <record id="seq_ojt" model="ir.sequence">
+        <field name="name">ใบประเมิน OJT</field>
+        <field name="code">hr.ojt.evaluation</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+</odoo>

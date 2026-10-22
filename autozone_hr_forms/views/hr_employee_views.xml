@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_employee_form_hr_forms" model="ir.ui.view">
+        <field name="name">hr.employee.form.autozone.hr.forms</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_az_open_ojt" type="object" class="oe_stat_button" icon="fa-graduation-cap"
+                        groups="hr.group_hr_user">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value"><field name="az_ojt_count"/></span>
+                        <span class="o_stat_text">OJT</span>
+                    </div>
+                </button>
+                <button name="action_az_open_skillmap" type="object" class="oe_stat_button" icon="fa-th"
+                        groups="hr.group_hr_user">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value"><field name="az_skillmap_this_year"/> / 2</span>
+                        <span class="o_stat_text">Skill Map ปีนี้</span>
+                    </div>
+                </button>
+            </xpath>
+            <xpath expr="//page[@name='personal_information']" position="inside">
+                <group string="ความยินยอมใช้ข้อมูลส่วนตัว (FM-HR-04 หน้า 3)" name="az_consent" groups="hr.group_hr_user">
+                    <group>
+                        <field name="az_consent_health"/>
+                        <field name="az_consent_criminal"/>
+                        <field name="az_consent_biometric"/>
+                    </group>
+                    <group>
+                        <field name="az_consent_media"/>
+                        <field name="az_consent_drug_test"/>
+                        <field name="az_consent_date"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

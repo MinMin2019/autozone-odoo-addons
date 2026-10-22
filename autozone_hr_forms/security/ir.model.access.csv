@@ -1,0 +1,10 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_resignation_user,hr.resignation.user,model_hr_resignation,base.group_user,1,1,1,0
+access_resignation_hr,hr.resignation.hr,model_hr_resignation,hr.group_hr_user,1,1,1,1
+access_ojt_user,hr.ojt.evaluation.user,model_hr_ojt_evaluation,base.group_user,1,1,1,0
+access_ojt_hr,hr.ojt.evaluation.hr,model_hr_ojt_evaluation,hr.group_hr_user,1,1,1,1
+access_skillmap_task_user,hr.skillmap.task.user,model_hr_skillmap_task,base.group_user,1,0,0,0
+access_skillmap_task_hr,hr.skillmap.task.hr,model_hr_skillmap_task,hr.group_hr_user,1,1,1,1
+access_skillmap_eval_user,hr.skillmap.evaluation.user,model_hr_skillmap_evaluation,base.group_user,1,1,1,0
+access_skillmap_eval_hr,hr.skillmap.evaluation.hr,model_hr_skillmap_evaluation,hr.group_hr_user,1,1,1,1
+access_skillmap_line_user,hr.skillmap.evaluation.line.user,model_hr_skillmap_evaluation_line,base.group_user,1,1,1,1

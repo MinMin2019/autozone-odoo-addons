@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_departure_wizard_view_form_blacklist" model="ir.ui.view">
+        <field name="name">hr.departure.wizard.form.blacklist</field>
+        <field name="model">hr.departure.wizard</field>
+        <field name="inherit_id" ref="hr.hr_departure_wizard_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@id='detailed_reason']/.." position="after">
+                <group string="Blacklist">
+                    <field name="no_rehire"/>
+                    <field name="no_rehire_reason" invisible="not no_rehire" required="no_rehire"
+                           placeholder="เช่น ทุจริต ขาดงานโดยไม่แจ้ง ทำร้ายร่างกาย"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

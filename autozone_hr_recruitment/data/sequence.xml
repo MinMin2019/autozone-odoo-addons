@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- The year in MR-2569-0001 is the Buddhist year, added in create(); the
+         sequence itself only counts. -->
+    <record id="seq_manpower_request" model="ir.sequence">
+        <field name="name">ใบขออัตรากำลัง</field>
+        <field name="code">hr.manpower.request</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+</odoo>

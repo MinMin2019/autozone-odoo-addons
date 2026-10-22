@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Granted to the HR manager during roll-out, while approvers learn the
+         system; untick it on the user to take it back. Implies the rights needed
+         to see what is waiting (all requests, applicants, employees). -->
+    <!-- Its own category: inside Recruitment's it would join that app's
+         Interviewer/Officer/Administrator dropdown and break it. Alone in a
+         category it shows as a single tick box on the user form. -->
+    <record id="module_category_autozone_hr" model="ir.module.category">
+        <field name="name">Autozone HR</field>
+        <field name="sequence">90</field>
+    </record>
+    <record id="group_approve_on_behalf" model="res.groups">
+        <field name="name">อนุมัติแทนผู้อื่นได้ (ใบขอ / ผลสัมภาษณ์ / อนุมัติจ้าง / ใบลาออก)</field>
+        <field name="category_id" ref="module_category_autozone_hr"/>
+        <field name="implied_ids" eval="[(4, ref('hr_recruitment.group_hr_recruitment_user')), (4, ref('hr.group_hr_user'))]"/>
+        <field name="comment">ช่วงเริ่มใช้งาน: กดอนุมัติแทนผู้อนุมัติตัวจริงได้ทุกขั้น ระบบบันทึกในใบนั้นว่าอนุมัติแทนใคร</field>
+    </record>
+
+    <!-- Everyone sees the requests they are part of: as requester, as an
+         approver, or because they keyed it in. HR sees all of them. -->
+    <record id="rule_manpower_request_involved" model="ir.rule">
+        <field name="name">ใบขออัตรากำลัง: เฉพาะที่เกี่ยวข้อง</field>
+        <field name="model_id" ref="model_hr_manpower_request"/>
+        <field name="domain_force">['|', '|', '|', '|',
+            ('create_uid', '=', user.id),
+            ('requester_id.user_id', '=', user.id),
+            ('division_approver_id', '=', user.id),
+            ('line_approver_id', '=', user.id),
+            ('department_id.manager_id.user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="rule_manpower_request_hr" model="ir.rule">
+        <field name="name">ใบขออัตรากำลัง: ฝ่ายบุคคลเห็นทั้งหมด</field>
+        <field name="model_id" ref="model_hr_manpower_request"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('hr_recruitment.group_hr_recruitment_user'))]"/>
+    </record>
+
+    <record id="rule_manpower_request_company" model="ir.rule">
+        <field name="name">ใบขออัตรากำลัง: บริษัท</field>
+        <field name="model_id" ref="model_hr_manpower_request"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+</odoo>

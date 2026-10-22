@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_hr_forms_root" name="แบบฟอร์มบุคคล" parent="hr.menu_hr_root" sequence="85"/>
+    <menuitem id="menu_resignation" name="ใบลาออก (FM-HR-27)" action="action_resignation"
+              parent="menu_hr_forms_root" sequence="10"/>
+    <menuitem id="menu_ojt" name="ประเมิน OJT (FM-HR-12)" action="action_ojt"
+              parent="menu_hr_forms_root" sequence="20"/>
+    <menuitem id="menu_skillmap_eval" name="ประเมิน Skill Map (FM-HR-14)" action="action_skillmap_eval"
+              parent="menu_hr_forms_root" sequence="30"/>
+    <menuitem id="menu_skillmap_chart" name="Skill Map Chart" action="action_skillmap_chart"
+              parent="menu_hr_forms_root" sequence="40"/>
+    <menuitem id="menu_skillmap_task" name="ตั้งค่า Skill Map (หัวข้อต่อตำแหน่ง)" action="action_skillmap_task"
+              parent="menu_hr_forms_root" sequence="90" groups="hr.group_hr_user"/>
+</odoo>

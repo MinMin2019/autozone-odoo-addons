@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Same behaviour as the employee form: the Job Position dropdown offers only
+        the positions of the department chosen above it, and Department opens the
+        flat picker list. hr_contract shows each of these fields twice, once per
+        access group (contract managers may create, others may only pick), so
+        every rule is applied to both copies.
+    -->
+    <record id="hr_contract_view_form_autozone" model="ir.ui.view">
+        <field name="name">hr.contract.form.autozone</field>
+        <field name="model">hr.contract</field>
+        <field name="inherit_id" ref="hr_contract.hr_contract_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='department_id'][@groups='!hr_contract.group_hr_contract_manager']" position="attributes">
+                <attribute name="context">{'list_view_ref': 'autozone_org_chart.view_department_list_select'}</attribute>
+            </xpath>
+            <xpath expr="//field[@name='department_id'][@groups='hr_contract.group_hr_contract_manager']" position="attributes">
+                <attribute name="context">{'list_view_ref': 'autozone_org_chart.view_department_list_select'}</attribute>
+            </xpath>
+            <xpath expr="//field[@name='job_id'][@groups='!hr_contract.group_hr_contract_manager']" position="attributes">
+                <attribute name="domain">department_id and [('department_id', '=', department_id), '|', ('company_id', '=', False), ('company_id', '=', company_id)] or ['|', ('company_id', '=', False), ('company_id', '=', company_id)]</attribute>
+            </xpath>
+            <xpath expr="//field[@name='job_id'][@groups='hr_contract.group_hr_contract_manager']" position="attributes">
+                <attribute name="domain">department_id and [('department_id', '=', department_id), '|', ('company_id', '=', False), ('company_id', '=', company_id)] or ['|', ('company_id', '=', False), ('company_id', '=', company_id)]</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

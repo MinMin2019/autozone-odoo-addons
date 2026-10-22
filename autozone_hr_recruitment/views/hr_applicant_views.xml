@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_applicant_view_form_autozone" model="ir.ui.view">
+        <field name="name">hr.applicant.form.autozone.recruitment</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_applicant_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Stock "Create Employee" makes an employee without a contract and
+                 outside the approval flow; "เริ่มงาน" replaces it. -->
+            <xpath expr="//button[@name='create_employee_from_applicant']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//header" position="inside">
+                <button name="action_az_eval_approve" type="object" string="ผู้จัดการอนุมัติผลสัมภาษณ์" class="btn-primary"
+                        invisible="az_step != 'evaluate' or az_eval_manager_decision == 'approve' or not az_score_grade"/>
+                <button name="action_az_eval_reject" type="object" string="ผู้จัดการไม่อนุมัติ"
+                        invisible="az_step != 'evaluate' or az_eval_manager_decision or not az_score_grade"/>
+                <button name="action_az_approve_hire" type="object" string="อนุมัติจ้าง" class="btn-primary"
+                        invisible="az_hire_state != 'pending'"/>
+                <button name="action_az_reject_hire" type="object" string="ไม่อนุมัติจ้าง"
+                        invisible="az_hire_state != 'pending'"
+                        confirm="ไม่อนุมัติจ้างผู้สมัครคนนี้?"/>
+                <button name="action_az_start_work" type="object" string="เริ่มงาน" class="btn-primary"
+                        invisible="az_step != 'onboarding' or az_hire_state != 'approved'"
+                        groups="hr_recruitment.group_hr_recruitment_user"
+                        confirm="สร้างพนักงานและสัญญาจ้างร่างให้ผู้สมัครคนนี้?"/>
+            </xpath>
+            <xpath expr="//sheet" position="before">
+                <div class="alert alert-warning mb-0" role="alert" invisible="not az_is_my_hire_turn">
+                    <strong>รออนุมัติจ้างจากคุณ</strong> — ดูผลประเมินในแท็บ "ประเมินสัมภาษณ์ FM-HR-05"
+                </div>
+            </xpath>
+            <xpath expr="//sheet//field[@name='job_id']" position="after">
+                <field name="manpower_request_id"/>
+                <field name="az_start_date" invisible="az_step not in ('hire_approval', 'onboarding', 'hired')"/>
+                <field name="az_hire_state" readonly="1" invisible="az_hire_state == 'none'"/>
+                <field name="az_hire_approver_id" invisible="az_hire_state == 'none'"/>
+                <field name="az_step" invisible="1"/>
+                <field name="az_is_my_hire_turn" invisible="1"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="ประเมินสัมภาษณ์ FM-HR-05" name="az_evaluation">
+                    <group>
+                        <group>
+                            <field name="az_interview_date"/>
+                            <field name="az_interviewer_id"/>
+                        </group>
+                        <group>
+                            <field name="salary_expected" string="เงินเดือนที่ต้องการ"/>
+                            <field name="az_salary_unit" string="หน่วย"/>
+                        </group>
+                    </group>
+                    <group string="หัวข้อในการพิจารณา (5 ดีมาก · 4 ดี · 3 พอใช้ · 2 น้อย · 1 ปรับปรุง)">
+                        <field name="az_eval_01" widget="radio" options="{'horizontal': true}"/>
+                        <field name="az_eval_02" widget="radio" options="{'horizontal': true}"/>
+                        <field name="az_eval_03" widget="radio" options="{'horizontal': true}"/>
+                        <field name="az_eval_04" widget="radio" options="{'horizontal': true}"/>
+                        <field name="az_eval_05" widget="radio" options="{'horizontal': true}"/>
+                        <field name="az_eval_06" widget="radio" options="{'horizontal': true}"/>
+                        <field name="az_eval_07" widget="radio" options="{'horizontal': true}"/>
+                        <field name="az_eval_08" widget="radio" options="{'horizontal': true}"/>
+                        <field name="az_eval_09" widget="radio" options="{'horizontal': true}"/>
+                        <field name="az_eval_10" widget="radio" options="{'horizontal': true}"/>
+                    </group>
+                    <group>
+                        <group string="สรุป">
+                            <field name="az_score_total"/>
+                            <field name="az_score_avg"/>
+                            <field name="az_score_grade"/>
+                        </group>
+                        <group string="เกณฑ์การให้คะแนน (คะแนนเฉลี่ย)">
+                            <div colspan="2" class="text-muted">
+                                5.0–4.5 ดีเยี่ยม · 4.4–3.5 ดีมาก (ระดับสำนักงาน) · 3.4–2.5 ดี (ระดับพนักงาน) · 2.4–1.5 พอใช้ · 1.4–1.0 ไม่น่าพอใจ
+                            </div>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="ความคิดเห็นของผู้สัมภาษณ์">
+                            <field name="az_interviewer_opinion" widget="radio" nolabel="1" colspan="2"/>
+                            <field name="az_other_position" invisible="az_interviewer_opinion != 'other_position'"/>
+                        </group>
+                        <group string="ผู้จัดการ">
+                            <field name="az_eval_manager_decision"/>
+                            <field name="az_eval_manager_id"/>
+                            <field name="az_eval_manager_date"/>
+                        </group>
+                    </group>
+                    <field name="az_interview_note" placeholder="ความคิดเห็นเพิ่มเติม"/>
+                </page>
+                <page string="เงินเดือน (FM-HR-04)" name="az_salary" groups="hr_recruitment.group_hr_recruitment_user">
+                    <group>
+                        <group>
+                            <field name="az_salary_probation"/>
+                            <field name="az_salary_after_probation"/>
+                        </group>
+                        <group>
+                            <div colspan="2" class="text-muted">
+                                อนุมัติโดยผู้จัดการ (ผลสัมภาษณ์) และสายงาน/GM (อนุมัติจ้าง) ตามขั้นตอนในระบบ
+                                เงินเดือนทดลองงานจะไปเป็นค่าจ้างในสัญญาร่างตอนกด "เริ่มงาน"
+                            </div>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="hr_applicant_view_search_autozone" model="ir.ui.view">
+        <field name="name">hr.applicant.search.autozone.recruitment</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_applicant_view_search_bis"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='job_id']" position="after">
+                <field name="manpower_request_id"/>
+            </xpath>
+            <xpath expr="//field[@name='job_id']" position="before">
+                <filter string="รอฉันอนุมัติจ้าง" name="my_hire_turn"
+                        domain="[('az_hire_state', '=', 'pending'), ('az_hire_approver_id', '=', uid)]"/>
+                <separator/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="hr_recruitment_stage_form_autozone" model="ir.ui.view">
+        <field name="name">hr.recruitment.stage.form.autozone</field>
+        <field name="model">hr.recruitment.stage</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_recruitment_stage_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="az_step"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

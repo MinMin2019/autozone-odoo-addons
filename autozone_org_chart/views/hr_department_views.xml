@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Departments exist whether or not anyone manages them, which makes the
+        department org chart the only place a vacancy can be seen at all — the
+        employee chart draws people, so a vacant post simply is not there.
+
+        Stock renders an empty manager field, which reads the same as a field
+        somebody forgot to fill in. Say it instead.
+    -->
+    <record id="hr_department_hierarchy_autozone" model="ir.ui.view">
+        <field name="name">hr.department.hierarchy.autozone</field>
+        <field name="model">hr.department</field>
+        <field name="inherit_id" ref="hr_org_chart.hr_department_hierarchy_view"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//hierarchy/field[@name='total_employee']" position="after">
+                <field name="manager_id"/>
+                <field name="analytic_account_id"/>
+                <field name="total_employee_all"/>
+                <field name="open_positions"/>
+            </xpath>
+
+            <xpath expr="//t[@t-name='hierarchy-box']/div[2]" position="replace">
+                <div class="o_hierarchy_node_body d-flex flex-column">
+                    <field t-if="record.manager_id.raw_value" name="manager_id"
+                           class="pt-1 ps-1" widget="many2one_avatar_employee"/>
+                    <!--
+                        A department with no manager is not news here: twelve
+                        branches are run by their คอนโทรลเลอร์ on purpose, and
+                        the reporting line lives on hr.employee.parent_id either
+                        way. What is worth a badge is a position actually being
+                        recruited for.
+                    -->
+                    <span t-if="record.open_positions.raw_value"
+                          class="badge text-bg-warning align-self-start mt-2 ms-2">
+                        รับสมัคร <t t-out="record.open_positions.raw_value"/> อัตรา
+                    </span>
+                    <span t-if="record.analytic_account_id.raw_value"
+                          class="small text-muted ps-2 pt-1 text-truncate"
+                          t-att-title="record.analytic_account_id.value">
+                        <t t-out="record.analytic_account_id.value"/>
+                    </span>
+                    <div>
+                        <button class="btn btn-link" name="action_employee_from_department_all" type="object">
+                            <t t-out="record.total_employee_all.raw_value"/> Employees
+                        </button>
+                        <span t-if="record.total_employee.raw_value and record.total_employee.raw_value != record.total_employee_all.raw_value"
+                              class="small text-muted">
+                            (<t t-out="record.total_employee.raw_value"/> ในแผนกนี้)
+                        </span>
+                    </div>
+                </div>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!--
+        Fold/unfold comes from Odoo's own nested group_by. Grouping by these
+        three walks สายงาน > ฝ่าย > แผนก, each header foldable and counted, with
+        the หน่วย and งาน rows underneath.
+    -->
+    <record id="view_department_filter_autozone" model="ir.ui.view">
+        <field name="name">hr.department.search.autozone</field>
+        <field name="model">hr.department</field>
+        <field name="inherit_id" ref="hr.view_department_filter"/>
+        <field name="arch" type="xml">
+            <search position="inside">
+                <filter name="tree_only" string="มุมมองผัง"
+                        domain="[('is_visible_in_tree', '=', True)]"/>
+                <group expand="0" string="Group By" name="autozone_groupby">
+                    <filter name="group_line" string="สายงาน" context="{'group_by': 'line_id'}"/>
+                    <filter name="group_division" string="ฝ่าย" context="{'group_by': 'division_id'}"/>
+                    <filter name="group_section" string="แผนก" context="{'group_by': 'section_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!--
+        Open on the tree filter: only rows whose ancestors are all unfolded, so
+        the list starts at the roots and opens a level at a time from the carets.
+
+        Not grouped. Grouping by สายงาน > ฝ่าย > แผนก does fold, but it fights the
+        indented name — inside a group the parent is already the header, so the
+        indent repeats it at the wrong depth, and every level grows a "None"
+        bucket for the ancestor itself. The group-bys stay in the menu for
+        reporting; the default is the tree.
+
+        Turning the "มุมมองผัง" filter off gives the whole 297-row list back, which
+        is what you want when searching by name.
+    -->
+    <record id="hr.hr_department_kanban_action" model="ir.actions.act_window">
+        <field name="context">{'search_default_tree_only': 1}</field>
+    </record>
+
+    <record id="view_department_form_autozone" model="ir.ui.view">
+        <field name="name">hr.department.form.autozone</field>
+        <field name="model">hr.department</field>
+        <field name="inherit_id" ref="hr.view_department_form"/>
+        <!-- Applied after l10n_th_tier_department's view (priority 16) so its
+             approval_level group exists by the time the move below runs. -->
+        <field name="priority">30</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='parent_id']" position="after">
+                <field name="analytic_account_id"
+                       options="{'no_create': True, 'no_quick_create': True}"/>
+                <field name="analytic_plan_id"/>
+                <field name="master_department_id"/>
+                <field name="total_employee_all" string="Employees (incl. sub-departments)"/>
+                <field name="expected_employees"/>
+            </xpath>
+
+            <!--
+                The stock department form has no notebook at all, and
+                l10n_th_tier_department drops its Approval Level group loose in
+                the sheet. One notebook, two tabs, instead of two stacked slabs.
+
+                Job positions are the hinge to Recruitment: a department with
+                people but no positions is exactly the gap that stops "which
+                branch is short-handed" from being answerable.
+            -->
+            <xpath expr="//sheet" position="inside">
+                <notebook>
+                    <page string="Job Positions" name="job_positions">
+                        <field name="jobs_ids" context="{'default_company_id': company_id}">
+                            <list editable="bottom">
+                                <field name="name"/>
+                                <field name="no_of_employee" string="Current" readonly="1"/>
+                                <field name="no_of_recruitment" string="To Recruit"/>
+                                <field name="expected_employees" string="Expected" readonly="1"/>
+                            </list>
+                        </field>
+                        <p class="text-muted mt-2">
+                            เพิ่มบรรทัดที่นี่คือการ<strong>สร้างตำแหน่งใหม่</strong>ผูกกับแผนกนี้ —
+                            ถ้าตำแหน่งมีอยู่แล้วแต่ยังไม่ได้ระบุแผนก ให้ไปกำหนดจากหน้า Job Positions แทน
+                            จะได้ไม่เกิดตำแหน่งซ้ำ
+                        </p>
+                    </page>
+                    <page string="Approvals" name="approvals"/>
+                </notebook>
+            </xpath>
+
+            <!-- Relocate the tier group rather than duplicate it, so whatever
+                 l10n_th_tier_department puts in there keeps working as-is. -->
+            <xpath expr="//page[@name='approvals']" position="inside">
+                <xpath expr="//group[@name='approval_level']" position="move"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_department_tree_autozone" model="ir.ui.view">
+        <field name="name">hr.department.list.autozone</field>
+        <field name="model">hr.department</field>
+        <field name="inherit_id" ref="hr.view_department_tree"/>
+        <field name="arch" type="xml">
+            <!--
+                Pin the order to the tree key. The indent on name_indented only
+                tells the truth while rows sit directly under their parent, and
+                a user clicking another column header would silently break that.
+            -->
+            <xpath expr="//list" position="attributes">
+                <attribute name="default_order">hierarchy_sequence</attribute>
+            </xpath>
+
+            <!--
+                The caret. Two buttons rather than one, because a list button
+                cannot swap its own icon; `invisible` picks which one shows.
+                A leaf gets neither, so its row stays flush with its siblings.
+            -->
+            <xpath expr="//field[@name='name']" position="before">
+                <field name="sequence" widget="handle"/>
+                <field name="is_folded" column_invisible="True"/>
+                <field name="has_children" column_invisible="True"/>
+                <button name="action_unfold" type="object" icon="fa-caret-right"
+                        title="กาง" invisible="not has_children or not is_folded"/>
+                <button name="action_fold" type="object" icon="fa-caret-down"
+                        title="พับ" invisible="not has_children or is_folded"/>
+                <field name="name_indented" string="Department" readonly="1"/>
+            </xpath>
+
+            <!-- The raw name stays available for renaming straight from the list. -->
+            <xpath expr="//field[@name='name']" position="attributes">
+                <attribute name="optional">hide</attribute>
+                <attribute name="string">Name (editable)</attribute>
+            </xpath>
+            <xpath expr="//field[@name='manager_id']" position="after">
+                <field name="analytic_account_id" optional="show"/>
+            </xpath>
+            <xpath expr="//field[@name='total_employee']" position="after">
+                <field name="total_employee_all" string="Employees (all)" optional="hide"/>
+            </xpath>
+            <!-- The list is flat, so the full path is the only way the tier reads. -->
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="complete_name" string="Full Path" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!--
+        The list a Department field opens on "Search More…". The tree list
+        above is built for the Departments menu — fold carets, a drag handle and
+        a name padded by depth — and squeezed into a dialog it cuts every name
+        down to "สาขา …". Here the rows are flat, the name gets the room, and
+        the parent column says where each one sits. Primary view with a high
+        priority, so it never replaces the menu's list; fields ask for it by
+        list_view_ref.
+    -->
+    <record id="view_department_list_select" model="ir.ui.view">
+        <field name="name">hr.department.list.select</field>
+        <field name="model">hr.department</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list string="เลือกแผนก" default_order="hierarchy_sequence">
+                <field name="name" string="แผนก"/>
+                <field name="parent_id" string="อยู่ใต้"/>
+                <field name="manager_id" string="ผู้จัดการ" widget="many2one_avatar_user" optional="show"/>
+                <field name="total_employee" string="พนักงาน" optional="show"/>
+                <field name="complete_name" string="เส้นทางเต็ม" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ใบสมัครงาน FM-HR-04 (Rev.04) on the candidate: the person, not the application. -->
+    <record id="hr_candidate_view_form_fm_hr_04" model="ir.ui.view">
+        <field name="name">hr.candidate.form.fm-hr-04</field>
+        <field name="model">hr.candidate</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_candidate_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet//notebook" position="inside">
+                    <page string="ใบสมัคร FM-HR-04" name="az_fm_hr_04">
+                        <group>
+                            <group string="1. ประวัติส่วนตัว">
+                                <field name="az_photo" widget="image" class="oe_avatar" options="{'size': [96, 120]}"/>
+                                <field name="az_title"/>
+                                <field name="az_birthday"/>
+                                <field name="az_age" invisible="not az_birthday"/>
+                                <field name="az_nationality_id"/>
+                                <field name="az_line_id"/>
+                                <field name="az_facebook"/>
+                                <field name="az_application_date"/>
+                            </group>
+                            <group string="ที่อยู่ปัจจุบัน">
+                                <field name="az_addr_no"/>
+                                <field name="az_addr_moo"/>
+                                <field name="az_addr_soi"/>
+                                <field name="az_addr_road"/>
+                                <field name="az_addr_tambon"/>
+                                <field name="az_addr_amphoe"/>
+                                <field name="az_addr_state_id"/>
+                                <field name="az_addr_zip"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group string="2. สถานะทางครอบครัว">
+                                <field name="az_marital" widget="radio" options="{'horizontal': true}"/>
+                                <field name="az_marriage_registered" widget="radio" options="{'horizontal': true}"
+                                       invisible="az_marital != 'married'"/>
+                                <field name="az_emergency_name"/>
+                                <field name="az_emergency_relation"/>
+                                <field name="az_emergency_phone"/>
+                            </group>
+                            <group string="3. สถานภาพทางทหาร">
+                                <field name="az_military" widget="radio"/>
+                                <field name="az_military_draft_when" invisible="az_military != 'not_yet'"/>
+                                <field name="az_military_unit" invisible="az_military != 'done'"/>
+                                <field name="az_military_date" invisible="az_military != 'done'"/>
+                                <field name="az_military_exempt_reason" invisible="az_military != 'exempt'"/>
+                            </group>
+                        </group>
+                        <group string="4. ประวัติการศึกษาสูงสุด">
+                            <group>
+                                <field name="az_education"/>
+                                <field name="az_school"/>
+                            </group>
+                            <group>
+                                <field name="az_gpa"/>
+                            </group>
+                        </group>
+                        <separator string="5. ประวัติการทำงาน (จากปัจจุบันย้อนไปก่อนหน้า)"/>
+                        <field name="az_work_history_ids">
+                            <list editable="bottom">
+                                <field name="sequence" widget="handle"/>
+                                <field name="period"/>
+                                <field name="company"/>
+                                <field name="position"/>
+                                <field name="salary"/>
+                                <field name="leave_reason"/>
+                            </list>
+                        </field>
+                        <group string="ความสามารถช่าง (เฉพาะตำแหน่งช่างฝีมือ) · 0 ไม่เป็น · 1 ซ่อมเบา · 2 ซ่อมกลาง · 3 ซ่อมหนัก">
+                            <group>
+                                <field name="az_craft_beat"/>
+                                <field name="az_craft_strip"/>
+                                <field name="az_craft_assemble"/>
+                                <field name="az_craft_putty"/>
+                            </group>
+                            <group>
+                                <field name="az_craft_prep"/>
+                                <field name="az_craft_mix"/>
+                                <field name="az_craft_spray"/>
+                                <field name="az_craft_polish"/>
+                            </group>
+                            <group>
+                                <field name="az_trade_test_level"/>
+                                <field name="az_trade_test_field"/>
+                                <field name="az_trade_test_institute"/>
+                            </group>
+                        </group>
+                        <separator string="6. ความสามารถทางภาษา · 0 ไม่ได้ · 1 อ่อน · 2 พอใช้ · 3 ดี"/>
+                        <field name="az_language_ids">
+                            <list editable="bottom">
+                                <field name="name"/>
+                                <field name="level_understand"/>
+                                <field name="level_speak"/>
+                                <field name="level_write"/>
+                                <field name="level_read"/>
+                            </list>
+                        </field>
+                        <group string="7. รายละเอียดอื่น ๆ">
+                            <group>
+                                <field name="az_has_relative" widget="radio" options="{'horizontal': true}"/>
+                                <field name="az_criminal_check_consent" widget="radio" options="{'horizontal': true}"/>
+                            </group>
+                            <group>
+                                <field name="availability" string="9. เริ่มงานได้ภายในวันที่"/>
+                            </group>
+                        </group>
+                        <field name="az_relative_ids" invisible="az_has_relative != 'yes'">
+                            <list editable="bottom">
+                                <field name="name"/>
+                                <field name="relation"/>
+                                <field name="branch"/>
+                            </list>
+                        </field>
+                        <div class="text-muted">ข้อ 8 อัตราเงินเดือนที่ต้องการ และเงินเดือนทดลองงาน / ผ่านทดลองงาน อยู่ในใบสมัครของตำแหน่งนั้น (Applications)</div>
+                    </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Employee fields FM-HR-04 needs that Odoo lacks; filled by "เริ่มงาน". -->
+    <record id="view_employee_form_fm_hr_04" model="ir.ui.view">
+        <field name="name">hr.employee.form.fm-hr-04</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='emergency_phone']" position="after">
+                <field name="az_line_id"/>
+                <field name="az_facebook"/>
+                <field name="az_military"/>
+                <field name="az_military_note" invisible="not az_military"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_employee_form_name_en" model="ir.ui.view">
+        <field name="name">hr.employee.form.name_en</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('oe_title')]/h1" position="before">
+                <div class="fs-5" groups="hr.group_hr_user">
+                    <span class="text-muted me-2">รหัสพนักงาน</span>
+                    <field name="registration_number" class="fw-bold d-inline-block w-auto" placeholder="เช่น 14420"/>
+                </div>
+            </xpath>
+            <xpath expr="//div[hasclass('oe_title')]/h1" position="after">
+                <h4 class="text-muted">
+                    <field name="name_en" placeholder="ชื่อ-นามสกุลภาษาอังกฤษ เช่น Somchai Jaidee"/>
+                </h4>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_employee_form_id_card" model="ir.ui.view">
+        <field name="name">hr.employee.form.id_card</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='identification_id']" position="after">
+                <field name="id_card_issue_place" invisible="not identification_id"/>
+                <field name="id_card_issue_date" invisible="not identification_id"/>
+                <field name="id_card_expiry_date" invisible="not identification_id"/>
+            </xpath>
+            <!-- Odoo ships each Thai province twice here: its own English set (code TH-20)
+                 and the Thai set every customer address uses (code 20). Offer the Thai one. -->
+            <!-- Odoo's Bank Account is shared with Accounting (res.partner.bank on the
+                 work contact). Hidden, replaced by HR-only fields. -->
+            <xpath expr="//field[@name='bank_account_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='bank_account_id']" position="after">
+                <field name="hr_bank_name"/>
+                <field name="hr_bank_account_no" placeholder="เช่น 123-4-56789-0"/>
+                <field name="hr_bank_account_name" placeholder="ชื่อตามสมุดบัญชี"/>
+                <field name="hr_bank_branch"/>
+            </xpath>
+            <xpath expr="//field[@name='private_state_id']" position="attributes">
+                <attribute name="domain">[('country_id', '=?', private_country_id), '!', ('code', '=like', 'TH-%')]</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_employee_tree_name_en" model="ir.ui.view">
+        <field name="name">hr.employee.list.name_en</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="before">
+                <field name="registration_number" string="รหัส" groups="hr.group_hr_user"/>
+            </xpath>
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="name_en" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="hr_kanban_view_employees_code" model="ir.ui.view">
+        <field name="name">hr.employee.kanban.code</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.hr_kanban_view_employees"/>
+        <field name="arch" type="xml">
+            <xpath expr="//main//field[@name='name']" position="before">
+                <span t-if="record.registration_number.raw_value" class="badge text-bg-light border me-1"
+                      groups="hr.group_hr_user">
+                    <field name="registration_number"/>
+                </span>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Typing a name or a code in the search box finds the person. -->
+    <record id="view_employee_filter_name_en" model="ir.ui.view">
+        <field name="name">hr.employee.search.name_en</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="attributes">
+                <attribute name="filter_domain">['|', '|', '|', ('work_email', 'ilike', self), ('name', 'ilike', self), ('name_en', 'ilike', self), ('registration_number', '=ilike', self)]</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='message_needaction']" position="before">
+                <filter string="ยังไม่มีชื่ออังกฤษ" name="no_name_en" domain="[('name_en', '=', False)]"/>
+                <filter string="ยังไม่มีบัญชีธนาคาร" name="no_bank" domain="[('hr_bank_account_no', '=', False)]"
+                        groups="hr.group_hr_user"/>
+                <separator/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- One editable list to key in or check everybody's salary account. -->
+    <record id="view_employee_bank_list" model="ir.ui.view">
+        <field name="name">hr.employee.list.bank</field>
+        <field name="model">hr.employee</field>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <list string="บัญชีธนาคารพนักงาน" editable="bottom" create="false" delete="false">
+                <field name="registration_number" string="รหัส" readonly="1"/>
+                <field name="name" readonly="1"/>
+                <field name="department_id" readonly="1" optional="show"/>
+                <field name="hr_bank_name"/>
+                <field name="hr_bank_account_no"/>
+                <field name="hr_bank_account_name"/>
+                <field name="hr_bank_branch" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_employee_bank" model="ir.actions.act_window">
+        <field name="name">บัญชีธนาคารพนักงาน</field>
+        <field name="res_model">hr.employee</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="action_employee_bank_view_list" model="ir.actions.act_window.view">
+        <field name="sequence">1</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_employee_bank_list"/>
+        <field name="act_window_id" ref="action_employee_bank"/>
+    </record>
+
+    <menuitem id="menu_employee_bank"
+              name="บัญชีธนาคารพนักงาน"
+              action="action_employee_bank"
+              parent="hr.menu_hr_employee_payroll"
+              groups="hr.group_hr_user"
+              sequence="60"/>
+</odoo>

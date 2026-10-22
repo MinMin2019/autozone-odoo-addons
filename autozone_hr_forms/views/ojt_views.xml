@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ojt_form" model="ir.ui.view">
+        <field name="name">hr.ojt.evaluation.form</field>
+        <field name="model">hr.ojt.evaluation</field>
+        <field name="arch" type="xml">
+            <form string="ใบประเมิน OJT FM-HR-12">
+                <header>
+                    <button name="action_done" type="object" string="ยืนยันผลประเมิน" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_draft" type="object" string="แก้ไข" invisible="state != 'done'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <span class="text-muted">ใบประเมินผลการปฏิบัติงานหลังการฝึกอบรม OJT</span>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="employee_id" readonly="state == 'done'"/>
+                            <field name="job_title"/>
+                            <field name="division_id"/>
+                            <field name="department_id"/>
+                        </group>
+                        <group>
+                            <field name="course" readonly="state == 'done'"/>
+                            <field name="instructor" readonly="state == 'done'"/>
+                            <field name="date_start" readonly="state == 'done'"/>
+                            <field name="date_end" readonly="state == 'done'"/>
+                            <field name="location" widget="radio" options="{'horizontal': true}" readonly="state == 'done'"/>
+                        </group>
+                    </group>
+                    <group string="รายการ (5 ดีมาก · 4 ดี · 3 ปานกลาง · 2 แย่ · 1 แย่มาก)">
+                        <field name="c01" widget="radio" options="{'horizontal': true}" readonly="state == 'done'"/>
+                        <field name="c02" widget="radio" options="{'horizontal': true}" readonly="state == 'done'"/>
+                        <field name="c03" widget="radio" options="{'horizontal': true}" readonly="state == 'done'"/>
+                        <field name="c04" widget="radio" options="{'horizontal': true}" readonly="state == 'done'"/>
+                        <field name="c05" widget="radio" options="{'horizontal': true}" readonly="state == 'done'"/>
+                        <field name="c06" widget="radio" options="{'horizontal': true}" readonly="state == 'done'"/>
+                        <field name="c07" widget="radio" options="{'horizontal': true}" readonly="state == 'done'"/>
+                        <field name="c08" widget="radio" options="{'horizontal': true}" readonly="state == 'done'"/>
+                        <field name="c09" widget="radio" options="{'horizontal': true}" readonly="state == 'done'"/>
+                        <field name="c10" widget="radio" options="{'horizontal': true}" readonly="state == 'done'"/>
+                    </group>
+                    <group>
+                        <group string="สรุปผลการประเมิน">
+                            <field name="total"/>
+                            <field name="result" decoration-success="result == 'pass'" decoration-danger="result == 'fail'"/>
+                        </group>
+                        <group string="ผู้ประเมิน (Evaluator)">
+                            <field name="evaluator_id"/>
+                            <field name="eval_date"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="comments"/>
+                        <field name="follow_up" required="result == 'fail'"
+                               placeholder="ใช้สำหรับกรณีที่พนักงานได้คะแนนรวมต่ำกว่า 40 คะแนน"/>
+                    </group>
+                    <field name="company_id" invisible="1"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ojt_list" model="ir.ui.view">
+        <field name="name">hr.ojt.evaluation.list</field>
+        <field name="model">hr.ojt.evaluation</field>
+        <field name="arch" type="xml">
+            <list string="ประเมิน OJT">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="course"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <field name="total"/>
+                <field name="result" widget="badge" decoration-success="result == 'pass'" decoration-danger="result == 'fail'"/>
+                <field name="evaluator_id" optional="show"/>
+                <field name="state" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_ojt_search" model="ir.ui.view">
+        <field name="name">hr.ojt.evaluation.search</field>
+        <field name="model">hr.ojt.evaluation</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <field name="course"/>
+                <field name="department_id" operator="child_of"/>
+                <filter string="ไม่ผ่าน (ต้องติดตามผล)" name="fail" domain="[('result', '=', 'fail')]"/>
+                <filter string="ผ่าน" name="pass" domain="[('result', '=', 'pass')]"/>
+                <group expand="0" string="จัดกลุ่ม">
+                    <filter string="หลักสูตร" name="group_course" context="{'group_by': 'course'}"/>
+                    <filter string="แผนก" name="group_department" context="{'group_by': 'department_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ojt" model="ir.actions.act_window">
+        <field name="name">ประเมิน OJT</field>
+        <field name="res_model">hr.ojt.evaluation</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>
