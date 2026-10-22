@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_az_asset_handover_form" model="ir.ui.view">
+        <field name="name">az.asset.handover.form</field>
+        <field name="model">az.asset.handover</field>
+        <field name="arch" type="xml">
+            <form string="Asset Handover">
+                <header>
+                    <button name="action_done" type="object" string="Confirm" class="btn-primary"
+                            invisible="state != 'draft'"
+                            confirm="ยืนยันแล้วจะเปลี่ยนผู้ถือครองของทุกรายการ (ยกเลิกไม่ได้) — ได้ใบที่เซ็นครบแล้วใช่ไหม?"/>
+                    <button name="action_print" type="object" string="Print" invisible="state == 'cancel'"/>
+                    <button name="action_cancel" type="object" string="Cancel" invisible="state != 'draft'"/>
+                    <button name="action_draft" type="object" string="Reset to Draft" invisible="state != 'cancel'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="ส่วนที่ 1 ประเภท">
+                            <field name="handover_type" widget="radio" readonly="state != 'draft'"/>
+                            <field name="date" readonly="state != 'draft'"/>
+                            <field name="sender_id" options="{'no_create': True}"
+                                   context="{'az_employee_code_search': True}" readonly="state != 'draft'"/>
+                        </group>
+                        <group string="ส่วนที่ 2 ปลายทาง (ผู้รับมอบ / ผู้รับคืน)">
+                            <field name="receiver_id" options="{'no_create': True}"
+                                   context="{'az_employee_code_search': True}" readonly="state != 'draft'"/>
+                            <field name="receiver_job"/>
+                            <field name="receiver_code"/>
+                            <field name="receiver_department_id"/>
+                            <field name="approver_id" options="{'no_create': True}"
+                                   context="{'az_employee_code_search': True}" readonly="state != 'draft'"/>
+                            <field name="location_dest" readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="reason" readonly="state != 'draft'" placeholder="เหตุผล / รายละเอียด"/>
+                    </group>
+                    <notebook>
+                        <page string="ส่วนที่ 3 รายการทรัพย์สิน" name="lines">
+                            <field name="line_ids" readonly="state != 'draft'">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="asset_id" options="{'no_create': True}"/>
+                                    <field name="condition"/>
+                                    <field name="note"/>
+                                    <field name="from_custodian_id" optional="hide" column_invisible="parent.state != 'done'"/>
+                                    <field name="from_location" optional="hide" column_invisible="parent.state != 'done'"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="ส่วนที่ 4 / ฝ่ายบัญชี" name="check">
+                            <group>
+                                <group string="ผู้รับตรวจสอบ">
+                                    <field name="receiver_check" widget="radio" options="{'horizontal': True}"/>
+                                    <field name="mismatch_note" invisible="receiver_check != 'mismatch'"/>
+                                    <field name="hr_notified"/>
+                                    <field name="supervisor_notified"/>
+                                </group>
+                                <group string="ฝ่ายบัญชี — ศูนย์ต้นทุนของค่าเสื่อม">
+                                    <field name="update_analytic" readonly="state != 'draft'"/>
+                                    <field name="analytic_distribution" widget="analytic_distribution"
+                                           invisible="not update_analytic" required="update_analytic"
+                                           readonly="state != 'draft'"
+                                           options="{'account_field': False, 'business_domain': 'general'}"/>
+                                    <field name="analytic_precision" invisible="1"/>
+                                    <field name="done_user_id" invisible="state != 'done'"/>
+                                    <field name="done_date" invisible="state != 'done'"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_az_asset_handover_list" model="ir.ui.view">
+        <field name="name">az.asset.handover.list</field>
+        <field name="model">az.asset.handover</field>
+        <field name="arch" type="xml">
+            <list string="Asset Handovers" decoration-muted="state == 'cancel'" decoration-info="state == 'draft'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="handover_type"/>
+                <field name="sender_id"/>
+                <field name="receiver_id"/>
+                <field name="receiver_department_id" optional="show"/>
+                <field name="line_count" string="Items"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'" decoration-info="state == 'draft'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_az_asset_handover_search" model="ir.ui.view">
+        <field name="name">az.asset.handover.search</field>
+        <field name="model">az.asset.handover</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="sender_id"/>
+                <field name="receiver_id"/>
+                <field name="line_ids" string="Asset" filter_domain="[('line_ids.asset_id', 'ilike', self)]"/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Done" name="done" domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter string="ส่งมอบ" name="deliver" domain="[('handover_type', '=', 'deliver')]"/>
+                <filter string="ส่งคืน" name="return" domain="[('handover_type', '=', 'return')]"/>
+                <group>
+                    <filter string="Type" name="group_type" context="{'group_by': 'handover_type'}"/>
+                    <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Month" name="group_month" context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_az_asset_handover" model="ir.actions.act_window">
+        <field name="name">Asset Handovers</field>
+        <field name="res_model">az.asset.handover</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">สร้างใบส่งมอบ / ส่งคืนทรัพย์สิน</p>
+            <p>หรือติ๊กทรัพย์สินในลิสต์ แล้วกด Actions › Create Handover</p>
+        </field>
+    </record>
+
+    <!-- ประวัติการส่งมอบของทรัพย์สิน 1 ชิ้น (ปุ่มบนฟอร์มทรัพย์สิน) -->
+    <record id="view_az_asset_handover_line_history" model="ir.ui.view">
+        <field name="name">az.asset.handover.line.history</field>
+        <field name="model">az.asset.handover.line</field>
+        <field name="arch" type="xml">
+            <list string="Handover History" create="0" edit="0" delete="0" default_order="date desc, id desc">
+                <field name="date"/>
+                <field name="handover_id" string="Number"/>
+                <field name="handover_type"/>
+                <field name="from_custodian_id"/>
+                <field name="receiver_id" string="New Custodian"/>
+                <field name="from_location" optional="show"/>
+                <field name="condition"/>
+                <field name="note" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_account_asset_form_handover" model="ir.ui.view">
+        <field name="name">account.asset.form.handover</field>
+        <field name="model">account.asset</field>
+        <field name="inherit_id" ref="account_asset.view_account_asset_form"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button name="action_view_handovers" type="object" class="oe_stat_button"
+                        icon="fa-exchange" invisible="handover_count == 0">
+                    <field name="handover_count" widget="statinfo" string="Handovers"/>
+                </button>
+            </div>
+        </field>
+    </record>
+
+    <!-- ติ๊กทรัพย์สินในลิสต์ → Actions › Create Handover -->
+    <record id="action_server_asset_create_handover" model="ir.actions.server">
+        <field name="name">Create Handover</field>
+        <field name="model_id" ref="account_asset.model_account_asset"/>
+        <field name="binding_model_id" ref="account_asset.model_account_asset"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="groups_id" eval="[(4, ref('account.group_account_user'))]"/>
+        <field name="state">code</field>
+        <field name="code">action = records.action_create_handover()</field>
+    </record>
+
+    <menuitem id="menu_az_asset_handover" name="Asset Handovers"
+              parent="menu_az_asset_operations" action="action_az_asset_handover" sequence="10"/>
+</odoo>

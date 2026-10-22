@@ -40,8 +40,8 @@
 
     <menuitem id="menu_asset_check_report"
               name="Asset Check Report"
-              parent="account.menu_finance_entries"
+              parent="menu_az_asset_operations"
               action="action_asset_check_report_wizard"
-              sequence="61"
+              sequence="20"
               groups="account.group_account_readonly"/>
 </odoo>

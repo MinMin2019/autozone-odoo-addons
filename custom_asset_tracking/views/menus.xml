@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- แอป Assets แยกจาก Accounting (v1.8.0): งานฝั่งตัวของ (ผู้ถือครอง/ตรวจนับ/โอนย้าย)
+         ส่วนคิดค่าเสื่อม/เพิ่มรายการ/ตัดจำหน่ายยังอยู่ที่ Accounting เหมือนเดิม
+         เริ่มจากบัญชีที่ดูแลทรัพย์สินก่อน จึงใช้กลุ่มสิทธิ์บัญชีเดิม -->
+    <menuitem id="menu_az_asset_root" name="Assets"
+        web_icon="custom_asset_tracking,static/description/icon.png" sequence="310"
+        groups="account.group_account_readonly"/>
+    <menuitem id="menu_az_asset_register" name="Asset Register"
+        parent="menu_az_asset_root" action="account_asset.action_account_asset_form" sequence="10"/>
+    <menuitem id="menu_az_asset_operations" name="Operations"
+        parent="menu_az_asset_root" sequence="20"/>
+</odoo>

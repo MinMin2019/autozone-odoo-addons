@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_asset_handover" model="ir.actions.report">
+        <field name="name">ใบส่งมอบทรัพย์สิน</field>
+        <field name="model">az.asset.handover</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">custom_asset_tracking.report_asset_handover</field>
+        <field name="report_file">custom_asset_tracking.report_asset_handover</field>
+        <field name="print_report_name">'Handover %s' % object.name</field>
+        <field name="paperformat_id" ref="paperformat_asset_check"/>
+        <field name="binding_model_id" ref="model_az_asset_handover"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- ตามแบบฟอร์ม other/Autozone-ใบส่งมอบทรัพย์สินให้หน่วยงาน-แนวนอน.docx
+         ห้ามตั้งชื่อตัวแปรวน "doc"/"o" (web.basic_layout หยิบไปเป็น record แล้วพัง)
+         แบ่งหน้าใน Python (report.custom_asset_tracking.report_asset_handover._paginate) แถวสูงคงที่
+         → ค่า px ใน CSS ต้องตรงกับ HO_* ใน models/asset_handover.py
+         ช่องผลการตรวจ: Draft = ช่องว่างให้ผู้รับติ๊กเอง, Done = ติ๊กตามที่บันทึก -->
+    <template id="report_asset_handover">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="hd">
+                <t t-set="ho" t-value="hd['ho']"/>
+                <t t-set="done" t-value="ho.state == 'done'"/>
+                <t t-call="web.basic_layout">
+                    <style>
+                        .header, .footer { display: none !important; }
+                        .ho-page { font-family: Sarabun, sans-serif; font-size: 12.5px; color: #000; }
+                        .ho-top { height: 62px; position: relative; }
+                        .ho-co { font-size: 15px; font-weight: bold; line-height: 1.3; }
+                        .ho-title { position: absolute; left: 0; right: 0; top: 4px; text-align: center; font-size: 20px; font-weight: bold; }
+                        .ho-no { position: absolute; right: 0; top: 0; text-align: right; line-height: 1.6; font-size: 13px; }
+                        .ho-sec { font-weight: bold; margin: 4px 0 2px 0; font-size: 13px; }
+                        .ho-box { display: inline-block; width: 12px; height: 12px; border: 1px solid #000; text-align: center; line-height: 11px; font-size: 11px; font-weight: bold; font-family: Arial, sans-serif; vertical-align: middle; }
+                        .ho-row { line-height: 1.75; }
+                        .ho-half { display: inline-block; width: 49%; vertical-align: top; }
+                        .ho-fill { display: inline-block; border-bottom: 1px dotted #000; min-width: 150px; padding: 0 4px; }
+                        table.ho-lines { width: 100%; border-collapse: collapse; margin-top: 2px; }
+                        table.ho-lines th, table.ho-lines td { border: 1px solid #555; padding: 3px 4px; vertical-align: middle; }
+                        table.ho-lines th { background: #eee; text-align: center; font-weight: bold; }
+                        table.ho-lines thead tr { height: 23px; }
+                        tr.ho-r { height: 54px; }
+                        td.c { text-align: center; }
+                        td.r { text-align: right; }
+                        .ho-img { width: 40px; height: 40px; object-fit: cover; }
+                        .ho-noimg { width: 40px; height: 40px; background: #d0d0d0; display: inline-block; }
+                        .ho-name { max-height: 30px; line-height: 15px; overflow: hidden; }
+                        .ho-sub { height: 14px; line-height: 14px; font-size: 10.5px; overflow: hidden; white-space: nowrap; }
+                        .ho-cell { max-height: 44px; line-height: 14px; overflow: hidden; font-size: 11px; }
+                        .ho-pb { page-break-before: always; }
+                        .ho-end { page-break-inside: avoid; }
+                        .ho-note { font-size: 11px; margin-top: 3px; }
+                        .ho-frame { border: 1px solid #555; padding: 4px 8px; margin-top: 6px; line-height: 1.8; }
+                        .ho-sign { margin-top: 6px; }
+                        .ho-sign-cell { display: inline-block; width: 33%; text-align: center; line-height: 1.8; vertical-align: top; }
+                        .ho-terms { font-size: 10.5px; margin-top: 6px; line-height: 1.45; }
+                    </style>
+                    <div class="page ho-page">
+                        <div class="ho-top">
+                            <div class="ho-co">
+                                <t t-esc="ho.company_id.name"/><br/>AUTOZONE COMPANY LIMITED
+                            </div>
+                            <div class="ho-title">ใบส่งมอบทรัพย์สินให้หน่วยงาน</div>
+                            <div class="ho-no">
+                                เลขที่ <span class="ho-fill" style="min-width:110px;"><t t-esc="ho.name if ho.name != '/' else ''"/></span><br/>
+                                วันที่ <span class="ho-fill" style="min-width:110px;"><t t-esc="ho.date.strftime('%d/%m/%Y')"/></span>
+                            </div>
+                        </div>
+
+                        <div class="ho-sec">ส่วนที่ 1 ประเภทรายการ (เลือก 1 ประเภท)</div>
+                        <div class="ho-row">
+                            <span class="ho-box"><t t-if="ho.handover_type == 'deliver'">X</t></span>
+                            <b>ส่งมอบ</b> มอบทรัพย์สินให้พนักงาน / หน่วยงานรับผิดชอบ หรือโอนย้ายระหว่างฝ่าย / สาขา
+                        </div>
+                        <div class="ho-row">
+                            <span class="ho-box"><t t-if="ho.handover_type == 'return'">X</t></span>
+                            <b>ส่งคืน</b> คืนทรัพย์สินจากผู้ถือครอง เช่น ลาออก ย้ายงาน เลิกใช้ เปลี่ยนเครื่องใหม่
+                        </div>
+
+                        <div class="ho-sec">ส่วนที่ 2 ปลายทาง (ผู้รับมอบ / ผู้รับคืน)</div>
+                        <div class="ho-row">
+                            <span class="ho-half">ชื่อ <span class="ho-fill" style="min-width:330px;"><t t-esc="hd['receiver']"/></span></span>
+                            <span class="ho-half">ตำแหน่ง <span class="ho-fill" style="min-width:200px;"><t t-esc="ho.receiver_job or ''"/></span>
+                                รหัสพนักงาน <span class="ho-fill" style="min-width:90px;"><t t-esc="ho.receiver_code or ''"/></span></span>
+                        </div>
+                        <div class="ho-row">
+                            <span class="ho-half">ฝ่าย / ภาค / สาขา <span class="ho-fill" style="min-width:270px;"><t t-esc="ho.receiver_department_id.name or ''"/></span></span>
+                            <span class="ho-half">เหตุผล / รายละเอียด <span class="ho-fill" style="min-width:270px;"><t t-esc="(ho.reason or '').replace('\n', ' ')[:90]"/></span></span>
+                        </div>
+
+                        <div class="ho-sec">ส่วนที่ 3 รายการทรัพย์สิน</div>
+                        <t t-foreach="hd['pages']" t-as="page">
+                        <div t-att-class="'ho-pb' if not page_first else None">
+                        <table class="ho-lines">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2" style="width:3.5%;">ลำดับ</th>
+                                    <th rowspan="2" style="width:5%;">รูป</th>
+                                    <th rowspan="2" style="width:8%;">รหัสทรัพย์สิน</th>
+                                    <th rowspan="2" style="width:23%;">ชื่อทรัพย์สิน<br/>
+                                        <span style="font-weight:normal;">Brand / Model / Serial Number</span></th>
+                                    <th rowspan="2" style="width:9%;">Location</th>
+                                    <th rowspan="2" style="width:15%;">Description</th>
+                                    <th rowspan="2" style="width:7%;">วันที่ได้มา</th>
+                                    <th rowspan="2" style="width:8%;">มูลค่าเดิม</th>
+                                    <th colspan="3">ผลการตรวจ</th>
+                                    <th rowspan="2">หมายเหตุ</th>
+                                </tr>
+                                <tr>
+                                    <th style="width:4%;">สภาพดี</th>
+                                    <th style="width:4%;">ชำรุด</th>
+                                    <th style="width:4%;">ไม่พบ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="page" t-as="row">
+                                    <t t-set="a" t-value="row['asset']"/>
+                                    <t t-set="cond" t-value="row['line'].condition if done else False"/>
+                                    <tr class="ho-r">
+                                        <td class="c" t-esc="row['seq']"/>
+                                        <td class="c">
+                                            <img t-if="a.image_128" class="ho-img" t-att-src="image_data_uri(a.image_128)"/>
+                                            <span t-else="" class="ho-noimg"/>
+                                        </td>
+                                        <td class="c" t-esc="row['code']"/>
+                                        <td>
+                                            <div class="ho-name" t-esc="a.name"/>
+                                            <div class="ho-sub" t-if="a.x_asset_brand or a.x_asset_model or a.x_asset_serial">
+                                                <t t-if="a.x_asset_brand"><b>Brand:</b> <t t-esc="a.x_asset_brand"/>&#160;&#160;</t>
+                                                <t t-if="a.x_asset_model"><b>Model:</b> <t t-esc="a.x_asset_model"/>&#160;&#160;</t>
+                                                <t t-if="a.x_asset_serial"><b>S/N:</b> <t t-esc="a.x_asset_serial"/></t>
+                                            </div>
+                                        </td>
+                                        <td><div class="ho-cell" t-esc="row['location']"/></td>
+                                        <td><div class="ho-cell" t-esc="a.x_asset_description or ''"/></td>
+                                        <td class="c" t-esc="a.acquisition_date and a.acquisition_date.strftime('%d/%m/%Y') or ''"/>
+                                        <td class="r" t-esc="'{:,.2f}'.format(a.original_value)"/>
+                                        <td class="c"><span class="ho-box"><t t-if="cond == 'good'">X</t></span></td>
+                                        <td class="c"><span class="ho-box"><t t-if="cond == 'damaged'">X</t></span></td>
+                                        <td class="c"><span class="ho-box"><t t-if="cond == 'missing'">X</t></span></td>
+                                        <td><div class="ho-cell" t-esc="row['line'].note or ''"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                        </div>
+                        </t>
+                        <div class="ho-note">* สภาพดี = ใช้งานได้ • ชำรุด = ชำรุด / เสีย • ไม่พบ = สูญหาย</div>
+
+                        <div class="ho-end">
+                            <div class="ho-sec">ส่วนที่ 4 การส่งมอบ / ส่งคืน</div>
+                            <div class="ho-row">
+                                ผู้รับตรวจสอบแล้ว ครบถ้วน สภาพตรงตามส่วนที่ 3
+                                <span class="ho-box"><t t-if="ho.receiver_check == 'match'">X</t></span> ตรง
+                                <span class="ho-box"><t t-if="ho.receiver_check == 'mismatch'">X</t></span> ไม่ตรง (ระบุ)
+                                <span class="ho-fill" style="min-width:160px;"><t t-esc="ho.mismatch_note or ''"/></span>
+                                &#160;&#160; ส่งคืนเพราะลาออก / ย้ายงาน
+                                <span class="ho-box"><t t-if="ho.hr_notified">X</t></span> แจ้งฝ่ายทรัพยากรบุคคลแล้ว
+                                &#160;&#160; ส่งคืนไม่ครบ / ชำรุด
+                                <span class="ho-box"><t t-if="ho.supervisor_notified">X</t></span> แจ้งผู้บังคับบัญชาแล้ว
+                            </div>
+
+                            <div class="ho-sign">
+                                <t t-foreach="[('ผู้ส่งมอบ', hd['sender']), ('ผู้จัดการต้นสังกัด (อนุมัติ)', hd['approver']), ('ผู้รับมอบ', hd['receiver'])]" t-as="sig">
+                                    <div class="ho-sign-cell">
+                                        <b t-esc="sig[0]"/><br/>
+                                        ลงชื่อ .......................................<br/>
+                                        ( <t t-if="sig[1]" t-esc="sig[1]"/><t t-else="">.............................................</t> )<br/>
+                                        วันที่ ......./......./.........
+                                    </div>
+                                </t>
+                            </div>
+
+                            <div class="ho-frame">
+                                <b>ฝ่ายบัญชี</b> &#160;
+                                ปรับผู้ถือครอง / ที่ตั้ง ในทะเบียนทรัพย์สิน <span class="ho-box"><t t-if="done">X</t></span> แล้ว
+                                &#160;&#160; ปรับศูนย์ต้นทุนของค่าเสื่อมราคาใน Odoo
+                                <span class="ho-box"><t t-if="done and ho.update_analytic">X</t></span> แล้ว
+                                <span class="ho-box"><t t-if="done and not ho.update_analytic">X</t></span> ไม่ต้องปรับ
+                                &#160;&#160; ผู้บันทึก <span class="ho-fill"><t t-esc="ho.done_user_id.name or ''"/></span>
+                                วันที่ <span class="ho-fill" style="min-width:90px;"><t t-esc="ho.done_date and ho.done_date.strftime('%d/%m/%Y') or ''"/></span>
+                            </div>
+
+                            <div class="ho-terms">
+                                <b>ข้อกำหนด</b>
+                                1. ส่งมอบ / ส่งคืน ทรัพย์สินต้องลงนามทั้งผู้ส่งและผู้รับ และส่งฝ่ายบัญชีภายใน 7 วัน เพื่อปรับทะเบียนทรัพย์สิน (เทียบหมวดที่ 5 ข้อ 1.3)
+                                2. การอนุมัติในใบนี้เป็นการอนุมัติภายใน การลงนามสัญญาซื้อขายหรือโอนกรรมสิทธิ์ต้องทำโดยกรรมการผู้มีอำนาจลงนามผูกพันบริษัท (ข้อ 3.5.5)
+                                3. ผู้จัดการต้นสังกัด คือผู้จัดการฝ่าย / ภาค / โรงงาน ของหน่วยงานปลายทาง (กรณีส่งคืน คือหน่วยงานที่รับคืน) ผู้ส่งและผู้รับต้องไม่ใช่ผู้อนุมัติเอง
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

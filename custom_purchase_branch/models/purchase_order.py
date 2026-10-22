@@ -6,12 +6,11 @@
 * บรรทัด PO: az_branch_id (stored, compute จาก analytic_distribution = บัญชีที่มีสัดส่วนมากสุด)
   + inverse: ตั้งค่าจาก list/multi-edit แล้วเขียนกลับเป็น analytic_distribution {id: 100}
 * หัว PO: az_branch_ids (stored) = สาขาทั้งหมดที่ปรากฏบนบรรทัด -> คอลัมน์/ตัวกรอง/จัดกลุ่มบน list
-* บังคับ: ยืนยัน PO ไม่ได้ถ้ามีบรรทัดสินค้าที่ยังไม่ระบุสาขา
+* ไม่บังคับ: ยืนยัน PO ได้แม้บางบรรทัดยังไม่ระบุสาขา (v1.2.0 เอาข้อบังคับออกตามที่ user ขอ)
 * อัตโนมัติ: เลือก Deliver To (คลังสาขา) -> สาขา = analytic ที่ผูกกับคลังนั้น
   (จาก operation type "เบิกใช้วัสดุ" ของ custom_branch_consumption; ไม่มีก็จับคู่ code = รหัสคลัง)
 """
-from odoo import _, api, fields, models
-from odoo.exceptions import UserError
+from odoo import api, fields, models
 
 
 def _main_account_id(distribution):
@@ -125,23 +124,6 @@ class PurchaseOrder(models.Model):
         orders = super().create(vals_list)
         orders.filtered("az_branch_id")._apply_branch_to_lines()
         return orders
-
-    def button_confirm(self):
-        for order in self:
-            if order.state not in ("draft", "sent"):
-                continue
-            missing = order.order_line.filtered(
-                lambda l: not l.display_type and not l.az_branch_id and not l.is_downpayment
-            )
-            if missing:
-                names = "\n".join("- %s" % (l.product_id.display_name or l.name) for l in missing[:10])
-                more = _("\n... และอีก %d บรรทัด") % (len(missing) - 10) if len(missing) > 10 else ""
-                raise UserError(
-                    _("ยืนยันไม่ได้: ยังไม่ระบุสาขา (Analytic) ในบรรทัดต่อไปนี้\n%s%s\n\n"
-                      "เลือกช่อง 'สาขา' ที่หัวใบเพื่อเติมให้ทุกบรรทัด หรือระบุรายบรรทัดในคอลัมน์ 'สาขา'")
-                    % (names, more)
-                )
-        return super().button_confirm()
 
 
 class PurchaseOrderLine(models.Model):

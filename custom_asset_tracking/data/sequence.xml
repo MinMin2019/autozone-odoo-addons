@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- AST + ปี 2 หลัก + เดือน + ลำดับ 4 หลัก เช่น AST26100001; รีเซ็ตทุกเดือน
+             (date range รายเดือนสร้างใน az.asset.handover._next_number) -->
+        <record id="seq_asset_handover" model="ir.sequence">
+            <field name="name">Asset Handover</field>
+            <field name="code">az.asset.handover</field>
+            <field name="prefix">AST%(range_y)s%(range_month)s</field>
+            <field name="padding">4</field>
+            <field name="use_date_range" eval="True"/>
+            <field name="company_id" eval="False"/>
+        </record>
+    </data>
+</odoo>
