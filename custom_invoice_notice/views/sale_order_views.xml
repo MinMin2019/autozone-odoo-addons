@@ -14,6 +14,7 @@
             <xpath expr="//field[@name='payment_term_id']" position="after">
                 <field name="az_notice_date" invisible="state not in ('sale', 'done')"/>
                 <field name="az_notice_due_date" invisible="state not in ('sale', 'done')"/>
+                <field name="az_notice_promise_date" invisible="state not in ('sale', 'done')"/>
             </xpath>
             <xpath expr="//page[@name='other_information']" position="inside">
                 <group string="ใบแจ้งหนี้ (Invoice Notice)" name="az_invoice_notice">
@@ -42,6 +43,7 @@
                 <field name="az_notice_state" optional="hide"/>
                 <field name="az_notice_date" optional="hide"/>
                 <field name="az_notice_due_date" optional="hide"/>
+                <field name="az_notice_promise_date" optional="hide"/>
             </xpath>
         </field>
     </record>

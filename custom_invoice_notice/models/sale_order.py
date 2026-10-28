@@ -24,8 +24,11 @@ class SaleOrder(models.Model):
     az_notice_due_date = fields.Date(
         string="วันครบกำหนดชำระ (ใบแจ้งหนี้)", copy=False,
         compute="_compute_az_notice_due_date", store=True, readonly=False,
-        help="คิดให้ครั้งแรก = วันที่ใบแจ้งหนี้ + เงื่อนไขชำระเงิน (ของใบ หรือของลูกค้า) แก้ได้ "
-             "กรอกเองล่วงหน้าได้ = ถือว่าออกใบแจ้งหนี้แล้ว ยอดไปขึ้นรายงานคาดรับเงินในวันนี้")
+        help="คิดให้ครั้งแรก = วันที่ใบแจ้งหนี้ + เงื่อนไขชำระเงิน (ของใบ หรือของลูกค้า) แก้ได้ พิมพ์ลงใบแจ้งหนี้")
+    az_notice_promise_date = fields.Date(
+        string="วันนัดรับเงิน", copy=False, tracking=True,
+        help="กรอกเองเมื่อลูกค้านัดวันจ่าย ยอดใบแจ้งหนี้ขึ้นรายงานคาดรับเงินในวันนี้ (ไม่กรอก = ไม่ขึ้นรายงาน) "
+             "ตอนกด Create Invoice วันนี้ส่งต่อไปที่ IV")
     az_notice_hide_wht = fields.Boolean(string="ไม่แสดงหัก ณ ที่จ่ายบนใบแจ้งหนี้", copy=False)
     az_notice_bank_id = fields.Many2one(
         "res.partner.bank", string="บัญชีรับโอน (ใบแจ้งหนี้)", copy=False,
@@ -123,6 +126,13 @@ class SaleOrder(models.Model):
                 else:  # days_end_of_month_on_the
                     due = _end_of_month(d + timedelta(days=n))
             so.az_notice_due_date = due
+
+    def _prepare_invoice(self):
+        """IV ที่ออกจาก SO ใช้วันนัดรับเงินเดิมของใบแจ้งหนี้ต่อ (รายงานคาดรับเงินไม่หลุด)"""
+        vals = super()._prepare_invoice()
+        if self.az_notice_promise_date:
+            vals["az_notice_promise_date"] = self.az_notice_promise_date
+        return vals
 
     # ---------- บัญชีธนาคาร ----------
     @api.depends("partner_id", "company_id")

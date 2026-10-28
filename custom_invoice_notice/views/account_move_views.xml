@@ -16,6 +16,7 @@
                 <group string="ใบแจ้งหนี้ (Invoice Notice)" name="az_invoice_notice"
                        invisible="move_type != 'out_invoice'">
                     <group>
+                        <field name="az_notice_promise_date"/>
                         <field name="az_notice_bank_id"/>
                         <field name="az_notice_hide_wht"/>
                     </group>

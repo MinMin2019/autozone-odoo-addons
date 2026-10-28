@@ -7,7 +7,7 @@
         <field name="priority">99</field>
         <field name="arch" type="xml">
             <list string="ใบแจ้งหนี้" create="false"
-                  decoration-warning="not ar_billing_note">
+                  decoration-warning="not ar_expected_date">
                 <field name="currency_id" column_invisible="1"/>
                 <field name="name"/>
                 <field name="partner_id"/>
@@ -17,6 +17,7 @@
                        placeholder="ยังไม่วางบิล"/>
                 <field name="ar_billing_date"/>
                 <field name="ar_promise_date"/>
+                <field name="az_notice_promise_date" optional="show"/>
                 <field name="ar_expected_date" decoration-bf="1"/>
                 <field name="amount_total_signed" string="ยอดใบ" sum="รวม"/>
                 <field name="amount_residual_signed" string="คงค้าง" sum="รวม"/>

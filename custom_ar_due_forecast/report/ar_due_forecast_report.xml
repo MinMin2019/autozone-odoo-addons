@@ -44,8 +44,7 @@
                         table.ar tr.tot td { background: #e2efda; font-weight: bold; }
                         table.ar tr.grand td { background: #bdd7ee; font-weight: bold; }
                         table.ar tr.sec td { background: #fff2cc; font-weight: bold; }
-                        table.ar td.bill { background: #c6efce; color: #006100; }
-                        .bill-key { background: #c6efce; color: #006100; border: 1px solid #a9d08e; padding: 0 3px; }
+                        .ar-warn { margin-top: 4px; font-weight: bold; color: #c65911; }
                         .page.dense { font-size: 9px; }
                         .page.dense table.ar th, .page.dense table.ar td { padding: 2px 2px; }
                         table.ar td.name { min-width: 150px; }
@@ -96,8 +95,8 @@
                                     <td class="ctr"><t t-esc="r['seq']"/></td>
                                     <td class="name"><t t-esc="r['name']"/></td>
                                     <td t-if="d['show_due']" class="ctr"><t t-esc="r['due']"/></td>
-                                    <td t-if="d['show_carry']" t-attf-class="num #{'neg' if r['carry_neg'] else ''} #{'bill' if r['carry_billed'] else ''}"><t t-esc="r['carry']"/></td>
-                                    <td t-foreach="r['days']" t-as="v" t-attf-class="num #{'bill' if r['days_billed'][v_index] else ''}"><t t-esc="v"/></td>
+                                    <td t-if="d['show_carry']" t-attf-class="num #{'neg' if r['carry_neg'] else ''}"><t t-esc="r['carry']"/></td>
+                                    <td t-foreach="r['days']" t-as="v" class="num"><t t-esc="v"/></td>
                                     <td class="num sum"><t t-esc="r['month']"/></td>
                                     <td t-if="d['show_paydate']" class="ctr"><t t-esc="r['pay_date']"/></td>
                                     <td t-if="d['show_recv']" class="num"><t t-esc="r['recv']"/></td>
@@ -136,8 +135,11 @@
                                 </tr>
                             </tbody>
                         </table>
+                        <div t-if="d['pending']" class="ar-warn">
+                            ยังไม่นัดวันรับเงิน (ไม่รวมในรายงาน): IV <t t-esc="d['pending']['inv_count']"/> ใบ <t t-esc="d['pending']['inv_amount']"/> บาท · ใบแจ้งหนี้จาก SO <t t-esc="d['pending']['so_count']"/> ใบ <t t-esc="d['pending']['so_amount']"/> บาท
+                        </div>
                         <div class="ar-foot">
-                            <span class="bill-key">ช่องสีเขียว</span> = วางบิลแล้วครบทุกใบในช่อง · ลูกหนี้ลงช่องตามวันนัดรับชำระในใบวางบิล ถ้าไม่ได้ใส่ ใช้วันครบกำหนดของใบแจ้งหนี้ (ใบลดหนี้หักออก) · ลูกค้าเงินสด = ยอดรับจริงจากใบเสร็จ · ลูกหนี้นิติบุคคลแสดงยอดหลังหัก ณ ที่จ่าย 3% ของยอดก่อน VAT · Due = จำนวนวันเครดิต · แสดงเฉพาะลูกค้าและวันที่ที่มียอด · พิมพ์วันที่ <t t-esc="d['printed']"/>
+                            นับเฉพาะใบที่นัดวันรับเงินแล้ว: ลงช่องตามวันนัดรับชำระในใบวางบิล หรือวันนัดรับเงินของใบแจ้งหนี้ (SO) (ใบลดหนี้หักออก) · ลูกค้าเงินสด = ยอดรับจริงจากใบเสร็จ · ยอดหลังหัก ณ ที่จ่ายตามการตั้งค่าลูกค้า (เฉพาะค่าบริการก่อน VAT) · Due = จำนวนวันเครดิต · แสดงเฉพาะลูกค้าและวันที่ที่มียอด · พิมพ์วันที่ <t t-esc="d['printed']"/>
                         </div>
                     </div>
                 </t>

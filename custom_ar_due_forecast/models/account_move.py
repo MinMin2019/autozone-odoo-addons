@@ -11,7 +11,7 @@ class AccountMove(models.Model):
     ar_promise_date = fields.Date("วันนัดรับชำระ", compute="_compute_ar_billing")
     ar_expected_date = fields.Date(
         "วันคาดรับ", compute="_compute_ar_billing",
-        help="วันนัดรับชำระในใบวางบิล ถ้าไม่ได้ใส่ ใช้วันครบกำหนดของใบแจ้งหนี้",
+        help="วันนัดรับชำระในใบวางบิล ไม่งั้นวันนัดรับเงินของใบแจ้งหนี้ (SO) ว่าง = ยังไม่นัด ไม่นับในรายงาน",
     )
 
     def _compute_ar_billing(self):
@@ -35,4 +35,4 @@ class AccountMove(models.Model):
             move.ar_billing_note = name or False
             move.ar_billing_date = bdate or False
             move.ar_promise_date = promise or False
-            move.ar_expected_date = promise or move.invoice_date_due
+            move.ar_expected_date = promise or move.az_notice_promise_date or False

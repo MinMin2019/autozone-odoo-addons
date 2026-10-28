@@ -19,6 +19,10 @@ class AccountMove(models.Model):
         compute="_compute_az_notice_bank_id", store=True, readonly=False,
         domain=lambda self: [("partner_id", "in", self.env["res.company"].sudo().search([]).partner_id.ids)],
         help="เติมอัตโนมัติจากบัญชีที่ลูกค้าโอนเข้าล่าสุด ไม่เคยโอนใช้บัญชีหลักของบริษัท แก้เองได้")
+    az_notice_promise_date = fields.Date(
+        string="วันนัดรับเงิน (ใบแจ้งหนี้)", copy=False, tracking=True,
+        help="มาจากใบแจ้งหนี้บนใบสั่งขายตอนออก IV ใช้เป็นวันคาดรับในรายงานคาดรับเงิน "
+             "ถ้าใบวางบิลมีวันนัดรับชำระ ใช้วันในใบวางบิลแทน")
     az_notice_service_base = fields.Monetary(
         string="ค่าบริการก่อน VAT", compute="_compute_az_notice_amounts", currency_field="currency_id")
     az_notice_wht_percent = fields.Float(

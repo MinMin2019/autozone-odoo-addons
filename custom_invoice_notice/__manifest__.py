@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "Autozone Invoice Notice (ใบแจ้งหนี้)",
-    "version": "18.0.1.1.1",
+    "version": "18.0.1.2.0",
     "summary": "ใบแจ้งหนี้ (ไม่ใช่ใบกำกับภาษี) จากใบสั่งขาย/ใบขาย: หัก ณ ที่จ่ายเฉพาะค่าบริการ + บัญชีธนาคารรับโอน; ออก IV วันรับเงิน",
     "category": "Autozone/Accounting",
     "author": "Autozone",
