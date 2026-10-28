@@ -3,7 +3,7 @@
     "name": "Autozone Master Data Approval",
     "summary": "Workflow อนุมัติข้อมูลหลัก (Vendor/Customer/Item) — ส่งแล้วล็อค, "
                "บล็อกทรานแซคชันของข้อมูลที่ยังไม่อนุมัติ",
-    "version": "18.0.1.2.0",
+    "version": "18.0.1.2.1",
     "category": "Autozone/Master Data",
     "author": "Autozone",
     "license": "LGPL-3",

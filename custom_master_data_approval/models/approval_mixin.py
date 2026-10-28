@@ -94,7 +94,8 @@ class AzApprovalMixin(models.AbstractModel):
         if locked:
             raise UserError(
                 "ข้อมูลต่อไปนี้ส่งอนุมัติ/อนุมัติแล้ว แก้ไขได้เฉพาะผู้อนุมัติ (%s):\n%s\n\n"
-                "→ หากต้องแก้ไข แจ้งผู้อนุมัติแก้ให้ หรือให้ผู้อนุมัติกดตีกลับเป็นร่าง"
+                "→ หากต้องแก้ไข แจ้งผู้อนุมัติแก้ให้ หรือให้ผู้อนุมัติกด "
+                "\"ตีกลับ\"/\"ตีกลับให้แก้ไข\" เป็นร่างก่อน แล้วแก้และส่งอนุมัติใหม่"
                 % (t.approver_group_id.full_name,
                    "\n".join("- %s" % r.display_name for r in locked[:20])))
         return super().write(vals)

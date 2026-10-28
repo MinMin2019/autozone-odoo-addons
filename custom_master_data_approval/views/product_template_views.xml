@@ -16,6 +16,9 @@
                         invisible="approval_state == 'approved' or not mda_is_approver"/>
                 <button name="action_mda_open_reject_wizard" type="object" string="ตีกลับ"
                         invisible="approval_state != 'to_approve' or not mda_is_approver"/>
+                <button name="action_mda_open_reject_wizard" type="object" string="ตีกลับให้แก้ไข"
+                        invisible="approval_state != 'approved' or not mda_is_approver"
+                        confirm="สินค้านี้จะกลับเป็นร่างและใช้ในเอกสารไม่ได้จนกว่าจะอนุมัติใหม่ (SKU เดิมยังอยู่) — ดำเนินการต่อ?"/>
                 <field name="approval_state" widget="statusbar"
                        statusbar_visible="draft,to_approve,approved"/>
             </xpath>
