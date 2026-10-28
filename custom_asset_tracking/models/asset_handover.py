@@ -209,7 +209,7 @@ class AssetHandover(models.Model):
                 'from_analytic_distribution': asset.analytic_distribution,
             })
             if line.condition == 'missing':
-                asset.message_post(body=_('ใบส่งมอบ %s: ไม่พบทรัพย์สิน — ไม่เปลี่ยนผู้ถือครอง') % self.name)
+                asset._message_log(body=_('ใบส่งมอบ %s: ไม่พบทรัพย์สิน — ไม่เปลี่ยนผู้ถือครอง') % self.name)
                 continue
             vals = {'custodian_id': self.receiver_id.id}
             if has_location and self.location_dest:
@@ -218,7 +218,7 @@ class AssetHandover(models.Model):
                 # write ของ account.asset เปลี่ยน analytic ของรายการค่าเสื่อมที่ยัง Draft ให้เอง
                 vals['analytic_distribution'] = self.analytic_distribution
             asset.write(vals)
-            asset.message_post(body=_('ใบส่งมอบ %s (%s) ยืนยันแล้ว') % (
+            asset._message_log(body=_('ใบส่งมอบ %s (%s) ยืนยันแล้ว') % (
                 self.name, dict(self._fields['handover_type'].selection)[self.handover_type]))
 
     @api.constrains('sender_id', 'receiver_id', 'approver_id')
