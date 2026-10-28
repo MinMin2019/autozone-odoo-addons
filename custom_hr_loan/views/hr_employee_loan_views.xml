@@ -153,6 +153,7 @@
                   decoration-success="state in ('paid', 'paid_manual')"
                   decoration-info="state == 'in_slip'">
                 <field name="loan_id"/>
+                <field name="registration_number"/>
                 <field name="employee_id"/>
                 <field name="number"/>
                 <field name="date_due"/>
@@ -176,6 +177,7 @@
         <field name="arch" type="xml">
             <search>
                 <field name="employee_id"/>
+                <field name="registration_number"/>
                 <field name="loan_id"/>
                 <filter name="filter_open" string="รอหัก" domain="[('state', '=', 'open')]"/>
                 <filter name="filter_paid" string="หักแล้ว"

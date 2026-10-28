@@ -217,6 +217,10 @@ class HrEmployeeLoanLine(models.Model):
         'hr.employee.loan', string='เงินกู้', required=True, ondelete='cascade', index=True)
     employee_id = fields.Many2one(
         related='loan_id.employee_id', string='พนักงาน', store=True)
+    # groups ต้องระบุเอง ไม่งั้นสืบทอด hr.group_hr_user จากฟิลด์ต้นทาง (ดู registration_number ของ loan)
+    registration_number = fields.Char(
+        related='loan_id.registration_number', string='รหัสพนักงาน',
+        groups='base.group_user')
     company_id = fields.Many2one(related='loan_id.company_id', store=True)
     currency_id = fields.Many2one(related='loan_id.currency_id')
 
