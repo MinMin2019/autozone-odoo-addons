@@ -159,6 +159,91 @@ class IgarageUsageSyncLog(models.Model):
     message = fields.Text('รายละเอียด', readonly=True)
 
 
+class IgarageUsageBranchMonth(models.Model):
+    """ภาพรวมรายสาขารายเดือน (SQL view) + แถว "รวมทุกสาขา" ของแต่ละเดือน
+
+    ตัวเลขคำนวณจากจ๊อบจริงในเดือนนั้น (ไม่ใช่เฉลี่ยของเฉลี่ย) และนับช่างแบบไม่ซ้ำคน
+    ต้องประกาศหลังตาราง job และ job.worker เพราะ view อ่านสองตารางนั้น
+    """
+    _name = 'igarage.usage.branch.month'
+    _description = 'iGarage: ภาพรวมรายสาขารายเดือน'
+    _auto = False
+    _order = 'month desc, is_total desc, app_pct desc, job_count desc'
+    _rec_name = 'branch_code'
+
+    month = fields.Date('เดือน', readonly=True)
+    is_total = fields.Boolean('แถวรวม', readonly=True)
+    branch_code = fields.Char('สาขา', readonly=True)
+    branch_name = fields.Char('ชื่อสาขา', readonly=True)
+    job_count = fields.Integer('จ๊อบ', readonly=True)
+    app_job_count = fields.Integer('จ๊อบที่ใช้แอป', readonly=True)
+    app_pct = fields.Float('ใช้แอป (%)', digits=(5, 1), readonly=True)
+    ontime_pct = fields.Float('ลงเวลาตรง (%)', digits=(5, 1), readonly=True)
+    app_ontime_pct = fields.Float('ตรง: แอป (%)', digits=(5, 1), readonly=True,
+                                  help='ลงเวลาตรงของจ๊อบที่บันทึกผ่านแอปล้วน')
+    pc_ontime_pct = fields.Float('ตรง: PC (%)', digits=(5, 1), readonly=True,
+                                 help='ลงเวลาตรงของจ๊อบที่บันทึกผ่าน PC ล้วน')
+    diff_pct = fields.Float('แอป−PC', digits=(5, 1), readonly=True,
+                            help='ตรง: แอป ลบ ตรง: PC — บวก = จ๊อบที่ผ่านแอปลงเวลาตรงกว่า')
+    has_app = fields.Boolean(readonly=True)
+    has_pc = fields.Boolean(readonly=True)
+    worker_count = fields.Integer('ช่างทั้งหมด', readonly=True,
+                                  help='ช่างที่มีงานในเดือนนั้น นับไม่ซ้ำคน ไม่รวมบาร์โค้ดสำรอง/Dummy')
+    app_worker_count = fields.Integer('ช่างที่ใช้แอป', readonly=True,
+                                      help='ช่างที่มีอย่างน้อย 1 จ๊อบบันทึกผ่านแอปในเดือนนั้น')
+    workers_display = fields.Char('ช่างที่ใช้แอป', readonly=True,
+                                  help='ช่างที่ใช้แอป / ช่างทั้งหมด (นับไม่ซ้ำคน ไม่รวมบาร์โค้ดสำรอง/Dummy)')
+
+    def init(self):
+        tools.drop_view_if_exists(self.env.cr, self._table)
+        self.env.cr.execute("""
+            CREATE OR REPLACE VIEW igarage_usage_branch_month AS
+            WITH j AS (
+                SELECT date_trunc('month', date)::date                              AS month,
+                       GROUPING(branch_code) = 1                                    AS is_total,
+                       branch_code,
+                       MAX(branch_name)                                             AS branch_name,
+                       COUNT(*)                                                     AS job_count,
+                       COUNT(*) FILTER (WHERE app_score = 100)                      AS app_job_count,
+                       AVG(app_score)                                               AS app_pct,
+                       AVG(ontime_score)                                            AS ontime_pct,
+                       AVG(ontime_score) FILTER (WHERE channel = 'app')             AS app_ontime_pct,
+                       AVG(ontime_score) FILTER (WHERE channel = 'pc')              AS pc_ontime_pct
+                  FROM igarage_usage_job
+                 WHERE date IS NOT NULL
+                 GROUP BY GROUPING SETS ((date_trunc('month', date), branch_code),
+                                         (date_trunc('month', date)))
+            ), w AS (
+                SELECT date_trunc('month', date)::date                              AS month,
+                       GROUPING(branch_code) = 1                                    AS is_total,
+                       branch_code,
+                       COUNT(DISTINCT worker_ext_id)                                AS worker_count,
+                       COUNT(DISTINCT worker_ext_id) FILTER (WHERE app_score = 100) AS app_worker_count
+                  FROM igarage_usage_job_worker
+                 WHERE date IS NOT NULL AND NOT COALESCE(is_dummy, FALSE)
+                 GROUP BY GROUPING SETS ((date_trunc('month', date), branch_code),
+                                         (date_trunc('month', date)))
+            )
+            SELECT ((EXTRACT(YEAR FROM j.month) * 100 + EXTRACT(MONTH FROM j.month)) * 10000
+                    + ROW_NUMBER() OVER (PARTITION BY j.month ORDER BY j.is_total DESC, j.branch_code))::int AS id,
+                   j.month,
+                   j.is_total,
+                   CASE WHEN j.is_total THEN 'รวมทุกสาขา' ELSE j.branch_code END AS branch_code,
+                   CASE WHEN j.is_total THEN NULL ELSE j.branch_name END         AS branch_name,
+                   j.job_count, j.app_job_count, j.app_pct, j.ontime_pct,
+                   j.app_ontime_pct, j.pc_ontime_pct,
+                   j.app_ontime_pct - j.pc_ontime_pct                            AS diff_pct,
+                   j.app_ontime_pct IS NOT NULL                                  AS has_app,
+                   j.pc_ontime_pct IS NOT NULL                                   AS has_pc,
+                   COALESCE(w.worker_count, 0)                                   AS worker_count,
+                   COALESCE(w.app_worker_count, 0)                               AS app_worker_count,
+                   COALESCE(w.app_worker_count, 0) || '/' || COALESCE(w.worker_count, 0) AS workers_display
+              FROM j
+              LEFT JOIN w ON w.month = j.month AND w.is_total = j.is_total
+                         AND COALESCE(w.branch_code, '') = COALESCE(j.branch_code, '')
+        """)
+
+
 class IgarageUsageWorkerMonth(models.Model):
     """สรุปรายช่างรายเดือน (SQL view) — ต้องประกาศหลัง igarage.usage.job.worker เพราะ view อ่านตารางนั้น"""
     _name = 'igarage.usage.worker.month'

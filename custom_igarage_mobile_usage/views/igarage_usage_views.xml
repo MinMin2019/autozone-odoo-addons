@@ -71,7 +71,7 @@
     </record>
 
     <record id="action_igarage_usage_overview" model="ir.actions.act_window">
-        <field name="name">ภาพรวมรายสาขา</field>
+        <field name="name">สรุปจ๊อบแบบ pivot</field>
         <field name="res_model">igarage.usage.job</field>
         <field name="view_mode">pivot,graph,list</field>
         <field name="search_view_id" ref="view_igarage_usage_job_search"/>
@@ -103,6 +103,63 @@
         <field name="res_model">igarage.usage.job</field>
         <field name="view_mode">list,pivot</field>
         <field name="search_view_id" ref="view_igarage_usage_job_search"/>
+    </record>
+
+    <!-- ================= ภาพรวมรายสาขา (ตาราง) ================= -->
+    <record id="view_igarage_usage_branch_month_search" model="ir.ui.view">
+        <field name="name">igarage.usage.branch.month.search</field>
+        <field name="model">igarage.usage.branch.month</field>
+        <field name="arch" type="xml">
+            <search string="ภาพรวมรายสาขา">
+                <field name="branch_code"/>
+                <filter name="filter_month" string="เดือน" date="month" default_period="month"/>
+                <separator/>
+                <filter name="filter_using" string="สาขาที่ใช้แอปแล้ว" domain="[('app_job_count', '&gt;', 0)]"/>
+                <group expand="0" string="จัดกลุ่ม">
+                    <filter name="group_month" string="เดือน" context="{'group_by': 'month:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_igarage_usage_branch_month_list" model="ir.ui.view">
+        <field name="name">igarage.usage.branch.month.list</field>
+        <field name="model">igarage.usage.branch.month</field>
+        <field name="arch" type="xml">
+            <list string="ภาพรวมรายสาขา" create="false" edit="false" delete="false"
+                  decoration-bf="is_total" decoration-info="is_total">
+                <field name="is_total" column_invisible="1"/>
+                <field name="has_app" column_invisible="1"/>
+                <field name="has_pc" column_invisible="1"/>
+                <field name="month" widget="date" options="{'format': 'MMM yyyy'}" optional="hide"/>
+                <field name="branch_code"/>
+                <field name="branch_name" optional="show"/>
+                <field name="job_count"/>
+                <field name="app_pct"/>
+                <field name="ontime_pct"/>
+                <field name="app_ontime_pct" invisible="not has_app"/>
+                <field name="pc_ontime_pct" invisible="not has_pc"/>
+                <field name="diff_pct" invisible="not has_app or not has_pc"
+                       decoration-success="diff_pct &gt; 0" decoration-danger="diff_pct &lt; 0"/>
+                <field name="workers_display"/>
+                <field name="app_job_count" optional="hide"/>
+                <field name="app_worker_count" optional="hide"/>
+                <field name="worker_count" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_igarage_usage_branch_month" model="ir.actions.act_window">
+        <field name="name">ภาพรวมรายสาขา</field>
+        <field name="res_model">igarage.usage.branch.month</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_igarage_usage_branch_month_search"/>
+        <field name="context">{'search_default_filter_month': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">ยังไม่มีข้อมูลในเดือนที่เลือก</p>
+            <p>เรียงตาม % ใช้แอป · "ตรง: แอป / PC" = ลงเวลาตรงของจ๊อบที่ผ่านแอปล้วน เทียบ PC ล้วน ในสาขาเดียวกัน ·
+               "ช่างที่ใช้แอป" = ใช้แอป / ทั้งหมด</p>
+        </field>
     </record>
 
     <!-- ================= สรุปช่างรายเดือน ================= -->
