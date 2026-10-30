@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================= จ๊อบ ================= -->
+    <record id="view_igarage_usage_job_search" model="ir.ui.view">
+        <field name="name">igarage.usage.job.search</field>
+        <field name="model">igarage.usage.job</field>
+        <field name="arch" type="xml">
+            <search string="จ๊อบ">
+                <field name="branch_code"/>
+                <field name="job_ref"/>
+                <filter name="filter_known" string="ไม่รวมวันที่ยังไม่มี log" domain="[('channel', '!=', 'pending')]"/>
+                <separator/>
+                <filter name="filter_app" string="แอปล้วน" domain="[('channel', '=', 'app')]"/>
+                <filter name="filter_pc" string="PC ล้วน" domain="[('channel', '=', 'pc')]"/>
+                <filter name="filter_mixed" string="ผสมแอป+PC" domain="[('channel', '=', 'mixed')]"/>
+                <separator/>
+                <filter name="filter_date" string="วันที่เริ่ม" date="date"/>
+                <group expand="0" string="จัดกลุ่ม">
+                    <filter name="group_branch" string="สาขา" context="{'group_by': 'branch_code'}"/>
+                    <filter name="group_channel" string="ช่องทาง" context="{'group_by': 'channel'}"/>
+                    <filter name="group_day" string="วัน" context="{'group_by': 'date:day'}"/>
+                    <filter name="group_month" string="เดือน" context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_igarage_usage_job_pivot" model="ir.ui.view">
+        <field name="name">igarage.usage.job.pivot</field>
+        <field name="model">igarage.usage.job</field>
+        <field name="arch" type="xml">
+            <pivot string="การใช้แอปรายสาขา" sample="0" disable_linking="0">
+                <field name="branch_code" type="row"/>
+                <field name="job_count" type="measure"/>
+                <field name="app_score" type="measure"/>
+                <field name="ontime_score" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_igarage_usage_job_graph" model="ir.ui.view">
+        <field name="name">igarage.usage.job.graph</field>
+        <field name="model">igarage.usage.job</field>
+        <field name="arch" type="xml">
+            <graph string="แนวโน้มการใช้แอป" type="line" sample="0">
+                <field name="date" interval="day"/>
+                <field name="app_score" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_igarage_usage_job_list" model="ir.ui.view">
+        <field name="name">igarage.usage.job.list</field>
+        <field name="model">igarage.usage.job</field>
+        <field name="arch" type="xml">
+            <list string="จ๊อบ" create="false" edit="false" delete="false"
+                  decoration-muted="channel == 'pending'">
+                <field name="date"/>
+                <field name="branch_code"/>
+                <field name="job_ref"/>
+                <field name="item_count" sum="รวม"/>
+                <field name="app_item_count" sum="รวม" optional="show"/>
+                <field name="channel" widget="badge" decoration-success="channel == 'app'"
+                       decoration-info="channel == 'mixed'"/>
+                <field name="app_score" avg="เฉลี่ย"/>
+                <field name="ontime_score" avg="เฉลี่ย"/>
+                <button name="action_open_items" type="object" string="ชิ้นงาน" icon="fa-list"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_igarage_usage_overview" model="ir.actions.act_window">
+        <field name="name">ภาพรวมรายสาขา</field>
+        <field name="res_model">igarage.usage.job</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="search_view_id" ref="view_igarage_usage_job_search"/>
+        <field name="context">{'pivot_measures': ['job_count', 'app_score', 'ontime_score'], 'pivot_row_groupby': ['branch_code']}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">ยังไม่มีข้อมูลจาก iGarage</p>
+            <p>ตั้งค่าเชื่อมต่อใน System Parameters (igarage.*) แล้วรอรอบดึงข้อมูลอัตโนมัติ หรือกด "ดึงข้อมูลตอนนี้"</p>
+        </field>
+    </record>
+
+    <record id="action_igarage_usage_compare" model="ir.actions.act_window">
+        <field name="name">เทียบแอปกับ PC</field>
+        <field name="res_model">igarage.usage.job</field>
+        <field name="view_mode">pivot,list</field>
+        <field name="search_view_id" ref="view_igarage_usage_job_search"/>
+        <field name="context">{'search_default_filter_known': 1, 'pivot_measures': ['job_count', 'ontime_score'], 'pivot_row_groupby': ['branch_code'], 'pivot_column_groupby': ['channel']}</field>
+    </record>
+
+    <record id="action_igarage_usage_trend" model="ir.actions.act_window">
+        <field name="name">แนวโน้มรายวัน</field>
+        <field name="res_model">igarage.usage.job</field>
+        <field name="view_mode">graph,pivot,list</field>
+        <field name="search_view_id" ref="view_igarage_usage_job_search"/>
+        <field name="context">{'search_default_filter_known': 1, 'graph_measure': 'app_score', 'graph_mode': 'line', 'graph_groupbys': ['date:day']}</field>
+    </record>
+
+    <record id="action_igarage_usage_job_list" model="ir.actions.act_window">
+        <field name="name">รายจ๊อบ</field>
+        <field name="res_model">igarage.usage.job</field>
+        <field name="view_mode">list,pivot</field>
+        <field name="search_view_id" ref="view_igarage_usage_job_search"/>
+    </record>
+
+    <!-- ================= สรุปช่างรายเดือน ================= -->
+    <record id="view_igarage_usage_worker_month_search" model="ir.ui.view">
+        <field name="name">igarage.usage.worker.month.search</field>
+        <field name="model">igarage.usage.worker.month</field>
+        <field name="arch" type="xml">
+            <search string="ช่าง">
+                <field name="worker_name"/>
+                <field name="worker_code"/>
+                <field name="branch_code"/>
+                <filter name="filter_not_yet" string="ยังไม่เคยใช้แอป" domain="[('app_job_count', '=', 0)]"/>
+                <filter name="filter_using" string="ใช้แอปแล้ว" domain="[('app_job_count', '&gt;', 0)]"/>
+                <separator/>
+                <filter name="filter_hide_dummy" string="ซ่อนบาร์โค้ดสำรอง/Dummy" domain="[('is_dummy', '=', False)]"/>
+                <separator/>
+                <filter name="filter_month" string="เดือน" date="month" default_period="month"/>
+                <group expand="0" string="จัดกลุ่ม">
+                    <filter name="group_branch" string="สาขา" context="{'group_by': 'branch_code'}"/>
+                    <filter name="group_month" string="เดือน" context="{'group_by': 'month:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_igarage_usage_worker_month_list" model="ir.ui.view">
+        <field name="name">igarage.usage.worker.month.list</field>
+        <field name="model">igarage.usage.worker.month</field>
+        <field name="arch" type="xml">
+            <list string="ช่าง" create="false" edit="false" delete="false"
+                  decoration-warning="app_job_count == 0" decoration-muted="is_dummy">
+                <field name="month" widget="date" options="{'format': 'MMM yyyy'}"/>
+                <field name="branch_code"/>
+                <field name="worker_name"/>
+                <field name="worker_code"/>
+                <field name="job_count" sum="รวม"/>
+                <field name="app_job_count" sum="รวม"/>
+                <field name="app_pct"/>
+                <field name="ontime_pct"/>
+                <field name="is_dummy" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_igarage_usage_worker_month_pivot" model="ir.ui.view">
+        <field name="name">igarage.usage.worker.month.pivot</field>
+        <field name="model">igarage.usage.worker.month</field>
+        <field name="arch" type="xml">
+            <pivot string="ช่าง" sample="0">
+                <field name="branch_code" type="row"/>
+                <field name="job_count" type="measure"/>
+                <field name="app_job_count" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_igarage_usage_worker_month" model="ir.actions.act_window">
+        <field name="name">รายช่าง (ต่อเดือน)</field>
+        <field name="res_model">igarage.usage.worker.month</field>
+        <field name="view_mode">list,pivot</field>
+        <field name="search_view_id" ref="view_igarage_usage_worker_month_search"/>
+        <field name="context">{'search_default_filter_hide_dummy': 1, 'search_default_filter_month': 1}</field>
+        <field name="help" type="html">
+            <p>เรียงตามจำนวนจ๊อบ — แถวสีเหลือง = ช่างที่ยังไม่เคยถูกบันทึกผ่านแอปในเดือนนั้น
+               (ใช้ตัวกรอง "ยังไม่เคยใช้แอป" เพื่อดูเฉพาะกลุ่มนี้)</p>
+        </field>
+    </record>
+
+    <!-- ================= ชิ้นงาน ================= -->
+    <record id="view_igarage_usage_item_search" model="ir.ui.view">
+        <field name="name">igarage.usage.item.search</field>
+        <field name="model">igarage.usage.item</field>
+        <field name="arch" type="xml">
+            <search string="ชิ้นงาน">
+                <field name="branch_code"/>
+                <field name="job_ref"/>
+                <field name="worker_name"/>
+                <field name="recorder_name"/>
+                <filter name="filter_known" string="ไม่รวมวันที่ยังไม่มี log" domain="[('channel', '!=', 'pending')]"/>
+                <filter name="filter_app" string="ผ่านแอป" domain="[('channel', '=', 'app')]"/>
+                <filter name="filter_pc" string="ผ่าน PC" domain="[('channel', '=', 'pc')]"/>
+                <separator/>
+                <filter name="filter_date" string="วันที่เริ่ม" date="date"/>
+                <group expand="0" string="จัดกลุ่ม">
+                    <filter name="group_branch" string="สาขา" context="{'group_by': 'branch_code'}"/>
+                    <filter name="group_channel" string="ช่องทาง" context="{'group_by': 'channel'}"/>
+                    <filter name="group_worker" string="ช่าง" context="{'group_by': 'worker_name'}"/>
+                    <filter name="group_recorder" string="ผู้บันทึก" context="{'group_by': 'recorder_name'}"/>
+                    <filter name="group_day" string="วัน" context="{'group_by': 'date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_igarage_usage_item_list" model="ir.ui.view">
+        <field name="name">igarage.usage.item.list</field>
+        <field name="model">igarage.usage.item</field>
+        <field name="arch" type="xml">
+            <list string="ชิ้นงาน" create="false" edit="false" delete="false"
+                  decoration-muted="channel == 'pending'">
+                <field name="started"/>
+                <field name="finished"/>
+                <field name="branch_code"/>
+                <field name="job_ref"/>
+                <field name="worker_name"/>
+                <field name="recorder_name" optional="show"/>
+                <field name="channel" widget="badge" decoration-success="channel == 'app'"/>
+                <field name="app_score" avg="เฉลี่ย" optional="hide"/>
+                <field name="ontime_score" avg="เฉลี่ย"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_igarage_usage_item_pivot" model="ir.ui.view">
+        <field name="name">igarage.usage.item.pivot</field>
+        <field name="model">igarage.usage.item</field>
+        <field name="arch" type="xml">
+            <pivot string="ชิ้นงาน" sample="0">
+                <field name="branch_code" type="row"/>
+                <field name="item_count" type="measure"/>
+                <field name="app_score" type="measure"/>
+                <field name="ontime_score" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_igarage_usage_item" model="ir.actions.act_window">
+        <field name="name">รายชิ้นงาน</field>
+        <field name="res_model">igarage.usage.item</field>
+        <field name="view_mode">pivot,list</field>
+        <field name="search_view_id" ref="view_igarage_usage_item_search"/>
+    </record>
+
+</odoo>

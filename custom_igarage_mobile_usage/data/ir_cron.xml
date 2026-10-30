@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ถ้ายังไม่ตั้งค่า igarage.* ใน System Parameters สองงานนี้จะข้ามไปเงียบๆ -->
+        <record id="ir_cron_igarage_usage_db" model="ir.cron">
+            <field name="name">iGarage: ดึงการลงเวลาช่างจากฐานข้อมูล</field>
+            <field name="model_id" ref="model_igarage_usage_sync"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_sync_db()</field>
+            <field name="interval_number">15</field>
+            <field name="interval_type">minutes</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <record id="ir_cron_igarage_usage_logs" model="ir.cron">
+            <field name="name">iGarage: ดึง log เว็บ (แยกแอป/PC)</field>
+            <field name="model_id" ref="model_igarage_usage_sync"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_sync_logs()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">hours</field>
+            <field name="active" eval="True"/>
+        </record>
+
+    </data>
+</odoo>

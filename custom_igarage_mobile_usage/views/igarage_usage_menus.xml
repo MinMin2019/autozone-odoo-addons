@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="menu_igarage_usage_root" name="iGarage ลงเวลาช่าง"
+              web_icon="custom_igarage_mobile_usage,static/description/icon.png"
+              groups="group_igarage_usage_user" sequence="95"/>
+
+    <menuitem id="menu_igarage_usage_overview" name="ภาพรวมรายสาขา" parent="menu_igarage_usage_root"
+              action="action_igarage_usage_overview" sequence="10"/>
+    <menuitem id="menu_igarage_usage_compare" name="เทียบแอปกับ PC" parent="menu_igarage_usage_root"
+              action="action_igarage_usage_compare" sequence="20"/>
+    <menuitem id="menu_igarage_usage_trend" name="แนวโน้มรายวัน" parent="menu_igarage_usage_root"
+              action="action_igarage_usage_trend" sequence="30"/>
+    <menuitem id="menu_igarage_usage_worker" name="รายช่าง" parent="menu_igarage_usage_root"
+              action="action_igarage_usage_worker_month" sequence="40"/>
+
+    <menuitem id="menu_igarage_usage_detail" name="ข้อมูลละเอียด" parent="menu_igarage_usage_root" sequence="50"/>
+    <menuitem id="menu_igarage_usage_job_list" name="รายจ๊อบ" parent="menu_igarage_usage_detail"
+              action="action_igarage_usage_job_list" sequence="10"/>
+    <menuitem id="menu_igarage_usage_item" name="รายชิ้นงาน" parent="menu_igarage_usage_detail"
+              action="action_igarage_usage_item" sequence="20"/>
+
+    <menuitem id="menu_igarage_usage_config" name="ตั้งค่า" parent="menu_igarage_usage_root"
+              groups="group_igarage_usage_manager" sequence="90"/>
+    <menuitem id="menu_igarage_usage_sync_now" name="ดึงข้อมูลตอนนี้" parent="menu_igarage_usage_config"
+              action="action_igarage_usage_sync_now" sequence="10"/>
+    <menuitem id="menu_igarage_usage_sync_log" name="ประวัติการดึงข้อมูล" parent="menu_igarage_usage_config"
+              action="action_igarage_usage_sync_log" sequence="20"/>
+    <menuitem id="menu_igarage_usage_logfile" name="ไฟล์ log ที่ประมวลผลแล้ว" parent="menu_igarage_usage_config"
+              action="action_igarage_usage_logfile" sequence="30"/>
+
+</odoo>

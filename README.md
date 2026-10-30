@@ -115,6 +115,7 @@
 | `autozone_base_address` | method กลางจัดรูปแบบข้อมูลคู่ค้าไทยบน res.partner: ที่อยู่ (`get_thai_address` / `get_thai_address_lines` / `get_thai_state_display`) + ป้ายสาขา (`get_thai_branch_display` = สำนักงานใหญ่/สาขาที่ X, `get_thai_vat_line` = เลขผู้เสียภาษี+สาขา) — รายงานใหม่ทุกตัวต้องเรียกใช้ตัวนี้ ห้ามต่อ string เอง |
 | `autozone_report_fonts` | ฝังฟอนต์ Sarabun ให้ PDF report ทุกตัว (ไม่ต้องลงฟอนต์ที่ OS) |
 | `custom_chatter_toggle` | ปุ่มซ่อน/แสดง chatter บนฟอร์มใบสั่งขาย |
+| `custom_igarage_mobile_usage` | เมนู "iGarage ลงเวลาช่าง": ติดตามการใช้แอปมือถือลงเวลาช่างของระบบ iGarage รายสาขา/รายจ๊อบ/รายช่าง (ใช้แอปกี่ %, ลงเวลาตรงกี่ %, เทียบแอปกับ PC) — cron ดึงจาก MySQL ของ iGarage ทุก 15 นาที + log เว็บผ่าน FTPS ทุกชั่วโมง (% ใช้แอปช้า 1 วัน); ตั้งค่า `igarage.*` ใน System Parameters, ฝัง PyMySQL ไว้ใน lib/ |
 | `custom_delete_log` | Autozone Audit Log: log การลบ+archive record (ใคร/เมื่อไหร่/snapshot), log การล็อกอินสำเร็จ-ล้มเหลวพร้อม IP, log ติดตั้ง/อัปเกรดโมดูล, และ chatter-track field อ่อนไหว (บัญชีธนาคาร vendor, ราคาขาย/ต้นทุน, เงื่อนไขชำระเงิน, วงเงินเครดิต) — ดูที่ Settings > Technical > Audit Log |
 | `custom_line_product_image` | คอลัมน์รูปสินค้าในบรรทัดเอกสาร (โอนย้าย/ใบสั่งขาย) |
 | `custom_studio_fields` | สำรองฟิลด์ Studio (Asset Code/Location บน asset, Invoicing Journal บน SO) เป็นโค้ด — **ยังไม่ติดตั้ง** เก็บไว้ใช้ตอนอัพเกรด/ย้ายฐาน ดู README ในโมดูล |

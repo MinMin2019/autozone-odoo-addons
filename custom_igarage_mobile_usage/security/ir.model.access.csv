@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_igarage_usage_item_user,igarage.usage.item user,model_igarage_usage_item,group_igarage_usage_user,1,0,0,0
+access_igarage_usage_job_user,igarage.usage.job user,model_igarage_usage_job,group_igarage_usage_user,1,0,0,0
+access_igarage_usage_job_worker_user,igarage.usage.job.worker user,model_igarage_usage_job_worker,group_igarage_usage_user,1,0,0,0
+access_igarage_usage_worker_month_user,igarage.usage.worker.month user,model_igarage_usage_worker_month,group_igarage_usage_user,1,0,0,0
+access_igarage_usage_sync_log_user,igarage.usage.sync.log user,model_igarage_usage_sync_log,group_igarage_usage_user,1,0,0,0
+access_igarage_usage_sync_log_manager,igarage.usage.sync.log manager,model_igarage_usage_sync_log,group_igarage_usage_manager,1,1,1,1
+access_igarage_usage_logfile_manager,igarage.usage.logfile manager,model_igarage_usage_logfile,group_igarage_usage_manager,1,0,0,1
+access_igarage_usage_appmark_manager,igarage.usage.appmark manager,model_igarage_usage_appmark,group_igarage_usage_manager,1,0,0,1
