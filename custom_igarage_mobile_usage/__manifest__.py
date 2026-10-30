@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'iGarage Mobile Usage (การใช้แอปลงเวลาช่าง)',
-    'version': '18.0.1.0.4',
+    'version': '18.0.1.0.5',
     'category': 'Autozone/Tools',
     'summary': 'ติดตามการใช้แอปมือถือลงเวลาช่างของระบบ iGarage รายสาขา รายจ๊อบ รายช่าง',
     'description': """

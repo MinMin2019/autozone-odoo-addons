@@ -145,7 +145,7 @@
                 <field name="ontime_pct" string="ตรง·รวม %"/>
                 <field name="app_ontime_pct" string="ตรง·แอป %" invisible="not has_app"/>
                 <field name="pc_ontime_pct" string="ตรง·PC %" invisible="not has_pc"/>
-                <field name="diff_pct" string="แอปช่วย +" invisible="not has_app or not has_pc"
+                <field name="diff_pct" string="แอปช่วย (จุด)" invisible="not has_app or not has_pc"
                        decoration-success="diff_pct &gt; 0" decoration-danger="diff_pct &lt; 0"/>
                 <field name="effect" widget="badge" invisible="not effect"
                        decoration-success="effect == 'better'" decoration-danger="effect == 'worse'"

@@ -6,7 +6,7 @@
 คะแนน (app_score / ontime_score) เก็บเป็น 100 / 0 / ว่าง แล้วให้ pivot เฉลี่ย (aggregator=avg)
 ค่าเฉลี่ยที่ได้จึงเป็น % ทันที และแถวที่ "ยังไม่รู้" (ว่าง) จะไม่ถูกนับในตัวหาร
 """
-from odoo import fields, models, tools
+from odoo import api, fields, models, tools
 
 CHANNELS_ITEM = [
     ('app', 'แอปมือถือ'),
@@ -211,6 +211,12 @@ class IgarageUsageBranchMonth(models.Model):
                                       help='ช่างที่มีอย่างน้อย 1 จ๊อบบันทึกผ่านแอปในเดือนนั้น')
     workers_display = fields.Char('ช่างที่ใช้แอป', readonly=True,
                                   help='ช่างที่ใช้แอป / ช่างทั้งหมด (นับไม่ซ้ำคน ไม่รวมบาร์โค้ดสำรอง/Dummy)')
+
+    @api.model
+    def search_fetch(self, domain, field_names, offset=0, limit=None, order=None):
+        # แถว "รวมทุกสาขา" อยู่บนสุดเสมอ แม้ผู้ใช้กดหัวคอลัมน์เพื่อเรียงใหม่
+        order = 'month desc, is_total desc, ' + (order or self._order)
+        return super().search_fetch(domain, field_names, offset=offset, limit=limit, order=order)
 
     def action_open_workers(self):
         """คลิกแถวสาขา -> รายชื่อช่างของสาขานั้นในเดือนนั้น (แถวรวม = ทุกสาขา)"""
