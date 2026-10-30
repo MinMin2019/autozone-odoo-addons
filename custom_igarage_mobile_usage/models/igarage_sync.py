@@ -352,10 +352,15 @@ class IgarageUsageSync(models.AbstractModel):
             cr.execute("""
                 INSERT INTO igarage_usage_job_worker (
                     ext_job_id, worker_ext_id, job_ref, branch_code, branch_name, date, worker_name,
-                    worker_code, is_dummy, item_count, job_count, app_score, ontime_score,
+                    worker_code, is_dummy, item_count, job_count, channel, app_score, ontime_score,
                     create_uid, write_uid, create_date, write_date)
                 SELECT i.ext_job_id, i.worker_ext_id, MAX(i.job_ref), MAX(i.branch_code), MAX(i.branch_name),
                        MIN(i.date), MAX(i.worker_name), MAX(i.worker_code), BOOL_OR(i.is_dummy), COUNT(*), 1,
+                       CASE WHEN COUNT(*) FILTER (WHERE i.channel = 'app') = 0
+                                 AND COUNT(*) FILTER (WHERE i.channel = 'pending') > 0 THEN 'pending'
+                            WHEN COUNT(*) FILTER (WHERE i.channel <> 'app') = 0 THEN 'app'
+                            WHEN COUNT(*) FILTER (WHERE i.channel = 'app') = 0 THEN 'pc'
+                            ELSE 'mixed' END,
                        CASE WHEN COUNT(*) FILTER (WHERE i.channel = 'app') > 0 THEN 100.0
                             WHEN COUNT(*) FILTER (WHERE i.channel = 'pending') > 0 THEN NULL
                             ELSE 0.0 END,
@@ -372,6 +377,7 @@ class IgarageUsageSync(models.AbstractModel):
                     branch_name = EXCLUDED.branch_name, date = EXCLUDED.date,
                     worker_name = EXCLUDED.worker_name, worker_code = EXCLUDED.worker_code,
                     is_dummy = EXCLUDED.is_dummy, item_count = EXCLUDED.item_count,
+                    channel = EXCLUDED.channel,
                     app_score = EXCLUDED.app_score, ontime_score = EXCLUDED.ontime_score,
                     write_uid = EXCLUDED.write_uid, write_date = EXCLUDED.write_date
             """, params)

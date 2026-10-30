@@ -106,6 +106,8 @@ class IgarageUsageJobWorker(models.Model):
     is_dummy = fields.Boolean('บาร์โค้ดสำรอง/Dummy', readonly=True)
     item_count = fields.Integer('จำนวนชิ้น', readonly=True, aggregator='sum')
     job_count = fields.Integer('จำนวนจ๊อบ', default=1, readonly=True, aggregator='sum')
+    channel = fields.Selection(CHANNELS_JOB, 'ช่องทาง', index=True, readonly=True,
+                               help='ช่องทางของชิ้นงานของช่างคนนี้ในจ๊อบนี้')
     app_score = fields.Float('ใช้แอป (%)', digits=(5, 1), aggregator='avg', readonly=True)
     ontime_score = fields.Float('ลงเวลาตรง (%)', digits=(5, 1), aggregator='avg', readonly=True)
 
@@ -310,6 +312,14 @@ class IgarageUsageWorkerMonth(models.Model):
     app_job_count = fields.Integer('จ๊อบที่ใช้แอป', readonly=True, aggregator='sum')
     app_pct = fields.Float('ใช้แอป (%)', digits=(5, 1), readonly=True, aggregator='avg')
     ontime_pct = fields.Float('ลงเวลาตรง (%)', digits=(5, 1), readonly=True, aggregator='avg')
+    app_only_job_count = fields.Integer('จ๊อบผ่านแอป', readonly=True, aggregator='sum',
+                                        help='จ๊อบที่ชิ้นงานของช่างคนนี้บันทึกผ่านแอปทั้งหมด')
+    app_ontime_pct = fields.Float('ตรง·แอป (%)', digits=(5, 1), readonly=True, aggregator='avg',
+                                  help='ลงเวลาตรงของจ๊อบที่ผ่านแอป')
+    pc_only_job_count = fields.Integer('จ๊อบผ่าน PC', readonly=True, aggregator='sum',
+                                       help='จ๊อบที่ชิ้นงานของช่างคนนี้บันทึกผ่าน PC ทั้งหมด')
+    pc_ontime_pct = fields.Float('ตรง·PC (%)', digits=(5, 1), readonly=True, aggregator='avg',
+                                 help='ลงเวลาตรงของจ๊อบที่ผ่าน PC')
 
     def init(self):
         tools.drop_view_if_exists(self.env.cr, self._table)
@@ -326,7 +336,11 @@ class IgarageUsageWorkerMonth(models.Model):
                    COUNT(*)                                          AS job_count,
                    COUNT(*) FILTER (WHERE w.app_score = 100)         AS app_job_count,
                    AVG(w.app_score)                                  AS app_pct,
-                   AVG(w.ontime_score)                               AS ontime_pct
+                   AVG(w.ontime_score)                               AS ontime_pct,
+                   COUNT(*) FILTER (WHERE w.channel = 'app')         AS app_only_job_count,
+                   AVG(w.ontime_score) FILTER (WHERE w.channel = 'app') AS app_ontime_pct,
+                   COUNT(*) FILTER (WHERE w.channel = 'pc')          AS pc_only_job_count,
+                   AVG(w.ontime_score) FILTER (WHERE w.channel = 'pc')  AS pc_ontime_pct
               FROM igarage_usage_job_worker w
              WHERE w.date IS NOT NULL
              GROUP BY date_trunc('month', w.date), w.branch_code, w.worker_ext_id

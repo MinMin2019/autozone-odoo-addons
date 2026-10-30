@@ -207,9 +207,13 @@
                 <field name="worker_name"/>
                 <field name="worker_code"/>
                 <field name="job_count" string="จ๊อบ" sum="รวม"/>
-                <field name="app_job_count" string="ใช้แอป (จ๊อบ)" sum="รวม"/>
                 <field name="app_pct" string="ใช้แอป %"/>
-                <field name="ontime_pct" string="ตรง %"/>
+                <field name="ontime_pct" string="ตรง·รวม %"/>
+                <field name="app_only_job_count" string="จ๊อบแอป" sum="รวม"/>
+                <field name="app_ontime_pct" string="ตรง·แอป %" invisible="not app_only_job_count"/>
+                <field name="pc_only_job_count" string="จ๊อบ PC" sum="รวม"/>
+                <field name="pc_ontime_pct" string="ตรง·PC %" invisible="not pc_only_job_count"/>
+                <field name="app_job_count" string="ใช้แอป (จ๊อบ รวมผสม)" optional="hide"/>
                 <field name="is_dummy" optional="hide"/>
             </list>
         </field>
