@@ -43,7 +43,7 @@ P = 'igarage.'
 DEFAULTS = {
     'db_port': '3306',
     'since_date': '2026-10-01',
-    'exclude_branch_ids': '32,33',      # AMU, AKT = ไม่ใช่งานอู่
+    'exclude_branch_ids': '32,33,9',    # AMU, AKT = ไม่ใช่งานอู่, TRY = ข้อมูลทดสอบแอป (สาขาปิดแล้ว)
     'ontime_seconds': '60',
     'match_window': '4',
     'recent_days': '2',
