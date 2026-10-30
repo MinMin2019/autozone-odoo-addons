@@ -127,22 +127,33 @@
         <field name="model">igarage.usage.branch.month</field>
         <field name="arch" type="xml">
             <list string="ภาพรวมรายสาขา" create="false" edit="false" delete="false"
+                  action="action_open_workers" type="object"
                   decoration-bf="is_total" decoration-info="is_total">
                 <field name="is_total" column_invisible="1"/>
                 <field name="has_app" column_invisible="1"/>
                 <field name="has_pc" column_invisible="1"/>
                 <field name="month" widget="date" options="{'format': 'MMM yyyy'}" optional="hide"/>
                 <field name="branch_code"/>
-                <field name="branch_name" optional="show"/>
+                <field name="branch_name" optional="hide"/>
                 <field name="job_count"/>
-                <field name="app_pct"/>
-                <field name="ontime_pct"/>
-                <field name="app_ontime_pct" invisible="not has_app"/>
-                <field name="pc_ontime_pct" invisible="not has_pc"/>
-                <field name="diff_pct" invisible="not has_app or not has_pc"
+                <!-- กลุ่ม 1: ใช้แอปแค่ไหน (3 ช่องรวมกัน = 100%) -->
+                <field name="app_only_pct" string="แอปล้วน %"/>
+                <field name="mixed_pct" string="แอป+PC %"/>
+                <field name="pc_only_pct" string="PC ล้วน %"/>
+                <field name="workers_display" string="ช่างใช้แอป"/>
+                <!-- กลุ่ม 2: ลงเวลาตรงแค่ไหน และแอปช่วยหรือไม่ -->
+                <field name="ontime_pct" string="ตรง·รวม %"/>
+                <field name="app_ontime_pct" string="ตรง·แอป %" invisible="not has_app"/>
+                <field name="pc_ontime_pct" string="ตรง·PC %" invisible="not has_pc"/>
+                <field name="diff_pct" string="แอปช่วย +" invisible="not has_app or not has_pc"
                        decoration-success="diff_pct &gt; 0" decoration-danger="diff_pct &lt; 0"/>
-                <field name="workers_display"/>
-                <field name="app_job_count" optional="hide"/>
+                <field name="effect" widget="badge" invisible="not effect"
+                       decoration-success="effect == 'better'" decoration-danger="effect == 'worse'"
+                       decoration-warning="effect == 'few'"/>
+                <field name="app_pct" optional="hide"/>
+                <field name="app_only_count" optional="hide"/>
+                <field name="mixed_count" optional="hide"/>
+                <field name="pc_only_count" optional="hide"/>
                 <field name="app_worker_count" optional="hide"/>
                 <field name="worker_count" optional="hide"/>
             </list>
@@ -157,8 +168,8 @@
         <field name="context">{'search_default_filter_month': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">ยังไม่มีข้อมูลในเดือนที่เลือก</p>
-            <p>เรียงตาม % ใช้แอป · "ตรง: แอป / PC" = ลงเวลาตรงของจ๊อบที่ผ่านแอปล้วน เทียบ PC ล้วน ในสาขาเดียวกัน ·
-               "ช่างที่ใช้แอป" = ใช้แอป / ทั้งหมด</p>
+            <p>แอปล้วน + แอป+PC + PC ล้วน = 100% · "ตรง·แอป / ตรง·PC" = จ๊อบแอปล้วนเทียบ PC ล้วนในสาขาเดียวกัน ·
+               "ผลของแอป" ต้องมีจ๊อบแอปล้วนอย่างน้อย 10 จ๊อบถึงจะสรุป · คลิกแถวเพื่อดูรายชื่อช่าง</p>
         </field>
     </record>
 
@@ -195,10 +206,10 @@
                 <field name="branch_code"/>
                 <field name="worker_name"/>
                 <field name="worker_code"/>
-                <field name="job_count" sum="รวม"/>
-                <field name="app_job_count" sum="รวม"/>
-                <field name="app_pct"/>
-                <field name="ontime_pct"/>
+                <field name="job_count" string="จ๊อบ" sum="รวม"/>
+                <field name="app_job_count" string="ใช้แอป (จ๊อบ)" sum="รวม"/>
+                <field name="app_pct" string="ใช้แอป %"/>
+                <field name="ontime_pct" string="ตรง %"/>
                 <field name="is_dummy" optional="hide"/>
             </list>
         </field>

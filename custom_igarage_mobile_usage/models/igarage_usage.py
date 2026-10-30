@@ -178,21 +178,55 @@ class IgarageUsageBranchMonth(models.Model):
     job_count = fields.Integer('จ๊อบ', readonly=True)
     app_job_count = fields.Integer('จ๊อบที่ใช้แอป', readonly=True)
     app_pct = fields.Float('ใช้แอป (%)', digits=(5, 1), readonly=True)
-    ontime_pct = fields.Float('ลงเวลาตรง (%)', digits=(5, 1), readonly=True)
-    app_ontime_pct = fields.Float('ตรง: แอป (%)', digits=(5, 1), readonly=True,
+    ontime_pct = fields.Float('ตรง: รวม (%)', digits=(5, 1), readonly=True)
+    app_ontime_pct = fields.Float('ตรง: ผ่านแอป (%)', digits=(5, 1), readonly=True,
                                   help='ลงเวลาตรงของจ๊อบที่บันทึกผ่านแอปล้วน')
-    pc_ontime_pct = fields.Float('ตรง: PC (%)', digits=(5, 1), readonly=True,
+    pc_ontime_pct = fields.Float('ตรง: ผ่าน PC (%)', digits=(5, 1), readonly=True,
                                  help='ลงเวลาตรงของจ๊อบที่บันทึกผ่าน PC ล้วน')
-    diff_pct = fields.Float('แอป−PC', digits=(5, 1), readonly=True,
-                            help='ตรง: แอป ลบ ตรง: PC — บวก = จ๊อบที่ผ่านแอปลงเวลาตรงกว่า')
+    diff_pct = fields.Float('แอปช่วยเพิ่ม (จุด)', digits=(5, 1), readonly=True,
+                            help='ตรง: แอป ลบ ตรง: PC — บวก = จ๊อบที่ผ่านแอปลงเวลาตรงกว่า PC กี่จุด')
     has_app = fields.Boolean(readonly=True)
     has_pc = fields.Boolean(readonly=True)
+    app_only_count = fields.Integer('จ๊อบแอปล้วน', readonly=True)
+    mixed_count = fields.Integer('จ๊อบแอป+PC', readonly=True)
+    pc_only_count = fields.Integer('จ๊อบ PC ล้วน', readonly=True)
+    app_only_pct = fields.Float('ช่องทาง: แอปล้วน (%)', digits=(5, 1), readonly=True,
+                                help='สัดส่วนจ๊อบที่ทุกชิ้นบันทึกผ่านแอป (ไม่นับวันที่ยังไม่มี log)')
+    mixed_pct = fields.Float('ช่องทาง: แอป+PC (%)', digits=(5, 1), readonly=True,
+                             help='สัดส่วนจ๊อบที่บางชิ้นผ่านแอป บางชิ้นผ่าน PC')
+    pc_only_pct = fields.Float('ช่องทาง: PC ล้วน (%)', digits=(5, 1), readonly=True,
+                               help='สัดส่วนจ๊อบที่ไม่มีชิ้นไหนผ่านแอปเลย')
+    effect = fields.Selection(
+        [('better', 'แอปช่วยให้ตรงขึ้น'), ('same', 'ใกล้เคียงกัน'),
+         ('worse', 'ผ่านแอปตรงน้อยกว่า'), ('few', 'ข้อมูลยังน้อย')],
+        'ผลของแอป', readonly=True,
+        help='เทียบลงเวลาตรงของจ๊อบแอปล้วนกับ PC ล้วนในสาขาเดียวกัน: '
+             'ต่างกันตั้งแต่ 5 จุด = ช่วย / ตรงน้อยกว่า, น้อยกว่านั้น = ใกล้เคียงกัน, '
+             'จ๊อบแอปล้วนไม่ถึง 10 จ๊อบ = ข้อมูลยังน้อย ยังสรุปไม่ได้')
     worker_count = fields.Integer('ช่างทั้งหมด', readonly=True,
                                   help='ช่างที่มีงานในเดือนนั้น นับไม่ซ้ำคน ไม่รวมบาร์โค้ดสำรอง/Dummy')
     app_worker_count = fields.Integer('ช่างที่ใช้แอป', readonly=True,
                                       help='ช่างที่มีอย่างน้อย 1 จ๊อบบันทึกผ่านแอปในเดือนนั้น')
     workers_display = fields.Char('ช่างที่ใช้แอป', readonly=True,
                                   help='ช่างที่ใช้แอป / ช่างทั้งหมด (นับไม่ซ้ำคน ไม่รวมบาร์โค้ดสำรอง/Dummy)')
+
+    def action_open_workers(self):
+        """คลิกแถวสาขา -> รายชื่อช่างของสาขานั้นในเดือนนั้น (แถวรวม = ทุกสาขา)"""
+        self.ensure_one()
+        domain = [('month', '=', self.month)]
+        if not self.is_total:
+            domain.append(('branch_code', '=', self.branch_code))
+        label = 'ทุกสาขา' if self.is_total else self.branch_code
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'ช่าง %s — %s' % (label, self.month.strftime('%m/%Y') if self.month else ''),
+            'res_model': 'igarage.usage.worker.month',
+            'view_mode': 'list',
+            'views': [(self.env.ref('custom_igarage_mobile_usage.view_igarage_usage_worker_month_list').id, 'list')],
+            'search_view_id': self.env.ref('custom_igarage_mobile_usage.view_igarage_usage_worker_month_search').id,
+            'domain': domain,
+            'context': {'search_default_filter_hide_dummy': 1},
+        }
 
     def init(self):
         tools.drop_view_if_exists(self.env.cr, self._table)
@@ -208,7 +242,11 @@ class IgarageUsageBranchMonth(models.Model):
                        AVG(app_score)                                               AS app_pct,
                        AVG(ontime_score)                                            AS ontime_pct,
                        AVG(ontime_score) FILTER (WHERE channel = 'app')             AS app_ontime_pct,
-                       AVG(ontime_score) FILTER (WHERE channel = 'pc')              AS pc_ontime_pct
+                       AVG(ontime_score) FILTER (WHERE channel = 'pc')              AS pc_ontime_pct,
+                       COUNT(*) FILTER (WHERE channel = 'app')                      AS app_only_count,
+                       COUNT(*) FILTER (WHERE channel = 'mixed')                    AS mixed_count,
+                       COUNT(*) FILTER (WHERE channel = 'pc')                       AS pc_only_count,
+                       COUNT(*) FILTER (WHERE channel <> 'pending')                 AS known_count
                   FROM igarage_usage_job
                  WHERE date IS NOT NULL
                  GROUP BY GROUPING SETS ((date_trunc('month', date), branch_code),
@@ -235,6 +273,15 @@ class IgarageUsageBranchMonth(models.Model):
                    j.app_ontime_pct - j.pc_ontime_pct                            AS diff_pct,
                    j.app_ontime_pct IS NOT NULL                                  AS has_app,
                    j.pc_ontime_pct IS NOT NULL                                   AS has_pc,
+                   j.app_only_count, j.mixed_count, j.pc_only_count,
+                   100.0 * j.app_only_count / NULLIF(j.known_count, 0)           AS app_only_pct,
+                   100.0 * j.mixed_count / NULLIF(j.known_count, 0)              AS mixed_pct,
+                   100.0 * j.pc_only_count / NULLIF(j.known_count, 0)            AS pc_only_pct,
+                   CASE WHEN j.app_ontime_pct IS NULL OR j.pc_ontime_pct IS NULL THEN NULL
+                        WHEN j.app_only_count < 10 THEN 'few'
+                        WHEN j.app_ontime_pct - j.pc_ontime_pct >= 5 THEN 'better'
+                        WHEN j.app_ontime_pct - j.pc_ontime_pct <= -5 THEN 'worse'
+                        ELSE 'same' END                                          AS effect,
                    COALESCE(w.worker_count, 0)                                   AS worker_count,
                    COALESCE(w.app_worker_count, 0)                               AS app_worker_count,
                    COALESCE(w.app_worker_count, 0) || '/' || COALESCE(w.worker_count, 0) AS workers_display
