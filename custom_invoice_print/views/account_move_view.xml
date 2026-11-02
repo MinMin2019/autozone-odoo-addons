@@ -82,7 +82,7 @@
             </field>
         </record>
 
-        <!-- 2.5) Credit Note: ใบกำกับเดิม + เหตุผลการลดหนี้ + ปุ่มพิมพ์ใบลดหนี้ -->
+        <!-- 2.5) Credit/Debit Note: ใบกำกับเดิม + เหตุผล + ปุ่มพิมพ์ใบลดหนี้/ใบเพิ่มหนี้ -->
         <record id="view_move_form_inherit_credit_note" model="ir.ui.view">
             <field name="name">account.move.form.inherit.credit.note</field>
             <field name="model">account.move</field>
@@ -95,6 +95,11 @@
                         type="action"
                         string="พิมพ์ใบลดหนี้"
                         invisible="move_type != 'out_refund'" />
+                    <!-- ปุ่มพิมพ์ใบเพิ่มหนี้ (ใบแจ้งหนี้ลูกค้าที่ออกผ่าน Action > Debit Note) -->
+                    <button name="%(custom_invoice_print.action_report_debit_note_custom)d"
+                        type="action"
+                        string="พิมพ์ใบเพิ่มหนี้"
+                        invisible="move_type != 'out_invoice' or not debit_origin_id" />
                 </xpath>
 
                 <!-- ใบกำกับเดิม (reversed_entry_id ใส่อัตโนมัติเมื่อออก CN ผ่านปุ่ม Credit Note
@@ -107,7 +112,17 @@
                     <field name="x_original_invoice_date"
                         invisible="move_type != 'out_refund'" />
                     <field name="x_cn_reason"
+                        string="เหตุผลการลดหนี้"
                         invisible="move_type != 'out_refund'" />
+                    <!-- ใบเพิ่มหนี้: ใบกำกับเดิม (debit_origin_id ใส่อัตโนมัติจาก wizard, readonly) -->
+                    <field name="debit_origin_id"
+                        string="เลขที่ใบกำกับภาษีเดิม"
+                        invisible="move_type != 'out_invoice' or not debit_origin_id" />
+                    <field name="x_original_invoice_date"
+                        invisible="move_type != 'out_invoice' or not debit_origin_id" />
+                    <field name="x_cn_reason"
+                        string="เหตุผลการเพิ่มหนี้"
+                        invisible="move_type != 'out_invoice' or not debit_origin_id" />
                 </xpath>
 
             </field>

@@ -120,13 +120,39 @@ class AccountMove(models.Model):
     # เหตุผลการลดหนี้ (สำหรับใบลดหนี้) — wizard "Credit Note" จะ copy ค่าจากช่อง
     # "Reason displayed on Credit Note" มาใส่ให้อัตโนมัติ (ดู AccountMoveReversal ด้านล่าง)
     # เพราะ Odoo เดิมเอา reason ไปต่อรวมกับ ref เป็น "Reversal of: ..." ใช้พิมพ์ตรง ๆ ไม่ได้
-    x_cn_reason = fields.Char(string="เหตุผลการลดหนี้", copy=False)
+    # ใช้ช่องเดียวกันกับใบเพิ่มหนี้ (wizard "Debit Note" copy ช่อง Reason มาใส่ให้)
+    x_cn_reason = fields.Char(string="เหตุผลการลดหนี้/เพิ่มหนี้", copy=False)
 
-    # วันที่ใบกำกับภาษีเดิม (ดึงจากใบกำกับที่ถูกลดหนี้)
+    # วันที่ใบกำกับภาษีเดิม (ใบลดหนี้ = reversed_entry_id, ใบเพิ่มหนี้ = debit_origin_id)
     x_original_invoice_date = fields.Date(
         string="วันที่ใบกำกับภาษีเดิม",
-        related="reversed_entry_id.invoice_date",
+        compute="_compute_x_original_invoice_date",
     )
+
+    @api.depends("reversed_entry_id.invoice_date", "debit_origin_id.invoice_date")
+    def _compute_x_original_invoice_date(self):
+        for move in self:
+            move.x_original_invoice_date = move._get_adj_origin().invoice_date
+
+    def _get_starting_sequence(self):
+        # ใบเพิ่มหนี้ลูกค้าใบแรกของเดือน: Odoo ตั้งเป็น "DIV/2026/00000" ซึ่งไม่เข้ากับ
+        # sequence_override_regex ของสมุด (prefix+ปี2หลัก+เดือน+ลำดับ เช่น SCNJ261001)
+        # -> ได้เลขเพี้ยน "DIV/2026/00None11None0001" แล้วยืนยันไม่ผ่าน
+        # ตั้งให้เข้าชุดกับใบลดหนี้ SCNJ: SDNJ + yymm + ลำดับ 2 หลัก (ใบแรก = SDNJ261101)
+        if (
+            self.move_type == "out_invoice"
+            and self.debit_origin_id
+            and self.journal_id.debit_sequence
+            and self.journal_id.sequence_override_regex
+        ):
+            move_date = self.date or self.invoice_date or fields.Date.context_today(self)
+            return "SDNJ%s00" % move_date.strftime("%y%m")
+        return super()._get_starting_sequence()
+
+    def _get_adj_origin(self):
+        """ใบกำกับภาษีเดิมของใบเพิ่มหนี้ (debit_origin_id) หรือใบลดหนี้ (reversed_entry_id)"""
+        self.ensure_one()
+        return self.debit_origin_id or self.reversed_entry_id
 
     # 1. เพิ่ม Field เลขที่ใบสั่งซื้อ (PO Reference)
     x_po_reference = fields.Char(string="PO No.", help="เลขที่ใบสั่งซื้อจากลูกค้า")
@@ -226,17 +252,17 @@ class AccountMove(models.Model):
         return pages
 
     def get_cn_totals(self):
-        """ยอดรวมท้ายใบลดหนี้ 5 บรรทัด (ตามข้อกำหนดสรรพากร)
+        """ยอดรวมท้ายใบลดหนี้/ใบเพิ่มหนี้ 5 บรรทัด (ตามข้อกำหนดสรรพากร)
         - original = มูลค่าตามใบกำกับภาษีเดิม (ก่อน VAT)
-        - diff     = ผลต่าง (มูลค่าที่ลดหนี้ ก่อน VAT)
-        - correct  = มูลค่าที่ถูกต้อง = original - diff
+        - diff     = ผลต่าง (มูลค่าที่ลดหนี้/เพิ่มหนี้ ก่อน VAT)
+        - correct  = มูลค่าที่ถูกต้อง = original - diff (ลดหนี้) / original + diff (เพิ่มหนี้)
         """
         self.ensure_one()
-        original = self.reversed_entry_id.amount_untaxed or 0.0
+        original = self._get_adj_origin().amount_untaxed or 0.0
         diff = self.amount_untaxed
         return {
             "original": original,
-            "correct": original - diff,
+            "correct": original + diff if self.debit_origin_id else original - diff,
             "diff": diff,
             "vat": self.amount_tax,
             "total": self.amount_total,
@@ -293,6 +319,21 @@ class AccountMoveReversal(models.TransientModel):
         # Odoo เดิมเอา reason ไปต่อรวมใน ref เป็น "Reversal of: IVxxx, เหตุผล"
         # เก็บเฉพาะข้อความเหตุผลแยกไว้ที่ x_cn_reason สำหรับพิมพ์ในรายงานใบลดหนี้
         vals = super()._prepare_default_reversal(move)
+        if self.reason:
+            vals["x_cn_reason"] = self.reason
+        return vals
+
+
+# ---------------------------------------------------------
+# ส่วนที่ 5: Wizard ออกใบเพิ่มหนี้ (Debit Note)
+# ---------------------------------------------------------
+class AccountDebitNote(models.TransientModel):
+    _inherit = "account.debit.note"
+
+    def _prepare_default_values(self, move):
+        # เหมือนใบลดหนี้: Odoo เอา reason ไปต่อใน ref เป็น "IVxxx, เหตุผล"
+        # เก็บข้อความเหตุผลแยกไว้ที่ x_cn_reason สำหรับพิมพ์ในรายงานใบเพิ่มหนี้
+        vals = super()._prepare_default_values(move)
         if self.reason:
             vals["x_cn_reason"] = self.reason
         return vals

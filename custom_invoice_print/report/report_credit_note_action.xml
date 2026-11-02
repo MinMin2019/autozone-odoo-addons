@@ -12,5 +12,19 @@
             <field name="report_file">custom_invoice_print.report_credit_note_custom</field>
             <field name="print_report_name">(object._get_report_base_filename())</field>
         </record>
+
+        <!-- Action รายงานใบเพิ่มหนี้ — template เดียวกับใบลดหนี้ (สลับข้อความด้วย debit_origin_id)
+             เรียกผ่านปุ่ม "พิมพ์ใบเพิ่มหนี้" บนฟอร์ม เฉพาะใบแจ้งหนี้ลูกค้าที่มี debit_origin_id -->
+        <record id="action_report_debit_note_custom" model="ir.actions.report">
+            <field name="name">ใบเพิ่มหนี้ / ใบกำกับภาษี</field>
+            <field name="model">account.move</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">custom_invoice_print.report_credit_note_custom</field>
+            <field name="report_file">custom_invoice_print.report_credit_note_custom</field>
+            <field name="print_report_name">(object._get_report_base_filename())</field>
+            <!-- กระดาษเดียวกับใบลดหนี้ ("A4 For Custom Report" สร้างจากหน้าจอ ไม่มี xml id
+                 จึงค้นจากชื่อ — ไม่เจอ = ใช้ paperformat ของบริษัท) -->
+            <field name="paperformat_id" search="[('name', '=', 'A4 For Custom Report')]" />
+        </record>
     </data>
 </odoo>

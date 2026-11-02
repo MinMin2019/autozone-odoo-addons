@@ -2,6 +2,8 @@
 <odoo>
     <data>
         <!-- รายงานใบลดหนี้ / ใบกำกับภาษี — พิมพ์ 1 ชุด
+             ใช้ร่วมกับใบเพิ่มหนี้ (Debit Note = out_invoice ที่มี debit_origin_id):
+             is_dn สลับชื่อเอกสาร/หัวคอลัมน์/สูตรมูลค่าที่ถูกต้อง, ใบเดิมดึงจาก _get_adj_origin()
              โครง layout เดียวกับใบกำกับ 5 สำเนา (report_invoice_custom.xml) แต่:
              - กล่องชื่อเอกสาร = ใบลดหนี้ / ใบกำกับภาษี
              - กล่องลูกค้าไม่มีคำว่า ขายให้/SOLD TO
@@ -42,6 +44,8 @@
                 </style>
 
                 <div class="page">
+                    <t t-set="is_dn" t-value="bool(o.debit_origin_id)" />
+                    <t t-set="adj_origin" t-value="o._get_adj_origin()" />
                     <!-- ทุกหน้าพิมพ์หัวบิล (logic เดียวกับใบกำกับ 5 ใบ) — หัวบิลกิน 13 แถว
                          ทุกหน้า, footer ใบลดหนี้สูงกว่าใบกำกับ 1 แถว (ตารางยอดรวม 5 บรรทัด)
                          -> หน้าไม่มี footer จุ 33, หน้ามี footer จุ 19
@@ -98,10 +102,10 @@
                                     <div
                                         style="font-family:'Sarabun', sans-serif; font-size:15px; font-weight:600; line-height:1.2; padding-left:4px; white-space:normal;">
                                         <!-- nbsp คร่อมหน้า-หลัง กัน wkhtmltopdf ตัด glyph ไทยตัวแรก -->
-                                        <span>&#160;</span><span>ใบลดหนี้ / ใบกำกับภาษี</span><span>&#160;</span>
+                                        <span>&#160;</span><span t-esc="'ใบเพิ่มหนี้ / ใบกำกับภาษี' if is_dn else 'ใบลดหนี้ / ใบกำกับภาษี'" /><span>&#160;</span>
                                     </div>
                                     <div style="font-size: 10px; font-weight: bold;">
-                                        <span>CREDIT NOTE / TAX INVOICE</span>
+                                        <span t-esc="'DEBIT NOTE / TAX INVOICE' if is_dn else 'CREDIT NOTE / TAX INVOICE'" />
                                     </div>
                                 </div>
                             </td>
@@ -125,7 +129,7 @@
                                 </div>
                             </td>
                             <td style="width: 2%;"></td>
-                            <!-- ไม่มีบล็อกส่งของที่/DELIVERY TO ในใบลดหนี้ -->
+                            <!-- ไม่มีบล็อกส่งของที่/DELIVERY TO ในใบลดหนี้/ใบเพิ่มหนี้ -->
                             <td style="width: 49%; padding-right: 5px;"></td>
                         </tr>
                     </table>
@@ -135,11 +139,14 @@
                         style="border-color: black; font-size: 12px;">
                         <thead class="bg-light">
                             <tr>
-                                <th width="13%" class="text-center">วันที่ <br /> Credit Note Date</th>
-                                <th width="17%" class="text-center">เลขที่ใบลดหนี้ <br /> Credit Note No.</th>
+                                <th t-if="is_dn" width="13%" class="text-center">วันที่ <br /> Debit Note Date</th>
+                                <th t-else="" width="13%" class="text-center">วันที่ <br /> Credit Note Date</th>
+                                <th t-if="is_dn" width="17%" class="text-center">เลขที่ใบเพิ่มหนี้ <br /> Debit Note No.</th>
+                                <th t-else="" width="17%" class="text-center">เลขที่ใบลดหนี้ <br /> Credit Note No.</th>
                                 <th width="17%" class="text-center">เลขที่ใบกำกับภาษีเดิม <br /> Original Invoice No.</th>
                                 <th width="15%" class="text-center">วันที่ใบกำกับภาษีเดิม <br /> Original Invoice Date</th>
-                                <th width="38%" class="text-center">เหตุผลในการลดหนี้ <br /> Credit Note Reason</th>
+                                <th t-if="is_dn" width="38%" class="text-center">เหตุผลในการเพิ่มหนี้ <br /> Debit Note Reason</th>
+                                <th t-else="" width="38%" class="text-center">เหตุผลในการลดหนี้ <br /> Credit Note Reason</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -153,10 +160,10 @@
                                     </strong>
                                 </td>
                                 <td>
-                                    <span t-if="o.reversed_entry_id" t-field="o.reversed_entry_id.name" />
+                                    <span t-if="adj_origin" t-field="adj_origin.name" />
                                 </td>
                                 <td>
-                                    <span t-if="o.reversed_entry_id" t-field="o.reversed_entry_id.invoice_date" />
+                                    <span t-if="adj_origin" t-field="adj_origin.invoice_date" />
                                 </td>
                                 <td>
                                     <span t-field="o.x_cn_reason" />

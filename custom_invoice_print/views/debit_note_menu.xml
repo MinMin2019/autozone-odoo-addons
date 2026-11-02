@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- เมนู Customers > ใบเพิ่มหนี้ (ถัดจาก Credit Notes) — ดูอย่างเดียว ปิดปุ่ม New
+             เพราะใบเพิ่มหนี้ต้องออกจากใบกำกับเดิม (Action > Debit Note) จึงจะผูก debit_origin_id
+             (ได้เลข SDNJ + ปุ่มพิมพ์ใบเพิ่มหนี้) -->
+        <record id="action_move_out_debit_note" model="ir.actions.act_window">
+            <field name="name">ใบเพิ่มหนี้ (Debit Notes)</field>
+            <field name="res_model">account.move</field>
+            <field name="path">debit-notes</field>
+            <field name="view_mode">list,kanban,form,activity</field>
+            <field name="view_id" ref="account.view_out_invoice_tree" />
+            <field name="search_view_id" ref="account.view_account_invoice_filter" />
+            <field name="domain">[('move_type', '=', 'out_invoice'), ('debit_origin_id', '!=', False)]</field>
+            <field name="context">{'create': False, 'default_move_type': 'out_invoice', 'display_account_trust': True}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">ยังไม่มีใบเพิ่มหนี้</p>
+                <p>ออกใบเพิ่มหนี้จากใบกำกับภาษีเดิม: เปิดใบกำกับ (Posted) → ⚙ Action → Debit Note</p>
+            </field>
+        </record>
+
+        <menuitem id="menu_action_move_out_debit_note"
+            parent="account.menu_finance_receivables"
+            action="action_move_out_debit_note"
+            sequence="2" />
+    </data>
+</odoo>
