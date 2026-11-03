@@ -79,9 +79,10 @@ class AzApprovalMixin(models.AbstractModel):
         if not t:
             return super().write(vals)
         free_prefixes = FREE_FIELD_PREFIXES + t._free_prefixes()
+        free_fields = FREE_FIELDS | t._free_field_names()
         meaningful = [
             f for f in vals
-            if f not in FREE_FIELDS and not f.startswith(free_prefixes)
+            if f not in free_fields and not f.startswith(free_prefixes)
         ]
         if not meaningful or t._user_is_approver(self.env.user):
             return super().write(vals)

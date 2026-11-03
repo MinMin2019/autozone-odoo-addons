@@ -30,8 +30,20 @@
                         <field name="approver_user_ids" widget="many2many_tags"
                                options="{'no_create': True}"/>
                         <field name="approver_group_id" groups="base.group_no_one"/>
-                        <field name="free_field_prefixes" placeholder="เช่น az_"/>
                         <field name="active" invisible="1"/>
+                    </group>
+                    <separator string="ข้อมูลที่หน้างานแก้ได้โดยไม่ต้องอนุมัติ"/>
+                    <field name="free_field_ids" nolabel="1" options="{'no_create': True}">
+                        <list>
+                            <field name="field_description" string="ชื่อช่อง"/>
+                            <field name="name" string="ชื่อฟิลด์ (ระบบ)"/>
+                            <field name="ttype" string="ชนิด"/>
+                        </list>
+                    </field>
+                    <group>
+                        <field name="free_field_prefixes" placeholder="เช่น az_"/>
+                        <field name="prefix_field_preview" readonly="1"
+                               invisible="not free_field_prefixes"/>
                     </group>
                 </sheet>
             </form>

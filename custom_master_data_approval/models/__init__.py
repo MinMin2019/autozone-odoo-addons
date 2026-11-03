@@ -10,3 +10,4 @@ from . import sale_order
 from . import purchase_order
 from . import stock
 from . import wht_cert
+from . import product_supplierinfo

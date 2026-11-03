@@ -30,11 +30,21 @@ class AzApprovalType(models.Model):
              "ให้ทั้ง role ได้สิทธิ์: ไปที่ role แล้วใส่กลุ่มผู้อนุมัติในช่อง Extra Permissions "
              "— คนใน role จะขึ้นชื่อที่นี่เอง (คนที่มาจาก role ให้ถอดที่ role)")
     approver_warning = fields.Char(compute="_compute_approver_user_ids")
+    free_field_ids = fields.Many2many(
+        "ir.model.fields", "az_approval_type_free_field_rel", "type_id", "field_id",
+        string="ฟิลด์ที่แก้ได้โดยไม่ต้องอนุมัติ",
+        domain="[('model_id', '=', model_id)]",
+        help="เลือกฟิลด์ที่หน้างานแก้ได้ทุกสถานะโดยไม่ล็อค (ยังมีประวัติการแก้ในแชท) "
+             "เช่น ข้อมูลในแท็บ Purchase ของสินค้าที่จัดซื้อดูแลเอง — "
+             "ฟิลด์ที่ไม่ได้เลือก = ล็อคหลังส่งอนุมัติ")
     free_field_prefixes = fields.Char(
-        string="ฟิลด์ที่แก้ได้โดยไม่ต้องอนุมัติ (คำนำหน้า)",
-        help="คำนำหน้าชื่อฟิลด์ คั่นด้วยจุลภาค เช่น az_ — ฟิลด์ที่ชื่อขึ้นต้นแบบนี้แก้ได้ทุกสถานะ "
-             "โดยไม่ล็อค (ยังมีประวัติการแก้ในแชท) ใช้กับข้อมูลจัดกลุ่มที่คลัง/จัดซื้อช่วยดูแล "
-             "เช่น แบรนด์ ชิ้นส่วน ขั้นตอนงาน และค่าที่ระบบคำนวณเอง เช่น ชั้น ABC")
+        string="ปลดทั้งกลุ่มด้วยคำนำหน้า",
+        help="ใช้กับฟิลด์ที่ตั้งชื่อเป็นชุด เช่น az_ = ฟิลด์จัดกลุ่มสินค้าทุกตัว "
+             "(รวมตัวที่จะเพิ่มในอนาคตโดยอัตโนมัติ) คั่นด้วยจุลภาค — "
+             "คำนำหน้าที่ไม่ตรงฟิลด์ใดเลยจะบันทึกไม่ได้ (กันพิมพ์ผิด) "
+             "ระวังคำสั้นเกิน: purchase จะปลด Control Policy (purchase_method) ไปด้วย")
+    prefix_field_preview = fields.Text(
+        string="ฟิลด์ที่คำนำหน้าครอบคลุม", compute="_compute_prefix_field_preview")
     active = fields.Boolean(
         default=True, string="เปิดใช้งาน",
         help="ปิด = พัก workflow ทั้งประเภท (ไม่ล็อคการแก้ไข ไม่บล็อกทรานแซคชัน) "
@@ -56,6 +66,39 @@ class AzApprovalType(models.Model):
     def _free_prefixes(self):
         self.ensure_one()
         return tuple(p.strip() for p in (self.free_field_prefixes or "").split(",") if p.strip())
+
+    def _free_field_names(self):
+        self.ensure_one()
+        return set(self.sudo().free_field_ids.mapped("name"))
+
+    def _prefix_matches(self):
+        """{คำนำหน้า: [ฟิลด์ที่ขึ้นต้นด้วยคำนั้น]} ของโมเดลนี้"""
+        self.ensure_one()
+        if not self.model_name or self.model_name not in self.env:
+            return {}
+        names = sorted(self.env[self.model_name]._fields)
+        return {p: [n for n in names if n.startswith(p)] for p in self._free_prefixes()}
+
+    @api.depends("free_field_prefixes", "model_id")
+    def _compute_prefix_field_preview(self):
+        for t in self:
+            lines = []
+            for prefix, names in t._prefix_matches().items():
+                Model = self.env[t.model_name]
+                labels = ", ".join("%s (%s)" % (Model._fields[n].string, n) for n in names)
+                lines.append("%s → %d ฟิลด์: %s" % (prefix, len(names), labels or "-"))
+            t.prefix_field_preview = "\n".join(lines) or False
+
+    @api.constrains("free_field_prefixes", "model_id")
+    def _check_free_field_prefixes(self):
+        for t in self:
+            bad = [p for p, names in t._prefix_matches().items() if not names]
+            if bad:
+                raise UserError(
+                    "คำนำหน้าต่อไปนี้ไม่ตรงกับฟิลด์ใดของ %s — อาจพิมพ์ผิด: %s\n"
+                    "ถ้าต้องการปลดฟิลด์ทีละตัว ให้เลือกในตาราง "
+                    "\"ฟิลด์ที่แก้ได้โดยไม่ต้องอนุมัติ\" แทน"
+                    % (t.model_id.name, ", ".join(bad)))
 
     def _user_is_approver(self, user):
         self.ensure_one()
