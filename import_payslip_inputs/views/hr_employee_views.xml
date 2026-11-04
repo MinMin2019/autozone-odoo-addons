@@ -9,9 +9,8 @@
                 <field name="title_th" placeholder="คำนำหน้า" class="me-2"
                        style="max-width: 9rem; font-size: min(3vw, 1.8rem);"/>
             </xpath>
-            <xpath expr="//field[@name='employee_type']" position="after">
-                <field name="job_level"/>
-            </xpath>
+            <!-- 3.4.1: ไม่โชว์ job_level บนพนักงานแล้ว — ใช้ "Job Level" บนตำแหน่งงาน (hr.job) ของ
+                 autozone_org_chart ที่เดียว; ข้อมูลเดิมยังเก็บในฐาน (ฟิลด์ไม่ถูกลบ) จนกว่า HR ตรวจรายการที่ไม่ตรงเสร็จ -->
         </field>
     </record>
 </odoo>

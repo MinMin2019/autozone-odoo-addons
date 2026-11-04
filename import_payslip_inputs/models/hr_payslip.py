@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import re
 from collections import defaultdict
 
 from markupsafe import Markup
@@ -64,7 +65,7 @@ class HrPayslip(models.Model):
 
         def sort_key(key):
             branch = key[2]
-            return (key[0], key[1], branch.code or branch.name or '')
+            return (key[0], key[1], re.sub(r'^\d+\s+', '', branch.code or '') or branch.name or '')
 
         account_move_vals = []
         slips_date_tuples = []
@@ -72,7 +73,8 @@ class HrPayslip(models.Model):
             journal_id, date, branch = key
             slips = groups[key]
             month = fields.Date.end_of(slips[0].date_to, 'month').strftime('%B %Y')
-            branch_label = branch.code or branch.name or _('ไม่ระบุสาขา')
+            # รหัส analytic บางกลุ่มบัญชีใส่เลขลำดับนำหน้า ("1 ATP", "2 HTR") — ชื่อใบสำคัญใช้แค่รหัสสาขา
+            branch_label = re.sub(r'^\d+\s+', '', branch.code or '') or branch.name or _('ไม่ระบุสาขา')
             move_dict = {
                 'narration': '',
                 'ref': '%s - %s' % (month, branch_label),

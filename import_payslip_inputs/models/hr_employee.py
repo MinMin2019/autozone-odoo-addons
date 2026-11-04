@@ -11,6 +11,8 @@ class HrEmployee(models.Model):
     # อ่านช่องใดก็ตามของพนักงาน (เช่นชื่อในรายงาน) แล้ว prefetch ลากช่องนี้ไปด้วย → AccessError
     title_th = fields.Char(string='คำนำหน้า', tracking=True, groups='hr.group_hr_user')
 
+    # DEPRECATED (3.4.1): ซ่อนจากฟอร์มแล้ว ใช้ hr.job.job_level ของ autozone_org_chart แทน
+    # ห้ามลบฟิลด์จนกว่า HR ตรวจ 33 คนที่ระดับไม่ตรงตำแหน่งเสร็จ (ลบ = คอลัมน์หาย ข้อมูลหาย)
     # ระดับตำแหน่งตามโครงสร้างองค์กรใหม่ (G2-G5, S2-S4, SC, M1, P2, TM1-TM2)
     # เก็บเป็น Char เพราะโครงสร้างยังไม่ final
     job_level = fields.Char(string='ระดับตำแหน่ง (Job Level)', tracking=True, groups='hr.group_hr_user')
