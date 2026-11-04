@@ -150,6 +150,14 @@ class SaleOrder(models.Model):
             raise UserError(_("ต้องยืนยันใบสั่งขาย (Confirm) ก่อนพิมพ์ใบแจ้งหนี้"))
         lines = self._az_notice_lines().filtered(lambda l: not l.display_type)
         if not lines:
+            # qty_to_invoice = 0 มี 2 กรณี: ออก IV ครบแล้ว หรือยังไม่กรอกจำนวนส่งแล้ว (สินค้าคิดตามที่ส่ง)
+            undelivered = self.order_line.filtered(
+                lambda l: not l.display_type and l.qty_invoiced < l.product_uom_qty and l.qty_delivered < l.product_uom_qty)
+            if undelivered:
+                raise UserError(_(
+                    "ยังไม่มีรายการที่ส่งงานแล้ว ใส่จำนวนในช่อง \"ส่งแล้ว\" (Delivered) ของบรรทัดก่อน แล้วกดพิมพ์ใหม่\n"
+                    "รายการที่ยังไม่ได้ใส่: %s",
+                    ", ".join(undelivered.mapped("product_id.display_name")[:3])))
             raise UserError(_("ใบนี้ออกใบกำกับภาษีครบแล้ว ไม่มีรายการเหลือให้แจ้งหนี้"))
         goods = lines.filtered(lambda l: not self._az_line_is_service(l))
         if goods:
