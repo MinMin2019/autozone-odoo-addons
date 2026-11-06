@@ -1,6 +1,6 @@
 {
     'name': 'Custom Import Payslip Other Inputs',
-    'version': '18.0.3.4.1',
+    'version': '18.0.3.5.0',
     'category': 'Autozone/HR',
     'summary': 'Import Other Inputs (Allowance/Deduction) from Excel into Payslip Batch',
     'description': """
@@ -26,6 +26,7 @@ Phase 1: Legacy payroll import (Model A - pass-through)
         'wizard/import_payslip_wizard_views.xml',
         'views/hr_employee_views.xml',
         'views/hr_payslip_run_views.xml',
+        'views/account_move_views.xml',
     ],
     'installable': True,
     'application': False,

@@ -5,6 +5,8 @@
 
 สถานะ ณ วันส่งมอบ: **18.0.3.4.1** ติดตั้งแล้วบน prod (Autozone-PD) และ Dev (Autozone-Dev), commit 1b64895 บน main
 
+เพิ่มหลังส่งมอบ: **18.0.3.5.0** (6 พ.ย. 2569) ตัวกรอง "JE เงินเดือน" ในหน้า Journal Entries และเมนู Accounting > Accounting > JE เงินเดือน ให้บัญชีเปิดดราฟจาก Payroll ได้โดยไม่ต้องมีสิทธิ์ Payroll สคริปต์ deploy อยู่ที่ `scripts/payroll_350/`
+
 ---
 
 ## 1. โมดูลนี้ทำอะไร
