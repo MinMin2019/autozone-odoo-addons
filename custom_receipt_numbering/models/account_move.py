@@ -1,6 +1,6 @@
 import re
 
-from odoo import api, models
+from odoo import api, fields, models
 
 # สมุดรับเงินลูกค้า = รหัสขึ้นต้น RV (RVB1-8 ธนาคาร, RVC เงินสด)
 # ใบขายสดที่ใบรับเงินใช้เลขตาม: RCV (VAT, เลข CT...) / RCN (Non-VAT, เลข SR...)
@@ -42,6 +42,17 @@ class AccountMove(models.Model):
             if same_month and not taken:
                 return name
         return self._az_next_rp_name(self.date)
+
+    def _get_starting_sequence(self):
+        # ใบจ่าย/รับเงินใบแรกของสมุดใหม่: Odoo ตั้งเป็น "PPVB11/2026/00000" ซึ่งไม่เข้ากับ
+        # sequence_override_regex (รหัสสมุด+ปี2หลัก+เดือน+ลำดับ) -> ได้เลขเพี้ยน
+        # "PPVB11/2026/00None11None0001" แล้วยืนยันไม่ผ่าน (Duplicate สมุดจะติด regex มาด้วย)
+        journal = self.journal_id
+        is_payment = self.origin_payment_id or self.env.context.get('is_payment')
+        if journal.sequence_override_regex and journal.payment_sequence and is_payment:
+            move_date = self.date or self.invoice_date or fields.Date.context_today(self)
+            return '%s%s000' % (journal.code, move_date.strftime('%y%m'))
+        return super()._get_starting_sequence()
 
     def _post(self, soft=True):
         # ตั้งเลขก่อน post — ถ้ามีเลขอยู่แล้ว (พิมพ์เอง/เคย post) ไม่แตะ

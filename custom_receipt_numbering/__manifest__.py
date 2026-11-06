@@ -1,6 +1,6 @@
 {
     "name": "Autozone Receipt Numbering",
-    "version": "18.0.1.0.0",
+    "version": "18.0.1.1.0",
     "category": "Autozone/Accounting",
     "author": "Autozone",
     "summary": "ออกเลขใบรับเงินลูกค้าอัตโนมัติตามกติกาเดิมที่พนักงานพิมพ์เอง: "
