@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 class CustomerBillingNote(models.Model):
     _name = 'customer.billing.note'
@@ -125,9 +125,29 @@ class CustomerBillingNote(models.Model):
     def create(self, vals_list):
         """เจนเลขที่เอกสารตอนกด Save"""
         for vals in vals_list:
-            if vals.get('name', _('New')) == _('New'):
+            if not vals.get('name') or vals['name'] == _('New'):
                 vals['name'] = self.env['ir.sequence'].next_by_code('customer.billing.note') or _('New')
         return super().create(vals_list)
+
+    @api.constrains('name')
+    def _check_name_unique(self):
+        """กันเลขที่เอกสารซ้ำ: ช่องเลขที่ยังแก้ได้ตอนร่าง แต่บันทึกเลขที่มีใบอื่นใช้แล้วไม่ได้
+        (ตรวจเฉพาะตอนสร้าง/แก้เลข — ใบเก่าที่ซ้ำอยู่แล้วยังกดปุ่มอื่นได้ตามปกติ)"""
+        for record in self:
+            if not record.name or record.name == _('New'):
+                continue
+            dup = self.with_context(active_test=False).search(
+                [('name', '=', record.name), ('id', '!=', record.id)], limit=1)
+            if dup:
+                raise ValidationError(_(
+                    'เลขที่ %(name)s ถูกใช้แล้ว (%(label)s ของ %(partner)s วันที่ %(date)s)\n'
+                    'กรุณาแก้ช่องเลขที่เป็นคำว่า New เพื่อให้ระบบออกเลขใหม่ หรือใช้เลขอื่นที่ไม่ซ้ำ'
+                ) % {
+                    'name': record.name,
+                    'label': 'ใบวางบิล',
+                    'partner': dup.partner_id.display_name or '-',
+                    'date': dup.date and dup.date.strftime('%d/%m/%Y') or '-',
+                })
 
     def action_confirm(self):
         """ปุ่มกดยืนยันใบวางบิล"""

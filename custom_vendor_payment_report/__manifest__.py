@@ -1,6 +1,6 @@
 {
     'name': 'Custom Vendor Payment Report',
-    'version': '18.0.1.0.0',
+    'version': '18.0.1.2.0',
     'category': 'Autozone/Accounting',
     'summary': 'รายงานการชำระเงิน สำหรับเช็คใบวางบิลจาก Vendor (AP)',
     'description': """

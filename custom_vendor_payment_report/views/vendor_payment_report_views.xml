@@ -108,7 +108,7 @@
                                     <field name="invoice_date_due" string="วันครบกำหนด" width="13%" />
                                     <field name="payment_state" widget="badge" width="15%" />
                                     <field name="move_type" column_invisible="1" />
-                                    <field name="amount_total" widget="float" width="12%" />
+                                    <field name="vpr_amount_after_refund" string="Total" widget="float" width="12%" />
                                 </list>
                             </field>
 

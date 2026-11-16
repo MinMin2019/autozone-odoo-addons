@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 THAI_MONTHS = [
     'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
@@ -147,10 +147,19 @@ class VendorPaymentReport(models.Model):
         return bill.currency_id.round(wht)
 
     def _get_bill_amounts(self, bill):
-        """คืน (ยอดบิล, หัก ณ ที่จ่าย, ยอดจ่ายสุทธิ) ติดเครื่องหมายลบถ้าเป็นใบลดหนี้"""
+        """คืน (ยอดบิล, หัก ณ ที่จ่าย, ยอดจ่ายสุทธิ) ติดเครื่องหมายลบถ้าเป็นใบลดหนี้
+
+        ยอดบิล = ยอดหลังหักใบลดหนี้ที่จับคู่ตัดกับบิลแล้ว (กรณีบัญชีกดปุ่ม Credit Note
+        บนบิล -> CN ตัดกับบิลอัตโนมัติ ไม่โผล่ให้เลือกในรายงาน) ไม่หักการจ่ายเงินจริง
+        WHT ก็หักส่วนของ CN ตามสัดส่วนยอดที่จับคู่"""
         sign = -1.0 if bill.move_type == 'in_refund' else 1.0
-        amount = sign * bill.amount_total
-        wht = sign * self._get_bill_wht(bill)
+        bill_wht = self._get_bill_wht(bill)
+        for other, matched in bill._vpr_refund_offsets():
+            if other.amount_total:
+                bill_wht -= self._get_bill_wht(other) * matched / other.amount_total
+        bill_wht = bill.currency_id.round(bill_wht)
+        amount = sign * bill.vpr_amount_after_refund
+        wht = sign * bill_wht
         return amount, wht, amount - wht
 
     def get_report_lines(self):
@@ -163,7 +172,8 @@ class VendorPaymentReport(models.Model):
             lines.append({'bill': bill, 'amount': amount, 'wht': wht, 'net': net})
         return lines
 
-    @api.depends('bill_ids', 'bill_ids.amount_total', 'bill_ids.invoice_line_ids.wht_tax_id')
+    @api.depends('bill_ids', 'bill_ids.amount_total', 'bill_ids.amount_residual',
+                 'bill_ids.invoice_line_ids.wht_tax_id')
     def _compute_amounts(self):
         for record in self:
             total = wht = 0.0
@@ -179,9 +189,29 @@ class VendorPaymentReport(models.Model):
     def create(self, vals_list):
         """เจนเลขที่เอกสารตอนกด Save"""
         for vals in vals_list:
-            if vals.get('name', _('New')) == _('New'):
+            if not vals.get('name') or vals['name'] == _('New'):
                 vals['name'] = self.env['ir.sequence'].next_by_code('vendor.payment.report') or _('New')
         return super().create(vals_list)
+
+    @api.constrains('name')
+    def _check_name_unique(self):
+        """กันเลขที่เอกสารซ้ำ: ช่องเลขที่ยังแก้ได้ตอนร่าง แต่บันทึกเลขที่มีใบอื่นใช้แล้วไม่ได้
+        (ตรวจเฉพาะตอนสร้าง/แก้เลข — ใบเก่าที่ซ้ำอยู่แล้วยังกดปุ่มอื่นได้ตามปกติ)"""
+        for record in self:
+            if not record.name or record.name == _('New'):
+                continue
+            dup = self.with_context(active_test=False).search(
+                [('name', '=', record.name), ('id', '!=', record.id)], limit=1)
+            if dup:
+                raise ValidationError(_(
+                    'เลขที่ %(name)s ถูกใช้แล้ว (%(label)s ของ %(partner)s วันที่ %(date)s)\n'
+                    'กรุณาแก้ช่องเลขที่เป็นคำว่า New เพื่อให้ระบบออกเลขใหม่ หรือใช้เลขอื่นที่ไม่ซ้ำ'
+                ) % {
+                    'name': record.name,
+                    'label': 'รายงานการชำระเงิน',
+                    'partner': dup.partner_id.display_name or '-',
+                    'date': dup.date and dup.date.strftime('%d/%m/%Y') or '-',
+                })
 
     def action_confirm(self):
         """ปุ่มกดยืนยันรายงาน"""
