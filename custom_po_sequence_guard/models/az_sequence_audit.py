@@ -46,6 +46,35 @@ class AzSequenceAudit(models.Model):
             END;
             $$ LANGUAGE plpgsql;
         """)
+        # ตัวนับรายเดือนของ PO (ir_sequence_date_range) - บันทึกทุกการเปลี่ยน
+        cr.execute("""
+            CREATE OR REPLACE FUNCTION az_sequence_dr_audit_fn() RETURNS trigger AS $$
+            DECLARE seq_code varchar;
+            BEGIN
+                IF NEW.number_next IS DISTINCT FROM OLD.number_next THEN
+                    SELECT code INTO seq_code FROM ir_sequence WHERE id = NEW.sequence_id;
+                    IF seq_code = 'purchase.order' OR NEW.number_next < OLD.number_next THEN
+                        INSERT INTO az_sequence_audit
+                            (at, sequence_id, sequence_code, old_next, new_next, backwards,
+                             db_user, app_name, client_addr, backend_pid, query)
+                        VALUES
+                            (now() AT TIME ZONE 'UTC', NEW.sequence_id,
+                             seq_code || ' [' || NEW.date_from || '..' || NEW.date_to || ']',
+                             OLD.number_next, NEW.number_next, NEW.number_next < OLD.number_next,
+                             current_user, current_setting('application_name', true),
+                             inet_client_addr()::text, pg_backend_pid(), left(current_query(), 2000));
+                    END IF;
+                END IF;
+                RETURN NEW;
+            END;
+            $$ LANGUAGE plpgsql;
+        """)
+        cr.execute("DROP TRIGGER IF EXISTS az_sequence_dr_audit_trg ON ir_sequence_date_range")
+        cr.execute("""
+            CREATE TRIGGER az_sequence_dr_audit_trg
+            AFTER UPDATE OF number_next ON ir_sequence_date_range
+            FOR EACH ROW EXECUTE FUNCTION az_sequence_dr_audit_fn()
+        """)
         cr.execute("DROP TRIGGER IF EXISTS az_sequence_audit_trg ON ir_sequence")
         cr.execute("""
             CREATE TRIGGER az_sequence_audit_trg

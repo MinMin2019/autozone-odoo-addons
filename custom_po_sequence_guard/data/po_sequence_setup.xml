@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ทุกครั้งที่ติดตั้ง/อัปเกรด: ตัวนับ PO แยกรายเดือน + prefix ใช้เดือนของช่วงตัวนับ -->
+    <function model="purchase.order" name="_az_setup_po_sequence"/>
+</odoo>
