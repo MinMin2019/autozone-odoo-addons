@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- โครง P&L ตามที่ฝ่ายบัญชีขอ (17 พ.ย. 2026):
+         - ค่าใช้จ่ายในการขายและบริหาร (EXP) แบ่ง: ขาย 611xxx / บริหาร หมวด 6 ที่เหลือ /
+           ตาข่ายกันหล่น "รหัสนอกช่วง" (ซ่อนเมื่อ 0)
+         - ดอกเบี้ยจ่าย (81xxx) และภาษีเงินได้ (821xxx ยกเว้น 821003 ภาษีธุรกิจเฉพาะ) เป็นบัญชีประเภท
+           Expense เหมือนค่าใช้จ่ายทั่วไป จึงย้ายออกจาก EXP ไปเป็นบรรทัดท้ายงบ:
+             ค่าเสื่อมราคา (OEXP) -> ต้นทุนทางการเงิน -> กำไรสุทธิก่อนภาษีเงินได้ -> ภาษีเงินได้ -> กำไรสุทธิ
+         กำไรสุทธิยอดเท่าเดิมทุกกรณี (EXP เดิม = EXP ใหม่ + ต้นทุนทางการเงิน + ภาษีเงินได้)
+         ชื่อทุกบรรทัด (ไทย/อังกฤษ) ตั้งโดย _az_apply_pl_labels ใน apply_labels.xml -->
+
+    <!-- EXP: เอา groupby ออก (Odoo ห้ามมี groupby + บรรทัดลูกพร้อมกัน) และตัดดอกเบี้ย/ภาษีเงินได้ออก -->
+    <record id="account_reports.account_financial_report_expense0" model="account.report.line">
+        <field name="groupby"></field>
+        <field name="user_groupby"></field>
+    </record>
+    <record id="account_reports.account_financial_report_expense0_balance" model="account.report.expression">
+        <field name="formula" eval="[('account_id.account_type', '=', 'expense'), '!', ('account_id.code', '=like', '81%'), '|', '!', ('account_id.code', '=like', '821%'), ('account_id.code', '=', '821003')]"/>
+    </record>
+
+    <record id="pl_exp_selling" model="account.report.line">
+        <field name="name">Selling Expenses</field>
+        <field name="code">AZ_EXP_SELL</field>
+        <field name="parent_id" ref="account_reports.account_financial_report_expense0"/>
+        <field name="sequence">61</field>
+        <field name="hierarchy_level">2</field>
+        <field name="groupby">account_id</field>
+        <field name="foldable" eval="True"/>
+        <field name="expression_ids">
+            <record id="pl_exp_selling_balance" model="account.report.expression">
+                <field name="label">balance</field>
+                <field name="engine">domain</field>
+                <field name="formula" eval="[('account_id.account_type', '=', 'expense'), ('account_id.code', '=like', '611%')]"/>
+                <field name="subformula">sum</field>
+                <field name="green_on_positive" eval="False"/>
+            </record>
+        </field>
+    </record>
+
+    <record id="pl_exp_admin" model="account.report.line">
+        <field name="name">Administrative Expenses</field>
+        <field name="code">AZ_EXP_ADMIN</field>
+        <field name="parent_id" ref="account_reports.account_financial_report_expense0"/>
+        <field name="sequence">62</field>
+        <field name="hierarchy_level">2</field>
+        <field name="groupby">account_id</field>
+        <field name="foldable" eval="True"/>
+        <field name="expression_ids">
+            <record id="pl_exp_admin_balance" model="account.report.expression">
+                <field name="label">balance</field>
+                <field name="engine">domain</field>
+                <field name="formula" eval="[('account_id.account_type', '=', 'expense'), ('account_id.code', '=like', '6%'), '!', ('account_id.code', '=like', '611%')]"/>
+                <field name="subformula">sum</field>
+                <field name="green_on_positive" eval="False"/>
+            </record>
+        </field>
+    </record>
+
+    <!-- ตาข่ายกันหล่น: บัญชี Expense ที่ไม่ใช่หมวด 6 และไม่ใช่ดอกเบี้ย/ภาษีเงินได้ (เช่น 821003, 999xxx) -->
+    <record id="pl_exp_misc" model="account.report.line">
+        <field name="name">Other Expenses (Unmapped Account Codes)</field>
+        <field name="code">AZ_EXP_MISC</field>
+        <field name="parent_id" ref="account_reports.account_financial_report_expense0"/>
+        <field name="sequence">63</field>
+        <field name="hierarchy_level">2</field>
+        <field name="groupby">account_id</field>
+        <field name="foldable" eval="True"/>
+        <field name="hide_if_zero" eval="True"/>
+        <field name="expression_ids">
+            <record id="pl_exp_misc_balance" model="account.report.expression">
+                <field name="label">balance</field>
+                <field name="engine">domain</field>
+                <field name="formula" eval="[('account_id.account_type', '=', 'expense'), '!', ('account_id.code', '=like', '6%'), '!', ('account_id.code', '=like', '81%'), '|', '!', ('account_id.code', '=like', '821%'), ('account_id.code', '=', '821003')]"/>
+                <field name="subformula">sum</field>
+                <field name="green_on_positive" eval="False"/>
+            </record>
+        </field>
+    </record>
+
+    <!-- ท้ายงบ: OEXP (90) -> ต้นทุนทางการเงิน (92) -> กำไรก่อนภาษี (94) -> ภาษีเงินได้ (96) -> NEP (100) -->
+    <record id="pl_line_finance_cost" model="account.report.line">
+        <field name="name">Finance Costs</field>
+        <field name="report_id" ref="account_reports.profit_and_loss"/>
+        <field name="code">AZ_FIN</field>
+        <field name="sequence">92</field>
+        <field name="hierarchy_level">1</field>
+        <field name="groupby">account_id</field>
+        <field name="foldable" eval="True"/>
+        <field name="expression_ids">
+            <record id="pl_line_finance_cost_balance" model="account.report.expression">
+                <field name="label">balance</field>
+                <field name="engine">domain</field>
+                <field name="formula" eval="[('account_id.account_type', '=', 'expense'), ('account_id.code', '=like', '81%')]"/>
+                <field name="subformula">sum</field>
+                <field name="green_on_positive" eval="False"/>
+            </record>
+        </field>
+    </record>
+
+    <record id="pl_line_ebt" model="account.report.line">
+        <field name="name">Net Profit (Loss) before Income Tax</field>
+        <field name="report_id" ref="account_reports.profit_and_loss"/>
+        <field name="code">AZ_EBT</field>
+        <field name="sequence">94</field>
+        <field name="hierarchy_level">0</field>
+        <field name="expression_ids">
+            <record id="pl_line_ebt_balance" model="account.report.expression">
+                <field name="label">balance</field>
+                <field name="engine">aggregation</field>
+                <field name="formula">AZ_EBDA.balance - OEXP.balance - AZ_FIN.balance</field>
+                <field name="green_on_positive" eval="True"/>
+                <field name="date_scope">strict_range</field>
+            </record>
+        </field>
+    </record>
+
+    <record id="pl_line_income_tax" model="account.report.line">
+        <field name="name">Income Tax Expense</field>
+        <field name="report_id" ref="account_reports.profit_and_loss"/>
+        <field name="code">AZ_TAX</field>
+        <field name="sequence">96</field>
+        <field name="hierarchy_level">1</field>
+        <field name="groupby">account_id</field>
+        <field name="foldable" eval="True"/>
+        <field name="expression_ids">
+            <record id="pl_line_income_tax_balance" model="account.report.expression">
+                <field name="label">balance</field>
+                <field name="engine">domain</field>
+                <field name="formula" eval="[('account_id.account_type', '=', 'expense'), ('account_id.code', '=like', '821%'), ('account_id.code', '!=', '821003')]"/>
+                <field name="subformula">sum</field>
+                <field name="green_on_positive" eval="False"/>
+            </record>
+        </field>
+    </record>
+
+    <record id="account_reports.account_financial_report_net_profit0_balance" model="account.report.expression">
+        <field name="formula">AZ_EBT.balance - AZ_TAX.balance</field>
+    </record>
+</odoo>

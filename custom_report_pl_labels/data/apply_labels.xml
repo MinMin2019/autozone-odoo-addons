@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- รันทุกครั้งที่ติดตั้ง/อัปเกรดโมดูลนี้ (และตอนอัปเกรด account_reports หรือโมดูล P&L ที่เราพึ่ง
+         เพราะ Odoo อัปเกรดโมดูลลูกตามไปด้วย) เพื่อเขียนชื่อทับค่ามาตรฐานที่ XML ของ Odoo รีเซ็ตกลับ -->
+    <function model="account.report.line" name="_az_apply_pl_labels"/>
+</odoo>
