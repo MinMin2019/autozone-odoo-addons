@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_igarage_import_wizard_form" model="ir.ui.view">
+        <field name="name">az.igarage.import.wizard.form</field>
+        <field name="model">az.igarage.import.wizard</field>
+        <field name="arch" type="xml">
+            <form string="ดึงข้อมูลจาก iGarage / AutoPart">
+                <field name="state" invisible="1"/>
+                <group invisible="state == 'done'">
+                    <field name="mode" widget="radio"/>
+                    <field name="date_from" invisible="mode != 'transfer'" required="mode == 'transfer'"/>
+                    <field name="date_to" invisible="mode != 'transfer'" required="mode == 'transfer'"/>
+                    <field name="month" invisible="mode == 'transfer'" required="mode != 'transfer'" placeholder="2026-11"/>
+                    <field name="warehouse_ids" widget="many2many_tags" invisible="mode == 'cons_autopart'"/>
+                    <field name="min_date"/>
+                </group>
+                <div class="alert alert-info" role="alert" invisible="state == 'done'">
+                    ระบบจะสร้างเป็น <b>ดราฟ</b> เท่านั้น ให้คลังตรวจแล้วกดยืนยันเอง —
+                    ใบโอน 1 ใบต่อ 1 DO (ใช้จำนวนส่ง ข้าม DO ที่ยกเลิก/รออนุมัติ และ DO ที่ดึงแล้ว) ;
+                    ใบเบิก 1 ใบต่อสาขาต่อเดือน (ดึงเดือนเดียวกันซ้ำไม่ได้)
+                </div>
+                <field name="result_html" invisible="state != 'done'" nolabel="1"/>
+                <footer>
+                    <button name="action_import" type="object" string="ดึงข้อมูล" class="btn-primary" invisible="state == 'done'"/>
+                    <button name="action_open_created" type="object" string="เปิดเอกสารที่สร้าง" class="btn-primary" invisible="state != 'done'"/>
+                    <button string="ปิด" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_igarage_import_transfer" model="ir.actions.act_window">
+        <field name="name">ดึงใบโอนจาก iGarage</field>
+        <field name="res_model">az.igarage.import.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_mode': 'transfer'}</field>
+    </record>
+
+    <record id="action_igarage_import_consumption" model="ir.actions.act_window">
+        <field name="name">ดึงใบเบิกรายเดือน</field>
+        <field name="res_model">az.igarage.import.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_mode': 'cons_igarage'}</field>
+    </record>
+
+    <menuitem id="menu_igarage_import" name="ดึงข้อมูลจาก iGarage / AutoPart"
+              parent="stock.menu_stock_warehouse_mgmt" action="action_igarage_import_transfer"
+              sequence="19" groups="stock.group_stock_manager"/>
+</odoo>

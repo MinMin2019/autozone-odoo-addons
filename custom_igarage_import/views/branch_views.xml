@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_az_branch_transfer_list_igarage" model="ir.ui.view">
+        <field name="name">az.branch.transfer.list.igarage</field>
+        <field name="model">az.branch.transfer</field>
+        <field name="inherit_id" ref="custom_branch_transfer.view_az_branch_transfer_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="inside">
+                <header>
+                    <button name="%(custom_igarage_import.action_igarage_import_transfer)d" type="action"
+                            string="ดึงจาก iGarage" class="btn-secondary" display="always" groups="stock.group_stock_manager"/>
+                </header>
+            </xpath>
+            <field name="date" position="after">
+                <field name="igarage_do_ref" optional="show"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_az_branch_consumption_list_igarage" model="ir.ui.view">
+        <field name="name">az.branch.consumption.list.igarage</field>
+        <field name="model">az.branch.consumption</field>
+        <field name="inherit_id" ref="custom_branch_consumption_ui.view_az_branch_consumption_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="inside">
+                <header>
+                    <button name="%(custom_igarage_import.action_igarage_import_consumption)d" type="action"
+                            string="ดึงจาก iGarage / AutoPart" class="btn-secondary" display="always" groups="stock.group_stock_manager"/>
+                </header>
+            </xpath>
+            <field name="date" position="after">
+                <field name="import_ref" optional="hide"/>
+            </field>
+        </field>
+    </record>
+</odoo>

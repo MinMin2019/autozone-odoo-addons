@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_igarage_warehouse_map_list" model="ir.ui.view">
+        <field name="name">az.igarage.warehouse.map.list</field>
+        <field name="model">az.igarage.warehouse.map</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="igarage_wh_id"/>
+                <field name="name"/>
+                <field name="warehouse_id"/>
+                <field name="is_central"/>
+                <field name="is_central_use"/>
+                <field name="use_for_consumption"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_igarage_warehouse_map" model="ir.actions.act_window">
+        <field name="name">จับคู่คลัง iGarage</field>
+        <field name="res_model">az.igarage.warehouse.map</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'active_test': False}</field>
+    </record>
+
+    <menuitem id="menu_igarage_warehouse_map" name="จับคู่คลัง iGarage"
+              parent="stock.menu_stock_config_settings" action="action_igarage_warehouse_map"
+              sequence="90" groups="stock.group_stock_manager"/>
+</odoo>

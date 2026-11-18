@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_igarage" model="ir.ui.view">
+        <field name="name">res.config.settings.igarage.import</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="stock.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//app[@name='stock']" position="inside">
+                <block title="ดึงข้อมูลจาก iGarage / AutoPart" name="az_igarage_import" groups="base.group_system">
+                    <setting string="iGarage (ระบบสาขา)" help="ใช้ดึงใบส่งของ (DO) และยอดเบิกของสาขา — บัญชีอ่านอย่างเดียว">
+                        <div class="row mt8"><label for="az_igarage_host" class="col-lg-4 o_light_label"/><field name="az_igarage_host"/></div>
+                        <div class="row"><label for="az_igarage_port" class="col-lg-4 o_light_label"/><field name="az_igarage_port"/></div>
+                        <div class="row"><label for="az_igarage_db" class="col-lg-4 o_light_label"/><field name="az_igarage_db"/></div>
+                        <div class="row"><label for="az_igarage_user" class="col-lg-4 o_light_label"/><field name="az_igarage_user"/></div>
+                        <div class="row"><label for="az_igarage_password" class="col-lg-4 o_light_label"/><field name="az_igarage_password" password="True"/></div>
+                        <button name="action_test_igarage" type="object" string="ทดสอบการเชื่อมต่อ iGarage" class="btn-link" icon="fa-plug"/>
+                    </setting>
+                    <setting string="AutoPart (โรงพ่นสี ATP)" help="ใช้ดึงยอดเบิกรายเดือนของ ATP — SQL Server">
+                        <div class="row mt8"><label for="az_autopart_server" class="col-lg-4 o_light_label"/><field name="az_autopart_server"/></div>
+                        <div class="row"><label for="az_autopart_port" class="col-lg-4 o_light_label"/><field name="az_autopart_port"/></div>
+                        <div class="row"><label for="az_autopart_db" class="col-lg-4 o_light_label"/><field name="az_autopart_db"/></div>
+                        <div class="row"><label for="az_autopart_user" class="col-lg-4 o_light_label"/><field name="az_autopart_user"/></div>
+                        <div class="row"><label for="az_autopart_password" class="col-lg-4 o_light_label"/><field name="az_autopart_password" password="True"/></div>
+                        <div class="row"><label for="az_autopart_driver" class="col-lg-4 o_light_label"/><field name="az_autopart_driver"/></div>
+                        <button name="action_test_autopart" type="object" string="ทดสอบการเชื่อมต่อ AutoPart" class="btn-link" icon="fa-plug"/>
+                    </setting>
+                    <setting string="จับคู่คลัง iGarage" help="รหัสคลังใน iGarage ↔ คลังใน Odoo">
+                        <button name="%(custom_igarage_import.action_igarage_warehouse_map)d" type="action" string="เปิดตารางจับคู่คลัง" class="btn-link" icon="fa-arrow-right"/>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>
